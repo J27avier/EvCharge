@@ -1,91 +1,111 @@
 import numpy as np
 import pandas as pd
-from dataclasses import dataclass
 #import pygame;
 
 maxint = 9223372036854775807
 car_columns_fully_obs = ["idSess", "C", "t_arr", "soc_arr", "E_arr", "t_dep", "E_req", "t_soj", "E_t", "soc_t", "t_rem"]
+car_columns_simple = ["idSess", "t_arr", "soc_arr", "t_dep", "soc_t"]
 
 class ChargeWorldEnv():                       
-    def __init__(self, data, tinit = 0, max_cars=25, minP=0, maxP=10, render_mode = None):
+    def __init__(self, df_data, tinit = 0, max_cars=25, minP=0, maxP=10, render_mode = None):
+        # Set action and obs spaces
         self.max_cars = max_cars
         self.render_mode = render_mode
         self.window = None
         self.clock = None
         self.t = tinit
-        self.data = data
-        self.df_active = self.init_active()
+        self.df_data = df_data
+        self.t_max = df_data['TransactionStopTS'].max() 
+        self.df_park = self.init_park()
 
-    def init_active(self):
-        df_active = pd.DataFrame(columns=car_columns_fully_obs)
+        # Charging vars
+        self.max_soc = 1
+        self.min_soc = 0
+
+    def init_park(self):
+        df_park = pd.DataFrame(columns=car_columns_simple)
         for i in range(self.max_cars):
             blank_session = Session()
-            df_active = pd.concat((df_active, pd.DataFrame([blank_session.flatten_fully_obs()], columns = car_columns_fully_obs)))
-        return df_active.reset_index(drop=True)
+            df_park = pd.concat((df_park, pd.DataFrame([blank_session.flatten_simple()], columns = car_columns_simple)))
+        return df_park.reset_index(drop=True)
 
-    def step(self):
+    def reset(self):
+        self.t = 0
+        self.df_park = self.init_park()
+        return self.df_park
+
+    def step(self, action):
         # Apply action
         # self.state = self.apply_action(action)
+        self.cars_charge(action)
 
         # Tick clock
         # self.t += 1
+        self.t += 1
 
         # Calculate reward
+        self.df_depart = self.df_park[self.df_park["t_dep"] == self.t]
         # reward = self.calc_reward(self.state)
+        reward = 0
 
         # Check if done
-        # if self.t >= self.max_t: done = True; else: False
+        done = True if self.t > self.t_max else False
 
-        # If not done
-        # self.state = self.update_state()
+        # If not done update state
+        if not done:
+            self.cars_depart()
+            self.cars_arrive()
 
         # Create placeholder info
-        # info = {}
-        self.cars_depart()
-        self.cars_arrive()
-        self.df_active = self.df_active.sort_values(by=["t_arr"], ascending=False).reset_index(drop=True)
-        self.t += 1
-        # return self.state, reward, done, info
+        info = {}
+        
+        #self.df_park = self.df_park.sort_values(by=["t_arr"], ascending=False).reset_index(drop=True)
+        return self.df_park.copy(), reward, done, info
 
     def cars_depart(self):
-        df_departures = self.data[self.data["TransactionStopTS"] == self.t]
+        blank_session = Session()
+        self.df_park.loc[self.df_depart.index, car_columns_simple] = blank_session.flatten_simple()
         
-        for _, dep_car in df_departures.iterrows():
-            blank_session = Session()
-            df_occupied = self.df_active[self.df_active["idSess"] != -1]
-            self.df_occupied = df_occupied
-            if len(df_occupied) == 0:
-                raise Exception("No cars inside world")
-            else:
-                idx_leaving = df_occupied[df_occupied["idSess"] == dep_car.TransactionId].index[0]
-                self.df_active.loc[idx_leaving, car_columns_fully_obs] = blank_session.flatten_fully_obs()
-    # Funny edge case where sessions depart and arrive in the same timestep
+        # Mask is too slow
+        #self.df_park = self.df_park.mask(self.df_park["t_dep"] == self.t, blank_session.flatten_simple())
+        # Funny edge case where sessions depart and arrive in the same timestep
 
 
     def cars_arrive(self):
-        df_arrivals = self.data[self.data["TransactionStartTS"] == self.t]
+        df_arrivals = self.df_data[self.df_data["TransactionStartTS"] == self.t] # This could be sped up a lot
+        idx_empty = self.df_park[self.df_park["idSess"] == -1].index
+
+        if len(df_arrivals) > len(idx_empty):
+            raise Exception(f"Not enough {len(df_arrivals)} empty spots {len(idx_empty)} at timestep {self.t}!!")
         
-        for _, arr_car in df_arrivals.iterrows():
+        # Might be able to be a one liner with 
+        for i, (_, arr_car) in enumerate(df_arrivals.iterrows()):
             sess = Session(idSess = arr_car.TransactionId,
                            C = arr_car.BatteryCapacity,
                            t_arr = arr_car.TransactionStartTS,
                            soc_arr = arr_car.SOC_arr,
                            t_dep = arr_car.TransactionStopTS,
                           )
-            df_empty = self.df_active[self.df_active["idSess"] == -1]
-            if len(df_empty) == 0:
-                raise Exception("No empty slots for arrivals!")
-            else:
-                idx_empty = df_empty.index[0]
-                self.df_active.loc[idx_empty, car_columns_fully_obs] = sess.flatten_fully_obs()
+            self.df_park.loc[idx_empty[i], car_columns_simple] = sess.flatten_simple()
 
-    
-    def reset(self):
-        raise NotImplementedError
+    def cars_charge(self, action):
+        assert len(action) == self.df_park.shape[0], "There must be as many actions as parking spots"
+        self.power_t = np.zeros(self.max_cars)
+        for i, (_, car) in enumerate(self.df_park.iterrows()):
+            if car.idSess == -1 and action[i] > 0:
+                raise Exception(f"Agent is trying to charge empty spot. Spot {i} at time {self.t}")
+
+            soc_temp = car.soc_t + action[i]
+            if self.min_soc > soc_temp or soc_temp > self.max_soc:
+                print(f"Warning: Car {i} at time {self.t} would charge to {soc_temp}")
+            soc_tminus1 = car.soc_t
+            car.soc_t = max(self.min_soc, min(self.max_soc, car.soc_t + action[i]))
+            self.power_t[i] = car.soc_t - soc_tminus1
 
 
 
 # car_columns_fully_obs = ["idSess", "C", "t_arr", "soc_arr", "E_arr", "t_dep", "E_req", "t_soj", "E_t", "soc_t", "t_rem"]
+# car_columns_simple = ["idSess", "t_arr", "soc_arr", "t_dep", "soc_t"]
 class Session():
     #def __init__(self, idSess=-1, C=80,  t_arr=0, soc_arr=0, t_dep=maxint):
     def __init__(self, idSess=-1, C=0, t_arr=0, soc_arr=0, t_dep=0):
@@ -107,4 +127,8 @@ class Session():
     def flatten_fully_obs(self):
         self._calc_dependent()
         return [self.idSess, self.C, self.t_arr, self.soc_arr, self.E_arr, self.t_dep, self.E_req, self.t_soj, self.E_t, self.soc_t, self.t_rem]
+
+    def flatten_simple(self):
+        # In simple case we dont calculate dependent
+        return [self.idSess, self.t_arr, self.soc_arr, self.t_dep, self.soc_t]
 

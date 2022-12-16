@@ -5,3 +5,4 @@ outputs/
 ref/
 gym-examples/
 EvGym/__pycache__
+profiling/
