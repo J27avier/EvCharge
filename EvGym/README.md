@@ -12,7 +12,7 @@ The state takes inspiration from board games. In this case it's a single player 
 | Board Game | EvCharge      |
 |------------|---------------|
 | Board      | Charging park |
-| Square     | Parking spot  |
+| Square     | Charging unit |
 | Piece      | Car           |
 | Turn       | Timestep      |
 | Move       | _action_      |
@@ -24,7 +24,7 @@ Defined by a single constant
 
 For now the size of the battery `C` will be the same for every car.
 
-Therefore, the environment is a list of `max_cars` spots. Each spot can be occupied or vacant.
+Therefore, the environment is a list of `max_cars` spots (units). Each spot can be occupied or vacant.
 
 ### Car
 The input is a DataFrame containing Cars (also called sessions or transactions). 
