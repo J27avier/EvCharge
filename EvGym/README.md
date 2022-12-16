@@ -53,7 +53,7 @@ $soc_{t}^i = a_{t}^i + soc_{t-1}^i$
 
 With $a_{t}^i$ being the "normalized" power. In which case, there is no use for battery size, `C`.
 
-### → Car auxiliary attributes
+#### → Car auxiliary attributes
 By simple arithmetic operations, the following features can be engineered. The value of them has not yet been measured.
 
 * Sojurn time (`t_soj`): $t_{soj}^i = t_{dep}^i - t_{arr}^i$
