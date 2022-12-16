@@ -1,0 +1,6 @@
+data/
+EVSDG/
+.ipynb_checkpoints/
+outputs/
+ref/
+gym-examples/
