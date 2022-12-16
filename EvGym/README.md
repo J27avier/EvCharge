@@ -1,9 +1,9 @@
 # Ev ChargeEnv Documentation
-This enviromnent simulates an EV Charging Park (aka EV Charging Plaza). 
-This is a parking lot with multiple EV Charging stations (or Electic Vehicle Supply Equipment or EVSE).
-The name "EV Charging Park" (or park for short) is used emphasize the difference between a single EV Charging Station that can accommodate one Charging Session at a time and a set of them.
+This environment simulates an EV Charging Park (aka _park_) that contains many EV Charging Units. One unit can charge one car per _session_.
 
-This environment runs on **discrete time**. The timestep is measured in minutes, and a common setting is $\Delta t = 15 min$. [There is a reference that says that some countrie's regulations now focus on 15 min granularity instead of 1 hour ganularity, need to check].
+The term "charging station" is ambiguous and therefore is avoided.
+
+This environment runs on **discrete time**. The timestep is measured in minutes, and a common setting is $\Delta t = 15 min$. [There is a reference that says that some countries regulations now focus on 15 min granularity instead of 1 hour granularity, need to check].
 
 
 ## State
