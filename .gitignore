@@ -4,3 +4,4 @@ EVSDG/
 outputs/
 ref/
 gym-examples/
+EvGym/__pycache__

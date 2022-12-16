@@ -29,7 +29,7 @@ Therefore, the environment is a list of `max_cars` spots. Each spot can be occup
 ### Car
 The input is a DataFrame containing Cars (also called sessions or transactions). 
 
-The car iterator is $i \in \{0, 1, ..., max\_cars \}$
+The car iterator is $i \in \{0, 1, ..., maxcars \}$
 Each row will have:
 
 
@@ -79,9 +79,9 @@ Additionally, the timestep $t$ is a global variable.
 The agent is the Virtual Power Plant (VPP) or Virtual Operating Reserve (VOR) that sets the power for each charging session.
 
 ### Action space
-The action will be $P_t = {p_t^1, p_t^2, ..., p_t^{max\_cars}}$ in Watts.
+The action will be $P_t = {p_t^1, p_t^2, ..., p_t^{maxcars}}$ in Watts.
 
-Or $A_t = {a_t^1, a_t^2, ..., a_t^{max\_cars}}$ in "normalized units".
+Or $A_t = {a_t^1, a_t^2, ..., a_t^{maxcars}}$ in "normalized units".
 
 In RlGym terms:
 
