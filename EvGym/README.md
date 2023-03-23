@@ -89,3 +89,9 @@ In RlGym terms:
 
 ## Notes
 In RlGym: `Box(lower_lim, upper_lim, shape)`
+
+
+## References
+How to make a custom gym env: https://github.com/nicknochnack/OpenAI-Reinforcement-Learning-with-Custom-Environment/blob/main/OpenAI%20Custom%20Environment%20Reinforcement%20Learning.ipynb
+
+

@@ -1,13 +1,10 @@
-import numpy as np
-import pandas as pd
-#import pygame;
+import numpy as np 
+import pandas as pd 
+from . import config
 
-maxint = 9223372036854775807
-car_columns_fully_obs = ["idSess", "C", "t_arr", "soc_arr", "E_arr", "t_dep", "E_req", "t_soj", "E_t", "soc_t", "t_rem"]
-car_columns_simple = ["idSess", "t_arr", "soc_arr", "t_dep", "soc_t"]
 
 class ChargeWorldEnv():                       
-    def __init__(self, df_data, tinit = 0, max_cars=25, minP=0, maxP=10, render_mode = None):
+    def __init__(self, df_data, tinit = 0, max_cars=25, render_mode = None, state_mode = "full"):
         # Set action and obs spaces
         self.max_cars = max_cars
         self.render_mode = render_mode
@@ -15,18 +12,31 @@ class ChargeWorldEnv():
         self.clock = None
         self.t = tinit
         self.df_data = df_data
-        self.t_max = df_data['TransactionStopTS'].max() 
+        self.t_max = df_data['ts_arr'].max() 
+        self.state_mode = state_mode
         self.df_park = self.init_park()
 
         # Charging vars
-        self.max_soc = 1
+        self.alpha_c = config.alpha_c
+        self.alpha_d = config.alpha_d
+        self.max_soc = config.FINAL_SOC
         self.min_soc = 0
 
     def init_park(self):
-        df_park = pd.DataFrame(columns=car_columns_simple)
-        for i in range(self.max_cars):
-            blank_session = Session()
-            df_park = pd.concat((df_park, pd.DataFrame([blank_session.flatten_simple()], columns = car_columns_simple)))
+        if self.state_mode == "full":
+            df_park = pd.DataFrame(columns=config.car_columns_full)
+            for i in range(self.max_cars):
+                blank_session = Session()
+                df_park = pd.concat((df_park,
+                                     pd.DataFrame([blank_dession.flatten_full()],
+                                     columns = config.car_columns_full)))
+        elif self.mode == "simple":
+            df_park = pd.DataFrame(columns=config.car_columns_simple)
+            for i in range(self.max_cars):
+                blank_session = Session()
+                df_park = pd.concat((df_park, pd.DataFrame([blank_session.flatten_simple()], columns = config.car_columns_simple)))
+            raise NotImplementedError
+
         return df_park.reset_index(drop=True)
 
     def reset(self):
@@ -64,7 +74,7 @@ class ChargeWorldEnv():
 
     def cars_depart(self):
         blank_session = Session()
-        self.df_park.loc[self.df_depart.index, car_columns_simple] = blank_session.flatten_simple()
+        self.df_park.loc[self.df_depart.index, config.car_columns_simple] = blank_session.flatten_simple()
         
         # Mask is too slow
         #self.df_park = self.df_park.mask(self.df_park["t_dep"] == self.t, blank_session.flatten_simple())
@@ -86,7 +96,7 @@ class ChargeWorldEnv():
                            soc_arr = arr_car.SOC_arr,
                            t_dep = arr_car.TransactionStopTS,
                           )
-            self.df_park.loc[idx_empty[i], car_columns_simple] = sess.flatten_simple()
+            self.df_park.loc[idx_empty[i], config.car_columns_simple] = sess.flatten_simple()
 
     def cars_charge(self, action):
         assert len(action) == self.df_park.shape[0], "There must be as many actions as parking spots"
@@ -104,8 +114,9 @@ class ChargeWorldEnv():
 
 
 
-# car_columns_fully_obs = ["idSess", "C", "t_arr", "soc_arr", "E_arr", "t_dep", "E_req", "t_soj", "E_t", "soc_t", "t_rem"]
-# car_columns_simple = ["idSess", "t_arr", "soc_arr", "t_dep", "soc_t"]
+
+# car_columns_full = ["idSess", "t_arr", "soc_arr", "E_arr", "t_dep", "E_rem", "soc_rem", "soc_t", "t_rem", ]
+# car_columns_simple = ["idSess", "t_rem", "soc_rem"]
 class Session():
     #def __init__(self, idSess=-1, C=80,  t_arr=0, soc_arr=0, t_dep=maxint):
     def __init__(self, idSess=-1, C=0, t_arr=0, soc_arr=0, t_dep=0):
@@ -115,18 +126,19 @@ class Session():
         self.soc_arr = soc_arr
         self.soc_t = soc_arr
         self.t_dep = t_dep
-        self.C = C # kWh, Similar to Model 3
+        self.B = config.B # kWh, Similar to Model 3
+        soc_dep = config.FINAL_SOC
         self._calc_dependent()
     def _calc_dependent(self):
         self.t_soj = self.t_dep - self.t_arr
-        self.E_arr = self.soc_arr * self.C
-        self.E_t = self.soc_t * self.C
-        self.E_req = self.C - self.E_t
+        self.E_arr = self.soc_arr * self.B
+        self.E_t = self.soc_t * self.B
+        self.E_req = self.B - self.E_t
         self.t_rem = self.t_dep - self.t
 
     def flatten_fully_obs(self):
         self._calc_dependent()
-        return [self.idSess, self.C, self.t_arr, self.soc_arr, self.E_arr, self.t_dep, self.E_req, self.t_soj, self.E_t, self.soc_t, self.t_rem]
+        return [self.idSess, self.B, self.t_arr, self.soc_arr, self.E_arr, self.t_dep, self.E_req, self.t_soj, self.E_t, self.soc_t, self.t_rem]
 
     def flatten_simple(self):
         # In simple case we dont calculate dependent
