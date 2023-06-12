@@ -1,4 +1,17 @@
 import sys
+from typing import Union
+import numpy as np
+import pandas as pd
+
+# Dummy imports for stubs
+import yaml
+import scipy # type: ignore
+import cvxpy as cp # type: ignore
+import matplotlib.pyplot as plt # type: ignore
+from scipy.stats import truncnorm # type: ignore
+
+# 
+Number = Union[int, float, np.number]
 maxint = sys.maxsize
 car_columns_full = ["idSess",
                      "B",
@@ -23,7 +36,7 @@ elaad_rename = {"TransactionId": "session",
                   "ConnectedTime": "connected_time_float",
                   "ChargeTime": "charged_time_float",
                   "MaxPower": "max_power",
-                 }
+                }
 
 timestep = 60*60 # in seconds, this is 1 hour
 
@@ -35,7 +48,10 @@ FINAL_SOC = 0.97 # Final SOC, for preprocessing elaad
 MIN_SOC = 0      # Minimum SOC
 eta_c = 0.98     # Charging efficiency
 eta_d = 0.98     # Discharging efficiency
-psi = (alpha_c * eta_c * eta_d)/(alpha_d + alpha_c * eta_c * eta_d)
+psi = (alpha_c * eta_c * eta_d)/(alpha_d + alpha_c * eta_c * eta_d) # Constant for maximum energy
+max_cars = 25    # Max cars in parking lot... Important that it is a constant number for RL purposes
+starttime_min = pd.to_datetime("2000-01-01 00:00:00") # Startime for absolute timestamps
+elec_retail = 0.14 # Retail price of electricity
 
 # Colors
 class bcolors:
