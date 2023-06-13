@@ -27,7 +27,7 @@ def main():
     title = "EvWorld"
     args = parse_args()
 
-    df_sessions = pd.read_csv("data/df_elaad_preproc.csv", parse_dates = ["starttime_parking", "endtime_parking"])
+    df_sessions = pd.read_csv(f"{config.data_path}/df_elaad_preproc.csv", parse_dates = ["starttime_parking", "endtime_parking"])
     ts_max = df_sessions["ts_dep"].max()
     ts_min = df_sessions["ts_arr"].min()
 

@@ -53,6 +53,10 @@ max_cars = 25    # Max cars in parking lot... Important that it is a constant nu
 starttime_min = pd.to_datetime("2000-01-01 00:00:00") # Startime for absolute timestamps
 elec_retail = 0.14 # Retail price of electricity
 
+# Paths
+data_path = "data"
+
+
 # Colors
 class bcolors:
     HEADER = '\033[95m'
