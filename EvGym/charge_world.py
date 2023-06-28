@@ -76,10 +76,10 @@ class ChargeWorldEnv():
         self.t += 1
 
         # Calculate reward
-        self.df_depart = self.df_park[self.df_park["t_dep"] == self.t]
+        reward = self._reward()
         # reward = self.calc_reward(self.state)
-        reward = 0
 
+        self.df_depart = self.df_park[self.df_park["t_dep"] == self.t]
         # Check if done
         done = True if self.t > self.t_max else False
 
@@ -93,6 +93,9 @@ class ChargeWorldEnv():
 
         #self.df_park = self.df_park.sort_values(by=["t_arr"], ascending=False).reset_index(drop=True)
         return self.df_park.copy(), reward, done, info
+
+    def _reward(self):
+        return 0
 
     def _cars_depart(self):
         blank_session = Session()
@@ -139,7 +142,7 @@ class ChargeWorldEnv():
         if (action[~occ_spots] != 0).any():
             raise Exception(f"Agent is trying to charge empty spot. Spot {i} at time {self.t}")
 
-        action_clip = np.clip(action, -self.alpha_d, self.alpha_c)
+        action_clip = np.clip(action, -self.alpha_d / config.B, self.alpha_c / config.B)
 
         # Charging and discharging inefficiencies
         soc_t = self.df_park["soc_t"].to_numpy()
@@ -186,7 +189,7 @@ class ChargeWorldEnv():
 
         # Print state
         print(f"t = {self.t:,.0f}")
-        print(tabulate(lst_print, tablefmt = "grid", headers=config.car_columns_full + ["Action"]))
+        print(tabulate(lst_print, tablefmt = "grid", headers=config.car_columns_full_lag + ["A"]))
         print("----")
         print("Departed")
 
@@ -202,7 +205,7 @@ class ChargeWorldEnv():
             colors.append(color)
 
         lst_print = self._make_park_lst_colors(self.df_depart, colors)
-        print(tabulate(lst_print, tablefmt = "grid", headers=config.car_columns_full + ["Action"]))
+        print(tabulate(lst_print, tablefmt = "grid", headers=config.car_columns_full_lag + ["A"] ))
 
         # -1 means wait for user input
         if wait == -1:
@@ -222,15 +225,26 @@ class ChargeWorldEnv():
             row_print = []
             color = colors[i]
 
-            row_print.append(color + f"{row[config.car_columns_full[0]]}")
-            for col in config.car_columns_full[1:]:
+            row_print.append(color + f"{row[config.car_columns_full_lag[0]]}")
+            found_lag = self.df_park_lag[self.df_park_lag["idSess"] == row["idSess"]]
+            for col in config.car_columns_full_lag[1:]:
                 if col in ["t_arr", "t_dep", "t_rem"]:
                     row_print.append(f"{row[col]:,.0f}")
+                elif col in ["soc_lag"]:
+                    if len(found_lag > 0):
+                        row_lag = found_lag.iloc[0]
+                        row_print.append(f"{row_lag['soc_t']:,.2f}")
+                    else:
+                        row_print.append(f"-")
                 elif type(row[col]) in [float, np.float64]:
                     row_print.append(f"{row[col]:,.2f}")
                 else:
                     row_print.append(row[col])
-            row_print.append(f"{self.action[i]:,.2f}")
+            if len(found_lag) > 0 :  
+                row_print.append(f"{self.action[i]:,.2f}")
+            else:
+                row_print.append(f"-")
+
             row_print[-1] += Back.RESET
 
             lst_print.append(row_print)

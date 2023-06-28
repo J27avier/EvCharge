@@ -26,6 +26,20 @@ car_columns_full = ["idSess",
                      "t_rem",
                      ]
 
+car_columns_full_lag = ["idSess",
+                     "B",
+                     "t_arr",
+                     "soc_arr",
+                     "E_arr",
+                     "t_dep",
+                     "E_rem",
+                     "soc_rem",
+                     "E_t",
+                     "soc_t",
+                     "soc_lag",
+                     "t_rem",
+                     ]
+
 car_columns_simple = ["idSess", "t_rem", "soc_rem"]
 
 # Elaad Preprocessing

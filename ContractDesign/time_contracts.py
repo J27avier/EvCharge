@@ -2,6 +2,91 @@ import numpy as np
 import cvxpy as cp
 from contracts import get_contract_customtypes
 
+def general_contracts(thetas_i = [1/1.25, 1/1, 1/0.75],
+                      thetas_j = [1/1.25, 1/1, 1/0.75],
+                      c1 = 0.01,
+                      c2 = 0.1,
+                      kappa1 = 0.1,
+                      kappa2 = 0.5,
+                      alpha_d = 11,
+                      psi = 0.49,
+                      my_print = False,
+                      monotonicity = True,
+                      integer = False,
+                      IR = "all",
+                      IC = "neq",
+                      ):
+    I = len(thetas_i)
+    J = len(thetas_j)
+    G = cp.Variable((I, J), nonneg=True)
+    W = cp.Variable((I), nonneg=True)
+    if integer:
+        L = cp.Variable((J), integer=True)
+    else:
+        L = cp.Variable((J), nonneg=True)
+
+    PI = np.ones((I,J)) / (I*J)
+    constraints = []
+    objective_func = 0
+
+    # Objective function
+    for i, theta_i in enumerate(thetas_i):
+        for j, theta_j in enumerate(thetas_j):
+            objective_func += PI[i,j] * (kappa1 * cp.log(W[i]+1) + kappa2 * cp.log(L[j]+1) - G[i,j])
+
+    # Individual rationality
+    for i, theta_i in enumerate(thetas_i):
+        for j, theta_j in enumerate(thetas_j):
+            if (IR == "fst" and i == 0 and j == 0):
+                constraints += [G[i,j] - c1 * W[i] / theta_i - c2 * L[j] / theta_j == 0]
+            elif(IR == "all"):
+                constraints += [G[i,j] - c1 * W[i] / theta_i - c2 * L[j] / theta_j >= 0]
+
+    # Incentive compatibility
+    for i, theta_i in enumerate(thetas_i):
+        for j, theta_j in enumerate(thetas_j):
+            for i_p in range(I):
+                for j_p in range(J):
+                    if (IC == "neq" and (i_p != i or j_p != j)) or\
+                       (IC == "ort") and ((i == i_p and j != j_p) or (i != i_p and j == j_p)) or\
+                       (IC == "ort_d") and ((i == i_p and j > j_p) or (i > i_p and j == j_p)) or\
+                       (IC == "all"):
+                        constraints += [G[i,j] - c1 * W[i] / theta_i - c2 * L[j] / theta_j >= G[i_p,j_p] - c1 * W[i_p] / theta_i - c2 * L[j_p] / theta_j]
+                    elif (IC == "ort_l") and ((i == i_p and j - j_p == 1) or (i - i_p == 1 and j ==j_p)):
+                        constraints += [G[i,j] - c1 * W[i] / theta_i - c2 * L[j] / theta_j == G[i_p,j_p] - c1 * W[i_p] / theta_i - c2 * L[j_p] / theta_j]
+
+    # Monotonicity
+    if monotonicity:
+        constraints += [0 <= W[0]]
+        for i in range(I-1): 
+            constraints += [W[i] <= W[i+1]]
+        constraints += [0 <= L[0]]
+        for j in range(J-1):
+            constraints += [L[j] <= L[j+1]]
+        for i in range(I):
+            constraints += [0 <= G[i,0]]
+            for j in range(J-1):
+                constraints += [G[i,j] <= G[i,j+1]]
+        for j in range(J):
+            constraints += [0 <= G[0,j]]
+            for i in range(I-1):
+                constraints += [G[i,j] <= G[i+1,j]]
+    
+
+    # TODO: Ordering constraints
+    obj = cp.Maximize(objective_func)
+    prob = cp.Problem(obj, constraints)
+    prob.solve(verbose=False)
+    if prob.status != "optimal":
+        raise Exception("Optimal contracts not found")
+    if my_print: print("G")
+    if my_print: print(G.value)
+    if my_print: print("\nW")
+    if my_print: print(W.value)
+    if my_print: print("\nL")
+    if my_print: print(L.value)
+    return G.value, W.value, L.value
+
 def time_var_contracts(thetas = [1/1.5, 1/1.25, 1/1,  1/0.75, 1/0.5],
                        laxes = [1,2,3,4,5],
                        c1 = 0.01,
@@ -10,7 +95,7 @@ def time_var_contracts(thetas = [1/1.5, 1/1.25, 1/1,  1/0.75, 1/0.5],
                        kappa2 = 0.5,
                        alpha_d = 11,
                        psi = 0.49,
-                       my_print = True,
+                       my_print = False,
                        u_vpp = "sep",
                        g_const = True,
                        lax_ic_const = True
@@ -142,7 +227,7 @@ def time_var_contracts_typelax(thetas = [1/1.5, 1/1.25, 1/1,  1/0.75, 1/0.5],
                        kappa2 = 0.5,
                        alpha_d = 11,
                        psi = 0.49,
-                       my_print = True,
+                       my_print = False,
                        u_vpp = "sep",
                        g_const = True,
                        lax_ic_const = True
@@ -274,7 +359,7 @@ def time_var_contracts_tract(thetas = [1/1.5, 1/1.25, 1/1,  1/0.75, 1/0.5],
                        kappa2 = 0.5,
                        alpha_d = 11,
                        psi = 0.49,
-                       my_print = True,
+                       my_print = False,
                        #u_vpp = "sep",
                        #g_const = False,
                        #lax_ic_const = False
