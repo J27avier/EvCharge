@@ -68,7 +68,8 @@ starttime_min = pd.to_datetime("2000-01-01 00:00:00") # Startime for absolute ti
 elec_retail = 0.14 # Retail price of electricity
 
 # Paths
-data_path = "data"
+data_path = "data/"
+results_path = "ExpLogs/"
 
 
 # Colors

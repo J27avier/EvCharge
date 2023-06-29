@@ -1,0 +1,8 @@
+timestamp: 2023-06-29-12:15:09
+
+--Info
+title: EvWorld
+
+--Args
+print_dash: False
+file_price: df_price_2019.csv

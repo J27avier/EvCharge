@@ -13,15 +13,18 @@ from math import isclose
 from .exp_tracker import ExpTracker
 
 class ChargeWorldEnv():
-    def __init__(self, df_sessions: pd.DataFrame, max_cars: int = config.max_cars, render_mode: Optional[str]  = None, state_mode: str = "full"):
+    def __init__(self, df_sessions: pd.DataFrame, df_price: pd.DataFrame, max_cars: int = config.max_cars, render_mode: Optional[str]  = None, state_mode: str = "full"):
         # Not implemented, for pygame
         self.render_mode = render_mode
         self.window = None
         self.clock = None
 
+        # Data frames
+        self.df_sessions = df_sessions
+        self.df_price = df_price.set_index("ts")
+
         # Constants
         self.max_cars = max_cars
-        self.df_sessions = df_sessions
         self.tinit = self.df_sessions["ts_arr"].min() - 1
         self.t_max = self.df_sessions['ts_dep'].max()
         self.state_mode = state_mode
@@ -143,6 +146,12 @@ class ChargeWorldEnv():
             raise Exception(f"Agent is trying to charge empty spot. Spot {i} at time {self.t}")
 
         action_clip = np.clip(action, -self.alpha_d / config.B, self.alpha_c / config.B)
+        total_action = np.sum(action_clip)
+        if self.tinit < self.t <= self.t_max:
+            price_im = self.df_price.loc[self.t].price_im
+        else:
+            price_im = 0
+        x = total_action * price_im # Transfer to imbalance market, notation borrowed from paper
 
         # Charging and discharging inefficiencies
         soc_t = self.df_park["soc_t"].to_numpy()
@@ -166,12 +175,15 @@ class ChargeWorldEnv():
         self.df_park.loc[occ_spots, "E_rem"] = self.df_park.loc[occ_spots]["soc_rem"] * self.df_park.loc[occ_spots]["B"]
         self.df_park.loc[occ_spots, "t_rem"] = self.df_park.loc[occ_spots]["t_dep"] - self.t - 1
         self.power_t = soc_temp_clip - soc_t_lag
+        self.tracker.imbalance_bill.append([self.t, total_action, x])
+
+
 
     def print(self, wait=0, clear = True):
         # Get the difference of parking lot now and one step before
         delta_park = self.df_park["idSess"] != self.df_park_lag["idSess"]
         colors = []
-        for i, row in self.df_park.iterrows():
+        for i, row in self.df_park.iterrows(): # Get color for each row
             row_print = []
             color = ""
             # Choose color
@@ -195,7 +207,7 @@ class ChargeWorldEnv():
 
         # Print departed cars
         colors = []
-        for _, row in self.df_depart.iterrows():
+        for _, row in self.df_depart.iterrows(): # Get color for each row
             row_print = []
             color = ""
             if isclose(row.soc_t, config.FINAL_SOC):
