@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 # User defined modules
 from EvGym.charge_world import ChargeWorldEnv
-from EvGym.charge_agent import agentASAP
+from EvGym.charge_agent import agentASAP, agentOptim
 from EvGym import config
 
 # ['session', 'ChargePoint', 'Connector', 'starttime_parking', 'endtime_parking', 'StartCard', 
@@ -22,6 +22,7 @@ def parse_args():
     parser.add_argument("-R", "--print-dash", help = "Print dashboard", action="store_true")
     parser.add_argument("-I", "--file_price", help = "Name of imbalance price dataframe", 
                         type=str, default= "df_price_2019.csv")
+    parser.add_argument("-S", "--no-save", help="Does not save results csv", action="store_true")
     return parser.parse_args()
 
 def main():
@@ -38,7 +39,8 @@ def main():
     # Initialize objects
     world = ChargeWorldEnv(df_sessions, df_price)
     df_state = world.reset()
-    agent = agentASAP()
+    #agent = agentASAP()
+    agent = agentOptim(df_price)
 
     # Print welcome screen
     if args.print_dash:
@@ -50,19 +52,29 @@ def main():
         print("df_price:")
         print(df_price.describe())
         print("Press Enter to begin...")
+        skips = 0
         input()
         os.system("clear")
 
     # Environment loop
-    for _ in tqdm(range(int(ts_max-ts_min)), desc = f"{title}: "):
-        action = agent.get_action(df_state)
+    #for _ in tqdm(range(int(ts_max-ts_min)), desc = f"{title}: "):
+    for t in tqdm(range(int(ts_min), int(ts_max)), desc = f"{title}: "):
+        action = agent.get_action(df_state, t)
         df_state, reward, done, info = world.step(action)
+        assert t == info['t'], "Main time and env time out of sync"
 
         if args.print_dash:
-            world.print(-1, clear = True)
+            if skips > 0: # Logic to jump forward
+                skips -= 1
+            else:
+                usr_in = world.print(-1, clear = True)
+            if usr_in.isnumeric():
+                skips = int(usr_in)
+                usr_in = ""
 
-    world.tracker.save_log(path=config.results_path)
-    world.tracker.save_desc(args, {"title": title}, path=config.results_path)
+    if not args.no_save:
+        world.tracker.save_log(path=config.results_path)
+        world.tracker.save_desc(args, {"title": title}, path=config.results_path)
 
 if __name__ == "__main__":
     main()

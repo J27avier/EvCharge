@@ -7,10 +7,10 @@ from typing import Dict, List
 class ExpTracker():
     def __init__(self, tinit: int, t_max: int, name: str = "_ev_world", timestamp: bool = True):
         self.name = name
-        self.client_bill_columns = ["ts", "arr_e_req", "client_bill"]
+        self.client_bill_columns = ["ts", "arr_e_req", "client_bill"] # Per timestep
         self.client_bill: List[List[config.Number]]= [] 
 
-        self.imbalance_bill_columns = ["ts", "chg_e_req", "imbalance_bill"]
+        self.imbalance_bill_columns = ["ts", "chg_e_req", "imbalance_bill", "n_cars", "avg_lax"] # Per timestep
         self.imbalance_bill: List[List[config.Number]] = []
 
         self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S")

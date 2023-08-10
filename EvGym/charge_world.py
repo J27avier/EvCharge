@@ -50,6 +50,10 @@ class ChargeWorldEnv():
                 df_park = pd.concat((df_park,
                                      pd.DataFrame([blank_session.flatten_full()],
                                      columns = config.car_columns_full)))
+
+            # Initialize columns that are used in simulation
+            for col in config.car_columns_proc:
+                df_park[col] = 0
         elif self.mode == "simple":
             df_park = pd.DataFrame(columns=config.car_columns_simple)
             for i in range(self.max_cars):
@@ -60,6 +64,8 @@ class ChargeWorldEnv():
         return df_park.reset_index(drop=True)
 
     def reset(self):
+        """ Resets the parking lot to be empty """
+
         self.tinit = self.df_sessions["ts_arr"].min() - 1
         self.t = self.tinit
         self.df_park = self._init_park()
@@ -67,6 +73,8 @@ class ChargeWorldEnv():
         return self.df_park.copy()
 
     def step(self, action: npt.NDArray[Any]) -> Tuple[pd.DataFrame, config.Number, bool, dict]:
+        """ Applies the charging action, cars depart and then new cars arrive """
+
         self.df_park_lag = self.df_park.copy()
 
         # Apply action
@@ -92,7 +100,7 @@ class ChargeWorldEnv():
             self._cars_arrive()
 
         # Create placeholder info
-        info = {"dummy": 0}
+        info = {"t": self.t}
 
         #self.df_park = self.df_park.sort_values(by=["t_arr"], ascending=False).reset_index(drop=True)
         return self.df_park.copy(), reward, done, info
@@ -136,6 +144,7 @@ class ChargeWorldEnv():
             self.df_park.loc[idx_empty[i], config.car_columns_full] = sess.flatten_full()
 
         # Experiment tracking
+        self._update_lax()
         self.tracker.client_bill.append([self.t, arr_e_req, arr_e_req * config.elec_retail])
 
     def _cars_charge(self, action):
@@ -175,8 +184,9 @@ class ChargeWorldEnv():
         self.df_park.loc[occ_spots, "E_rem"] = self.df_park.loc[occ_spots]["soc_rem"] * self.df_park.loc[occ_spots]["B"]
         self.df_park.loc[occ_spots, "t_rem"] = self.df_park.loc[occ_spots]["t_dep"] - self.t - 1
         self.power_t = soc_temp_clip - soc_t_lag
-        self.tracker.imbalance_bill.append([self.t, total_action, x])
-
+        self._update_lax() # Updates the laxity of the cars
+        avg_lax = self.df_park["lax"].mean()
+        self.tracker.imbalance_bill.append([self.t, total_action, x, occ_spots.sum(), avg_lax])
 
 
     def print(self, wait=0, clear = True):
@@ -201,7 +211,8 @@ class ChargeWorldEnv():
 
         # Print state
         print(f"t = {self.t:,.0f}")
-        print(tabulate(lst_print, tablefmt = "grid", headers=config.car_columns_full_lag + ["A"]))
+        print(tabulate(lst_print, tablefmt = "grid",
+                                  headers=config.car_columns_full_lag + config.car_columns_proc + ["A"]))
         print("----")
         print("Departed")
 
@@ -217,11 +228,12 @@ class ChargeWorldEnv():
             colors.append(color)
 
         lst_print = self._make_park_lst_colors(self.df_depart, colors)
-        print(tabulate(lst_print, tablefmt = "grid", headers=config.car_columns_full_lag + ["A"] ))
+        print(tabulate(lst_print, tablefmt = "grid", headers=config.car_columns_full_lag + config.car_columns_proc + ["A"] ))
 
+        usr_in = ""
         # -1 means wait for user input
         if wait == -1:
-            input()
+            usr_in = input()
         elif wait > 0:
             time.sleep(wait)
 
@@ -231,6 +243,9 @@ class ChargeWorldEnv():
         else:
             print("="*80)
 
+        return usr_in
+
+
     def _make_park_lst_colors(self, df_data: pd.DataFrame, colors: list) -> list:
         lst_print = []
         for i, (_, row) in enumerate(df_data.iterrows()):
@@ -239,7 +254,7 @@ class ChargeWorldEnv():
 
             row_print.append(color + f"{row[config.car_columns_full_lag[0]]}")
             found_lag = self.df_park_lag[self.df_park_lag["idSess"] == row["idSess"]]
-            for col in config.car_columns_full_lag[1:]:
+            for col in config.car_columns_full_lag[1:] + config.car_columns_proc:
                 if col in ["t_arr", "t_dep", "t_rem"]:
                     row_print.append(f"{row[col]:,.0f}")
                 elif col in ["soc_lag"]:
@@ -261,6 +276,15 @@ class ChargeWorldEnv():
 
             lst_print.append(row_print)
         return lst_print
+
+    def _update_lax(self):
+        occ_spots = self.df_park["idSess"] != -1 # Occupied spots
+        self.df_park.loc[occ_spots, "lax"] = self.df_park.loc[occ_spots]["t_rem"] \
+                                             - (config.FINAL_SOC - self.df_park.loc[occ_spots]["soc_t"])*config.B \
+                                             /(config.alpha_c * config.eta_c)
+        if any(self.df_park[occ_spots]["lax"] < -0.000001): # Some tolerance because f numerical error in division
+            print(self.df_park[self.df_park["lax"] < 0])
+            raise Exception("Negative laxity detected")
 
 # car_columns_full = ["idSess", "B", "t_arr", "soc_arr", "E_arr", "t_dep", "E_rem", "soc_rem", "self.E_t", "soc_t", "t_rem", ]
 # car_columns_simple = ["idSess", "t_rem", "soc_rem"]
