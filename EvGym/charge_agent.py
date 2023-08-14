@@ -40,9 +40,16 @@ class agentOptim():
     def get_action(self, df_state: pd.DataFrame, t: int) -> npt.NDArray[Any]:
         action = np.zeros(self.max_cars)
         occ_spots = df_state["idSess"] != -1 # Occupied spots
-        if occ_spots.sum() > 0:
-            t_end = df_state["t_dep"].max()
-            pred_price = self._get_prediction(t, t_end - t + 1)
+        num_cars = occ_spots.sum()
+        if num_cars > 0:
+            t_end = df_state[occ_spots]["t_dep"].max()
+            n = t_end - t + 1
+            pred_price = self._get_prediction(t, n)
+            Y = cp.Variable((num_cars, n), nonneg=True)
+            SOC = cp.Variable((num_cars, n), nonneg=True)
+        
+            
+            # Charge asap
             for i, (_, car) in enumerate(df_state.iterrows()):
                 if car.idSess >= 0: 
                     if car.soc_t < config.FINAL_SOC:
