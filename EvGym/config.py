@@ -68,6 +68,7 @@ psi = (alpha_c * eta_c * eta_d)/(alpha_d + alpha_c * eta_c * eta_d) # Constant f
 max_cars = 25    # Max cars in parking lot... Important that it is a constant number for RL purposes
 starttime_min = pd.to_datetime("2000-01-01 00:00:00") # Startime for absolute timestamps
 elec_retail = 0.14 # Retail price of electricity
+tol = 0.000001 # Tolerance for checking limits
 
 # Paths
 data_path = "data/"

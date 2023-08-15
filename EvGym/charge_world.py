@@ -132,7 +132,8 @@ class ChargeWorldEnv():
             raise Exception(f"Not enough {len(df_arrivals)} empty spots {len(idx_empty)} at timestep {self.t}!!")
 
         # Might be able to be a one liner with 
-        for i, (_, arr_car) in enumerate(df_arrivals.iterrows()):
+        #for i, (_, arr_car) in enumerate(df_arrivals.iterrows()):
+        for i, arr_car in enumerate(df_arrivals.itertuples()):
             sess = Session(idSess = arr_car.session,
                            B = config.B,
                            t_arr = arr_car.ts_arr,
@@ -171,8 +172,8 @@ class ChargeWorldEnv():
             else:
                 soc_temp[i] = soc_t[i] + act_d / config.eta_d
             # Check soc bounds
-            if soc_temp[i] < self.min_soc or  self.max_soc < soc_temp[i]:
-                print(f"Warning: Car {i} at time {self.t} would charge to {soc_temp}")
+            if soc_temp[i] < self.min_soc or  self.max_soc + config.tol < soc_temp[i]:
+                print(f"Warning: Car {i} at time {self.t} would charge to {soc_temp[i]}")
 
         soc_t_lag = soc_t
 
@@ -193,11 +194,12 @@ class ChargeWorldEnv():
         # Get the difference of parking lot now and one step before
         delta_park = self.df_park["idSess"] != self.df_park_lag["idSess"]
         colors = []
-        for i, row in self.df_park.iterrows(): # Get color for each row
+        #for i, row in self.df_park.iterrows(): # Get color for each row
+        for row in self.df_park.itertuples(): # Get color for each row
             row_print = []
             color = ""
             # Choose color
-            if delta_park[i]:
+            if delta_park[row.Index]: # previously if delta_park[i]
                 if row.idSess == -1:
                     # if a car left color it red
                     color  = Back.RED
@@ -218,7 +220,8 @@ class ChargeWorldEnv():
 
         # Print departed cars
         colors = []
-        for _, row in self.df_depart.iterrows(): # Get color for each row
+        #for _, row in self.df_depart.iterrows(): # Get color for each row
+        for row in self.df_depart.itertuples(): # Get color for each row
             row_print = []
             color = ""
             if isclose(row.soc_t, config.FINAL_SOC):
