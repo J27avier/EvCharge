@@ -5,6 +5,8 @@ from . import config
 from typing import TYPE_CHECKING, Any
 import numpy.typing as npt
 
+np.set_printoptions(linewidth=np.nan)
+
 class agentASAP():
     def __init__(self, max_cars: int = config.max_cars):
         self.max_cars = max_cars
@@ -73,8 +75,8 @@ class agentOptim():
 
                 for j in range(n):
                     # Charge rule
-                    if j <= j_end:
-                        constraints += [SOC[i, j+1] == SOC[i,j] + AC[i,j] * config.eta_c] # Missing discharging
+                    #if j <= j_end:
+                    constraints += [SOC[i, j+1] == SOC[i,j] + AC[i,j] * config.eta_c] # Missing discharging
 
                 # Laxity
                 for j in range(n+1):
@@ -85,8 +87,9 @@ class agentOptim():
 
             constraints += [LAX >= 0]
 
-            print(pred_price)
             print(f"{num_cars=}, {n=}")
+            print(np.array2string(pred_price, separator=", "))
+
             objective = cp.Minimize(cp.sum(cp.multiply(AC,np.asmatrix(pred_price).T)) -lambda_lax*cp.sum(LAX)) # Laxity regularization
             prob = cp.Problem(objective, constraints)
             prob.solve(solver=cp.MOSEK, verbose=False)
@@ -95,7 +98,14 @@ class agentOptim():
                 print("!!! Optimal solution not found")
             best_cost = prob.value
             AC_val = AC.value
-            print(LAX.value)
+            print("AC")
+            print(np.array2string(AC.value, separator=", "))
+            print("LAX")
+            print(np.array2string(LAX.value, separator=", "))
+            print("SOC")
+            print(np.array2string(SOC.value, separator=", "))
+            print("best_cost")
+            print(best_cost)
 
             for i, car in enumerate(df_state.itertuples()):
                 if car.idSess != -1:
