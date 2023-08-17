@@ -58,10 +58,10 @@ def main():
 
     # Environment loop
     #for _ in tqdm(range(int(ts_max-ts_min)), desc = f"{title}: "):
-    for t in tqdm(range(int(ts_min), int(ts_max)), desc = f"{title}: "):
+    for t in tqdm(range(int(ts_min)-1, int(ts_max)), desc = f"{title}: "):
         action = agent.get_action(df_state, t)
         df_state, reward, done, info = world.step(action)
-        assert t == info['t'], "Main time and env time out of sync"
+        assert t+1 == info['t'], "Main time and env time out of sync"
 
         if args.print_dash:
             if skips > 0: # Logic to jump forward
@@ -71,6 +71,8 @@ def main():
             if usr_in.isnumeric():
                 skips = int(usr_in)
                 usr_in = ""
+            print("Tracker: ts, chg_e_req, imbalance_bill, n_cars, avg_lax")
+            print(world.tracker.imbalance_bill)
 
     if not args.no_save:
         world.tracker.save_log(path=config.results_path)

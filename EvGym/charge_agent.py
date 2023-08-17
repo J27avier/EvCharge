@@ -54,7 +54,7 @@ class agentOptim():
             #SOC = np.zeros((num_cars, n+1 )) # SOC, need one more since action does not affect first col
             SOC = cp.Variable((num_cars, n+1 ), nonneg=True) # SOC, need one more since action does not affect first col
             #LAX = np.zeros((num_cars, n+1)) # LAX, or cp Variable?
-            LAX = cp.Variable((num_cars, n+1), nonneg=True) # LAX, or cp Variable?
+            LAX = cp.Variable((num_cars), nonneg=True) # LAX, or cp Variable?
 
 
             # SOC limits
@@ -70,7 +70,7 @@ class agentOptim():
 
             for i, car in enumerate(df_state[occ_spots].itertuples()):
                 # End charge
-                j_end = int(min(car.t_dep - t, n))
+                j_end = int(min(car.t_dep - t + 1, n))
                 constraints += [SOC[i, j_end:] == config.FINAL_SOC]
 
                 for j in range(n):
@@ -78,19 +78,23 @@ class agentOptim():
                     #if j <= j_end:
                     constraints += [SOC[i, j+1] == SOC[i,j] + AC[i,j] * config.eta_c] # Missing discharging
 
-                # Laxity
-                for j in range(n+1):
-                    if j <= j_end:
-                        constraints += [LAX[i,j] == (car.t_dep - (t + j)) - ((config.FINAL_SOC - SOC[i,j]) * config.B) / (config.alpha_c * config.eta_c)]
-                    else:
-                        constraints += [LAX[i,j] == 0]
+
+                # Laxity # Should be only at t+1
+                #for j in range(n+1):
+                #    if j <= j_end:
+                #        constraints += [LAX[i,j] == (car.t_dep - (t + j)) - ((config.FINAL_SOC - SOC[i,j]) * config.B) / (config.alpha_c * config.eta_c)]
+                #    else:
+                #        constraints += [LAX[i,j] == 0]
+                if n > 1:
+                    constraints += [LAX[i] == (car.t_dep - t) - ((config.FINAL_SOC - SOC[i,1]) * config.B) / (config.alpha_c * config.eta_c)]
 
             constraints += [LAX >= 0]
 
             print(f"{num_cars=}, {n=}")
+            print("pred_price=", end=' ')
             print(np.array2string(pred_price, separator=", "))
 
-            objective = cp.Minimize(cp.sum(cp.multiply(AC,np.asmatrix(pred_price).T)) -lambda_lax*cp.sum(LAX)) # Laxity regularization
+            objective = cp.Minimize(cp.sum(cp.multiply(np.asmatrix(pred_price), AC))) #  -lambda_lax*cp.sum(LAX)) # Laxity regularization
             prob = cp.Problem(objective, constraints)
             prob.solve(solver=cp.MOSEK, verbose=False)
             if prob.status != 'optimal':
@@ -98,17 +102,19 @@ class agentOptim():
                 print("!!! Optimal solution not found")
             best_cost = prob.value
             AC_val = AC.value
-            print("AC")
+            print("AC=", end=' ')
             print(np.array2string(AC.value, separator=", "))
-            print("LAX")
+            print("LAX=", end=' ')
             print(np.array2string(LAX.value, separator=", "))
-            print("SOC")
+            print("SOC=", end=' ')
             print(np.array2string(SOC.value, separator=", "))
-            print("best_cost")
+            print("best_cost=", end=' ')
             print(best_cost)
 
+            j = 0
             for i, car in enumerate(df_state.itertuples()):
                 if car.idSess != -1:
-                    action[i] = AC_val[i,0]
+                    action[i] = AC_val[j,0]
+                    j += 1
             
         return action
