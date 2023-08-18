@@ -17,7 +17,7 @@ class ExpTracker():
         self.tinit = tinit
         self.t_max  = t_max
 
-    def save_log(self, path = "Results/results_log/"):
+    def save_log(self, args, path = "Results/results_log/"):
         df_log = pd.DataFrame(np.arange(self.tinit, self.t_max+1), columns = ["ts"])
         df_client_bill = pd.DataFrame(self.client_bill, columns = self.client_bill_columns)
         df_imbalance_bill = pd.DataFrame(self.imbalance_bill, columns = self.imbalance_bill_columns)
@@ -25,7 +25,7 @@ class ExpTracker():
         df_log = pd.merge(df_log, df_client_bill, on = ["ts"], how = "outer")
         df_log = pd.merge(df_log, df_imbalance_bill, on = ["ts"], how = "outer")
         # TODO: fillna
-        df_log.to_csv(f"{path}{self.timestamp}{self.name}.csv", index = False)
+        df_log.to_csv(f"{path}{self.timestamp}{self.name}_{args.agent}{args.desc}.csv", index = False)
 
     def save_desc(self, args, info, path = "Results/results_log"):
         text = []
@@ -41,7 +41,7 @@ class ExpTracker():
         for key, value in vars(args).items():
             text.append(f"{key}: {value}")
 
-        with open(f"{path}{self.timestamp}{self.name}.txt", 'w') as f:
+        with open(f"{path}{self.timestamp}{self.name}_{args.agent}{args.desc}.txt", 'w') as f:
             for line in text:
                 f.write(line)
                 f.write('\n')

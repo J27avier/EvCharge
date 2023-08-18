@@ -1,0 +1,11 @@
+timestamp: 2023-08-17-18:36:44
+
+--Info
+title: EvWorld No-V2G
+
+--Args
+print_dash: False
+file_price: df_price_2019.csv
+no_save: False
+agent: No-V2G
+desc: 

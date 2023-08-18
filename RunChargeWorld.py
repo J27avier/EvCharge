@@ -23,11 +23,13 @@ def parse_args():
     parser.add_argument("-I", "--file_price", help = "Name of imbalance price dataframe", 
                         type=str, default= "df_price_2019.csv")
     parser.add_argument("-S", "--no-save", help="Does not save results csv", action="store_true")
+    parser.add_argument("-A", "--agent", help="Type of agent", type=str, required=True)
+    parser.add_argument("-D", "--desc", help="Description of the expereiment, starting with \"_\"", type=str, default="")
     return parser.parse_args()
 
 def main():
-    title = "EvWorld"
     args = parse_args()
+    title = f"EvWorld {args.agent}"
 
     # Load datasets
     df_sessions = pd.read_csv(f"{config.data_path}df_elaad_preproc.csv", parse_dates = ["starttime_parking", "endtime_parking"])
@@ -39,8 +41,13 @@ def main():
     # Initialize objects
     world = ChargeWorldEnv(df_sessions, df_price)
     df_state = world.reset()
-    #agent = agentASAP()
-    agent = agentOptim(df_price)
+
+    if args.agent == "ASAP":
+        agent = agentASAP()
+    elif args.agent == "No-V2G":
+        agent = agentOptim(df_price)
+    else:
+        raise Exception(f"Agent name not recognized")
 
     # Print welcome screen
     if args.print_dash:
@@ -75,7 +82,7 @@ def main():
             print(world.tracker.imbalance_bill)
 
     if not args.no_save:
-        world.tracker.save_log(path=config.results_path)
+        world.tracker.save_log(args, path=config.results_path)
         world.tracker.save_desc(args, {"title": title}, path=config.results_path)
 
 if __name__ == "__main__":

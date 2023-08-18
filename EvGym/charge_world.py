@@ -161,7 +161,8 @@ class ChargeWorldEnv():
             price_im = self.df_price.loc[self.t].price_im
         else:
             price_im = 0
-        x = total_action * price_im # Transfer to imbalance market, notation borrowed from paper
+        x = total_action * price_im * config.B # Transfer to imbalance market
+        # Multiplied by config.B because action is in SOC units, not in kWh
 
         # Charging and discharging inefficiencies
         soc_t = self.df_park["soc_t"].to_numpy()

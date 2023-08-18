@@ -1,4 +1,4 @@
-timestamp: 2023-08-04-18:17:44
+timestamp: 2023-08-17-14:28:55
 
 --Info
 title: EvWorld
@@ -6,3 +6,5 @@ title: EvWorld
 --Args
 print_dash: False
 file_price: df_price_2019.csv
+no_save: False
+agent: ASAP
