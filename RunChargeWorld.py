@@ -10,8 +10,11 @@ from tqdm import tqdm
 
 # User defined modules
 from EvGym.charge_world import ChargeWorldEnv
-from EvGym.charge_agent import agentASAP, agentOptim
+from EvGym.charge_agent import agentASAP, agentOptim, agentNoV2G
 from EvGym import config
+
+# Contracts
+from ContractDesign.time_contracts import general_contracts 
 
 # ['session', 'ChargePoint', 'Connector', 'starttime_parking', 'endtime_parking', 'StartCard', 
 #  'connected_time_float', 'charged_time_float', 'total_energy', 'max_power', 'start_hour',
@@ -38,14 +41,16 @@ def main():
 
     df_price = pd.read_csv(f"{config.data_path}{args.file_price}", parse_dates=["date"])
 
+    # Calculate contracts
+
     # Initialize objects
     world = ChargeWorldEnv(df_sessions, df_price)
     df_state = world.reset()
 
     if args.agent == "ASAP":
         agent = agentASAP()
-    elif args.agent == "No-V2G":
-        agent = agentOptim(df_price)
+    elif args.agent == "NoV2G":
+        agent = agentNoV2G(df_price)
     else:
         raise Exception(f"Agent name not recognized")
 

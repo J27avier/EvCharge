@@ -259,7 +259,7 @@ class ChargeWorldEnv():
             row_print.append(color + f"{row[config.car_columns_full_lag[0]]}")
             found_lag = self.df_park_lag[self.df_park_lag["idSess"] == row["idSess"]]
             for col in config.car_columns_full_lag[1:] + config.car_columns_proc:
-                if col in ["t_arr", "t_dep", "t_rem"]:
+                if col in ["t_arr", "t_dep", "t_rem", "t_dis"]: # Time is printed as int
                     row_print.append(f"{row[col]:,.0f}")
                 elif col in ["soc_lag"]:
                     if len(found_lag > 0):

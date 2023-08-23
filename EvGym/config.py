@@ -26,7 +26,7 @@ car_columns_full = ["idSess",
                      "t_rem",
                      ]
 
-car_columns_proc = ["soc_dis", "lax"]
+car_columns_proc = ["t_dis", "soc_dis", "lax"]
 
 car_columns_full_lag = ["idSess",
                      "B",
