@@ -13,7 +13,7 @@ from math import isclose
 from .exp_tracker import ExpTracker
 
 class ChargeWorldEnv():
-    def __init__(self, df_sessions: pd.DataFrame, df_price: pd.DataFrame, max_cars: int = config.max_cars, render_mode: Optional[str]  = None, state_mode: str = "full"):
+    def __init__(self, df_sessions: pd.DataFrame, df_price: pd.DataFrame, contract_info, max_cars: int = config.max_cars, render_mode: Optional[str]  = None):
         # Not implemented, for pygame
         self.render_mode = render_mode
         self.window = None
@@ -27,7 +27,6 @@ class ChargeWorldEnv():
         self.max_cars = max_cars
         self.tinit = self.df_sessions["ts_arr"].min() - 1
         self.t_max = self.df_sessions['ts_dep'].max()
-        self.state_mode = state_mode
         self.alpha_c = config.alpha_c
         self.alpha_d = config.alpha_d
         self.max_soc = config.FINAL_SOC
@@ -42,24 +41,25 @@ class ChargeWorldEnv():
         # Money tracking vars
         self.tracker = ExpTracker(self.tinit, self.t_max)
 
-    def _init_park(self):
-        if self.state_mode == "full":
-            df_park = pd.DataFrame(columns=config.car_columns_full)
-            for i in range(self.max_cars):
-                blank_session = Session()
-                df_park = pd.concat((df_park,
-                                     pd.DataFrame([blank_session.flatten_full()],
-                                     columns = config.car_columns_full)))
+        # Contract info
+        self.G = contract_info["G"]
+        self.W = contract_info["W"]
+        self.L = contract_info["L"]
+        self.count_I = len(self.W)
+        self.count_J = len(self.L)
 
-            # Initialize columns that are used in simulation
-            for col in config.car_columns_proc:
-                df_park[col] = 0
-        elif self.mode == "simple":
-            df_park = pd.DataFrame(columns=config.car_columns_simple)
-            for i in range(self.max_cars):
-                blank_session = Session()
-                df_park = pd.concat((df_park, pd.DataFrame([blank_session.flatten_simple()], columns = config.car_columns_simple)))
-            raise NotImplementedError
+    def _init_park(self):
+        df_park = pd.DataFrame(columns=config.car_columns_full)
+        for i in range(self.max_cars):
+            blank_session = Session()
+            df_park = pd.concat((df_park,
+                                 pd.DataFrame([blank_session.flatten_full()],
+                                 columns = config.car_columns_full)))
+
+        # Initialize columns that are used in simulation
+        assert len(config.car_columns_proc) == len(config.car_columns_proc_default), "Lists config.car_columns_proc and config.car_columns_proc_default must have the same number of items"
+        for col_d, val_d in zip(config.car_columns_proc, config.car_columns_proc_default):
+            df_park[col_d] = val_d
 
         return df_park.reset_index(drop=True)
 
@@ -116,11 +116,7 @@ class ChargeWorldEnv():
             print(df_unfinished_chrg)
             raise Exception(f"Some cars ({len(df_unfinished_chrg)}) have not finished charging at time {self.t}")
 
-        self.df_park.loc[self.df_depart.index, config.car_columns_full] = blank_session.flatten_full()
-
-        # Mask is too slow
-        #self.df_park = self.df_park.mask(self.df_park["t_dep"] == self.t, blank_session.flatten_simple())
-        # Funny edge case where sessions depart and arrive in the same timestep... fixed in preproc
+        self.df_park.loc[self.df_depart.index, config.car_columns_full + config.car_columns_proc] = blank_session.flatten_full() + config.car_columns_proc_default
 
 
     def _cars_arrive(self):
@@ -291,7 +287,6 @@ class ChargeWorldEnv():
             raise Exception("Negative laxity detected")
 
 # car_columns_full = ["idSess", "B", "t_arr", "soc_arr", "E_arr", "t_dep", "E_rem", "soc_rem", "self.E_t", "soc_t", "t_rem", ]
-# car_columns_simple = ["idSess", "t_rem", "soc_rem"]
 class Session():
     #def __init__(self, idSess=-1, C=80,  t_arr=0, soc_arr=0, t_dep=maxint):
     def __init__(self, idSess=-1, B=0, t_arr=0, soc_arr=0, t_dep=0):
@@ -318,9 +313,4 @@ class Session():
     def flatten_full(self):
         self._calc_dependent()
         return [self.idSess, self.B, self.t_arr, self.soc_arr, self.E_arr, self.t_dep, self.E_rem, self.soc_rem, self.E_t, self.soc_t, self.t_rem]
-
-    def flatten_simple(self):
-        self._calc_dependent()
-        # In simple case we dont calculate dependent
-        return [self.idSess, self.t_arr, self.soc_arr, self.t_dep, self.soc_t]
 

@@ -30,6 +30,27 @@ def parse_args():
     parser.add_argument("-D", "--desc", help="Description of the expereiment, starting with \"_\"", type=str, default="")
     return parser.parse_args()
 
+def print_welcome(df_sessions, df_price, contract_info):
+    G, W, L = contract_info["G"], contract_info["W"], contract_info["L"]
+    os.system("clear")
+    print(Fore.BLUE, pyfiglet.figlet_format("Welcome to Ev Charge World"), Fore.RESET)
+    print("df_sessions:")
+    print(df_sessions.describe())
+    print("="*80)
+    print("df_price:")
+    print(df_price.describe())
+    print("Press Enter to begin...")
+    print("="*80)
+    print("Contracts")
+    print("G ", G.shape)
+    print(G)
+    print("\nW", W.shape)
+    print(W)
+    print("\nL", L.shape)
+    print(L)
+    input()
+    os.system("clear")
+
 def main():
     args = parse_args()
     title = f"EvWorld {args.agent}"
@@ -42,9 +63,12 @@ def main():
     df_price = pd.read_csv(f"{config.data_path}{args.file_price}", parse_dates=["date"])
 
     # Calculate contracts
+    G, W, L_cont = general_contracts(IR = "fst", IC = "ort_l", monotonicity=False)
+    L = np.round(L_cont,0) # L_cont →  L continuous
+    contract_info = {"G": G, "W": W, "L": L}
 
     # Initialize objects
-    world = ChargeWorldEnv(df_sessions, df_price)
+    world = ChargeWorldEnv(df_sessions, df_price, contract_info)
     df_state = world.reset()
 
     if args.agent == "ASAP":
@@ -56,17 +80,8 @@ def main():
 
     # Print welcome screen
     if args.print_dash:
-        os.system("clear")
-        print(Fore.BLUE, pyfiglet.figlet_format("Welcome to Ev Charge World"), Fore.RESET)
-        print("df_sessions:")
-        print(df_sessions.describe())
-        print("="*80)
-        print("df_price:")
-        print(df_price.describe())
-        print("Press Enter to begin...")
+        print_welcome(df_sessions, df_price, contract_info)
         skips = 0
-        input()
-        os.system("clear")
 
     # Environment loop
     #for _ in tqdm(range(int(ts_max-ts_min)), desc = f"{title}: "):
@@ -83,8 +98,8 @@ def main():
             if usr_in.isnumeric():
                 skips = int(usr_in)
                 usr_in = ""
-            print("Tracker: ts, chg_e_req, imbalance_bill, n_cars, avg_lax")
-            print(world.tracker.imbalance_bill)
+            # print("Tracker: ts, chg_e_req, imbalance_bill, n_cars, avg_lax")
+            # print(world.tracker.imbalance_bill)
 
     if not args.no_save:
         world.tracker.save_log(args, path=config.results_path)

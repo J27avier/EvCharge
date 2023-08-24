@@ -26,7 +26,8 @@ car_columns_full = ["idSess",
                      "t_rem",
                      ]
 
-car_columns_proc = ["t_dis", "soc_dis", "lax"]
+car_columns_proc = ["t_dis", "soc_dis", "lax", "type_w", "type_l"] # Columns that are processed on arrival
+car_columns_proc_default = [0, 0, 0, -1, -1] # Default values
 
 car_columns_full_lag = ["idSess",
                      "B",

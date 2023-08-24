@@ -1,6 +1,5 @@
 import numpy as np
 import cvxpy as cp
-from contracts import get_contract_customtypes
 
 def general_contracts(thetas_i = [1/1.25, 1/1, 1/0.75],
                       thetas_j = [1/1.25, 1/1, 1/0.75],
