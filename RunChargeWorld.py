@@ -14,7 +14,7 @@ from EvGym.charge_agent import agentASAP, agentOptim, agentNoV2G
 from EvGym import config
 
 # Contracts
-from ContractDesign.time_contracts import general_contracts 
+from ContractDesign.time_contracts import general_contracts
 
 # ['session', 'ChargePoint', 'Connector', 'starttime_parking', 'endtime_parking', 'StartCard', 
 #  'connected_time_float', 'charged_time_float', 'total_energy', 'max_power', 'start_hour',
@@ -28,6 +28,7 @@ def parse_args():
     parser.add_argument("-S", "--no-save", help="Does not save results csv", action="store_true")
     parser.add_argument("-A", "--agent", help="Type of agent", type=str, required=True)
     parser.add_argument("-D", "--desc", help="Description of the expereiment, starting with \"_\"", type=str, default="")
+    parser.add_argument("-E", "--seed", help="Seed to use for the rng", type=int, default=42)
     return parser.parse_args()
 
 def print_welcome(df_sessions, df_price, contract_info):
@@ -55,6 +56,9 @@ def main():
     args = parse_args()
     title = f"EvWorld {args.agent}"
 
+    # Random number generator, same throught the program for reproducibility
+    rng = np.random.default_rng(args.seed)
+
     # Load datasets
     df_sessions = pd.read_csv(f"{config.data_path}df_elaad_preproc.csv", parse_dates = ["starttime_parking", "endtime_parking"])
     ts_max = df_sessions["ts_dep"].max()
@@ -63,12 +67,21 @@ def main():
     df_price = pd.read_csv(f"{config.data_path}{args.file_price}", parse_dates=["date"])
 
     # Calculate contracts
-    G, W, L_cont = general_contracts(IR = "fst", IC = "ort_l", monotonicity=False)
+    G, W, L_cont = general_contracts(thetas_i = config.thetas_i,
+                                     thetas_j = config.thetas_j,
+                                     c1 = config.c1,
+                                     c2 = config.c2,
+                                     kappa1 = config.kappa1,
+                                     kappa2 = config.kappa2,
+                                     alpha_d = config.alpha_d,
+                                     psi = config.psi,
+                                     IR = "fst", IC = "ort_l", monotonicity=False) # Tractable formulation
+
     L = np.round(L_cont,0) # L_cont →  L continuous
     contract_info = {"G": G, "W": W, "L": L}
 
     # Initialize objects
-    world = ChargeWorldEnv(df_sessions, df_price, contract_info)
+    world = ChargeWorldEnv(df_sessions, df_price, contract_info, rng)
     df_state = world.reset()
 
     if args.agent == "ASAP":
@@ -84,7 +97,6 @@ def main():
         skips = 0
 
     # Environment loop
-    #for _ in tqdm(range(int(ts_max-ts_min)), desc = f"{title}: "):
     for t in tqdm(range(int(ts_min)-1, int(ts_max)), desc = f"{title}: "):
         action = agent.get_action(df_state, t)
         df_state, reward, done, info = world.step(action)
@@ -99,7 +111,7 @@ def main():
                 skips = int(usr_in)
                 usr_in = ""
             # print("Tracker: ts, chg_e_req, imbalance_bill, n_cars, avg_lax")
-            # print(world.tracker.imbalance_bill)
+            # print(world.tracker.chg_bill)
 
     if not args.no_save:
         world.tracker.save_log(args, path=config.results_path)

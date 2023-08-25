@@ -7,11 +7,14 @@ from typing import Dict, List
 class ExpTracker():
     def __init__(self, tinit: int, t_max: int, name: str = "_ev_world", timestamp: bool = True):
         self.name = name
-        self.client_bill_columns = ["ts", "arr_e_req", "client_bill"] # Per timestep
-        self.client_bill: List[List[config.Number]]= [] 
+        self.arr_bill_columns = ["ts", "arr_e_req", "client_bill", "assigned_type", "realized_type", "fail_time", "fail_energy1", "fail_energy2", "fail_energy_both", "fail_IR"] # Per timestep
+        self.arr_bill = [] # type: ignore
 
-        self.imbalance_bill_columns = ["ts", "chg_e_req", "imbalance_bill", "n_cars", "avg_lax"] # Per timestep
-        self.imbalance_bill: List[List[config.Number]] = []
+        self.chg_bill_columns = ["ts", "chg_e_req", "imbalance_bill", "n_cars", "avg_lax"] # Per timestep
+        self.chg_bill = [] # type: ignore
+
+        self.dep_bill_columns = ["ts", "payoff"]
+        self.dep_bill = [] # type: ignore
 
         self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
         self.tinit = tinit
@@ -19,11 +22,14 @@ class ExpTracker():
 
     def save_log(self, args, path = "Results/results_log/"):
         df_log = pd.DataFrame(np.arange(self.tinit, self.t_max+1), columns = ["ts"])
-        df_client_bill = pd.DataFrame(self.client_bill, columns = self.client_bill_columns)
-        df_imbalance_bill = pd.DataFrame(self.imbalance_bill, columns = self.imbalance_bill_columns)
 
-        df_log = pd.merge(df_log, df_client_bill, on = ["ts"], how = "outer")
-        df_log = pd.merge(df_log, df_imbalance_bill, on = ["ts"], how = "outer")
+        bills = [self.arr_bill, self.chg_bill, self.dep_bill]
+        bill_columns = [self.arr_bill_columns, self.chg_bill_columns, self.dep_bill_columns]
+
+        for bill, bill_columns in zip(bills, bill_columns):
+            df_bill = pd.DataFrame(bill, columns = bill_columns)
+            df_log = pd.merge(df_log, df_bill, on = ["ts"], how = "outer")
+
         # TODO: fillna
         df_log.to_csv(f"{path}{self.timestamp}{self.name}_{args.agent}{args.desc}.csv", index = False)
 
@@ -45,3 +51,11 @@ class ExpTracker():
             for line in text:
                 f.write(line)
                 f.write('\n')
+
+
+#df_arr_bill = pd.DataFrame(self.arr_bill, columns = self.arr_bill_columns)
+#df_chg_bill = pd.DataFrame(self.chg_bill, columns = self.chg_bill_columns)
+#df_dep_bill = pd.DataFrame(self.dep_bill, columns = self.dep_bill_columns)
+#df_log = pd.merge(df_log, df_arr_bill, on = ["ts"], how = "outer")
+#df_log = pd.merge(df_log, df_chg_bill, on = ["ts"], how = "outer")
+#df_log = pd.merge(df_log, df_dep_bill, on = ["ts"], how = "outer")

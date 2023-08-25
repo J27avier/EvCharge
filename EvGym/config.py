@@ -26,7 +26,7 @@ car_columns_full = ["idSess",
                      "t_rem",
                      ]
 
-car_columns_proc = ["t_dis", "soc_dis", "lax", "type_w", "type_l"] # Columns that are processed on arrival
+car_columns_proc = ["lax", "soc_dis", "t_dis", "idx_theta_w", "idx_theta_l"] # Columns that are processed on arrival
 car_columns_proc_default = [0, 0, 0, -1, -1] # Default values
 
 car_columns_full_lag = ["idSess",
@@ -75,6 +75,13 @@ tol = 0.000001 # Tolerance for checking limits
 data_path = "data/"
 results_path = "ExpLogs/"
 
+# Contract parameters // This could be read later from YAML, but good enough for now
+thetas_i = [1/1.25, 1/1, 1/0.75]
+thetas_j = [1/1.25, 1/1, 1/0.75]
+c1 = 0.01
+c2 = 0.1
+kappa1 = 0.1
+kappa2 = 0.5
 
 # Colors
 class bcolors:

@@ -429,11 +429,14 @@ def time_var_contracts_tract(thetas = [1/1.5, 1/1.25, 1/1,  1/0.75, 1/0.5],
 
     return np.array(G_acc).T, np.array(W_acc).T
 
-def u_ev(g, w, theta, lax, c1 = 0.01, c2 = 0.1):
-    return g - w*c1/theta - c2*lax 
+#def u_ev(g, w, theta, lax, c1 = 0.01, c2 = 0.1):
+#    return g - w*c1/theta - c2*lax 
 
 def u_ev_typelax(g, w, theta, lax, c1 = 0.01, c2 = 0.1):
     return g - w*c1/theta - c2*lax/theta
+
+def u_ev_general(g, w, l, theta_w, theta_l, c1 = 0.01, c2 = 0.1):
+    return g - c1 * w / theta_w - c2 * l / theta_l
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt

@@ -1,11 +1,11 @@
 import numpy as np
-import cvxpy as cp
+import cvxpy as cp # type: ignore
 import pandas as pd
 from . import config
 from typing import TYPE_CHECKING, Any
 import numpy.typing as npt
 
-np.set_printoptions(linewidth=np.nan)
+np.set_printoptions(linewidth=np.nan) # type: ignore
 
 class agentASAP():
     def __init__(self, max_cars: int = config.max_cars):
@@ -45,6 +45,7 @@ class agentOptim():
         occ_spots = df_state["idSess"] != -1 # Occupied spots
         num_cars = occ_spots.sum()
         if num_cars > 0:
+            # TODO: Add discharge action
             t_end = df_state[occ_spots]["t_dep"].max()
             n = int(t_end - t ) 
             pred_price = self._get_prediction(t, n)

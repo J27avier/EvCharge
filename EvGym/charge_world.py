@@ -12,12 +12,20 @@ from math import isclose
 # User defined
 from .exp_tracker import ExpTracker
 
+# From folder above
+import sys
+sys.path.append("..")
+from ContractDesign.time_contracts import general_contracts, u_ev_general
+
 class ChargeWorldEnv():
-    def __init__(self, df_sessions: pd.DataFrame, df_price: pd.DataFrame, contract_info, max_cars: int = config.max_cars, render_mode: Optional[str]  = None):
+    def __init__(self, df_sessions: pd.DataFrame, df_price: pd.DataFrame, contract_info, rng, max_cars: int = config.max_cars, render_mode: Optional[str]  = None):
         # Not implemented, for pygame
         self.render_mode = render_mode
         self.window = None
         self.clock = None
+
+        # Rng
+        self.rng = rng
 
         # Data frames
         self.df_sessions = df_sessions
@@ -116,13 +124,30 @@ class ChargeWorldEnv():
             print(df_unfinished_chrg)
             raise Exception(f"Some cars ({len(df_unfinished_chrg)}) have not finished charging at time {self.t}")
 
+        # Calculate payoff with a little bit of pandas magic
+        if len(self.df_depart) > 0:
+            payoff = self.df_park.loc[self.df_depart.index].apply(lambda dep_car: self.G[dep_car.idx_theta_w, dep_car.idx_theta_l]\
+                                                                  if dep_car.idx_theta_w >= 0 and dep_car.idx_theta_l >= 0 else 0, axis = 1).sum()
+        else:
+            payoff = 0
+
         self.df_park.loc[self.df_depart.index, config.car_columns_full + config.car_columns_proc] = blank_session.flatten_full() + config.car_columns_proc_default
+
+        self.tracker.dep_bill.append([self.t, payoff]) 
 
 
     def _cars_arrive(self):
         df_arrivals = self.df_sessions[self.df_sessions["ts_arr"] == self.t] # This could be sped up a lot
         idx_empty = self.df_park[self.df_park["idSess"] == -1].index
         arr_e_req = 0
+
+        assigned_type = np.zeros((self.count_I, self.count_J))
+        realized_type = np.zeros((self.count_I, self.count_J))
+        fail_time = 0
+        fail_energy1 = 0
+        fail_energy2 = 0
+        fail_energy_both = 0
+        fail_IR = 0
 
         if len(df_arrivals) > len(idx_empty):
             raise Exception(f"Not enough {len(df_arrivals)} empty spots {len(idx_empty)} at timestep {self.t}!!")
@@ -136,13 +161,70 @@ class ChargeWorldEnv():
                            soc_arr = arr_car.soc_arr,
                            t_dep = arr_car.ts_dep,
                           )
-            arr_e_req += sess.E_req
+
+            # Contracts
+            idx_theta_w = self.rng.choice(list(range(self.count_I)))
+            idx_theta_l = self.rng.choice(list(range(self.count_J)))
+            assigned_type[idx_theta_w, idx_theta_l] += 1
+            lax = sess.t_soj - ((config.FINAL_SOC - sess.soc_arr) * config.B) / (config.alpha_c * config.eta_c)
+            xi_max = lax * config.psi * config.alpha_d
+
+            flag_fail = False
+
+            while True:
+                # Contract parameters
+                w = self.W[idx_theta_w] 
+                soc_dis = w / config.B
+                t_dis = self.L[idx_theta_l]
+                theta_w, theta_l = config.thetas_i[idx_theta_w], config.thetas_j[idx_theta_l]
+                
+                # Entry checks
+                check_time = sess.t_soj >= t_dis
+                check_energy1 = sess.soc_arr >= soc_dis
+                check_energy2 = xi_max >= w
+                check_IR = u_ev_general(self.G[idx_theta_w, idx_theta_l], w, t_dis, theta_w, theta_l, c1 = config.c1, c2 = config.c2) >= 0
+
+                # Contract is accepted 
+                if check_time and check_energy1 and check_energy2 and check_IR: break
+
+                # Otherwise
+                # Slide back in time
+                if (not check_time) or (not check_IR): idx_theta_l -= 1
+
+                # Slide back in energy
+                if (not check_energy1) or (not check_energy2) or (not check_IR): idx_theta_w -= 1 
+
+                # Fail reason
+                if idx_theta_l < 0: 
+                    fail_time += 1
+                    flag_fail = True
+
+                if idx_theta_w < 0:
+                    fail_energy_both += 1
+                    flag_fail = True
+                    if not check_energy1: fail_energy1 += 1
+                    if not check_energy2: fail_energy2 += 1
+
+
+                # Exit with no other options
+                if flag_fail:
+                    if not check_IR: fail_IR += 1
+                    soc_dis, t_dis = 0, 0
+                    break
+
+            if not flag_fail:
+                realized_type[idx_theta_w, idx_theta_l] += 1
 
             self.df_park.loc[idx_empty[i], config.car_columns_full] = sess.flatten_full()
+            self.df_park.loc[idx_empty[i], config.car_columns_proc] = [lax, soc_dis, t_dis, idx_theta_w, idx_theta_l]
+
+            arr_e_req += sess.E_req # Accumulate arrival demand
+
+        #self._update_lax()
 
         # Experiment tracking
-        self._update_lax()
-        self.tracker.client_bill.append([self.t, arr_e_req, arr_e_req * config.elec_retail])
+        self.tracker.arr_bill.append([self.t, arr_e_req, arr_e_req * config.elec_retail, assigned_type, realized_type,
+                                      fail_time, fail_energy1, fail_energy2, fail_energy_both, fail_IR])
 
     def _cars_charge(self, action):
         assert len(action) == self.df_park.shape[0], "There must be as many actions as parking spots"
@@ -172,6 +254,8 @@ class ChargeWorldEnv():
             if soc_temp[i] < self.min_soc or  self.max_soc + config.tol < soc_temp[i]:
                 print(f"Warning: Car {i} at time {self.t} would charge to {soc_temp[i]}")
 
+            # TODO: Update contract parameters
+
         soc_t_lag = soc_t
 
         # Update df_park
@@ -184,7 +268,7 @@ class ChargeWorldEnv():
         self.power_t = soc_temp_clip - soc_t_lag
         self._update_lax() # Updates the laxity of the cars
         avg_lax = self.df_park["lax"].mean()
-        self.tracker.imbalance_bill.append([self.t, total_action, x, occ_spots.sum(), avg_lax])
+        self.tracker.chg_bill.append([self.t, total_action, x, occ_spots.sum(), avg_lax])
 
 
     def print(self, wait=0, clear = True):
@@ -280,7 +364,7 @@ class ChargeWorldEnv():
     def _update_lax(self):
         occ_spots = self.df_park["idSess"] != -1 # Occupied spots
         self.df_park.loc[occ_spots, "lax"] = self.df_park.loc[occ_spots]["t_rem"] \
-                                             - (config.FINAL_SOC - self.df_park.loc[occ_spots]["soc_t"])*config.B \
+                                             - ((config.FINAL_SOC - self.df_park.loc[occ_spots]["soc_t"])*config.B) \
                                              /(config.alpha_c * config.eta_c)
         if any(self.df_park[occ_spots]["lax"] < - config.tol): # Some tolerance because f numerical error in division
             print(self.df_park[self.df_park["lax"] < 0])
@@ -313,4 +397,3 @@ class Session():
     def flatten_full(self):
         self._calc_dependent()
         return [self.idSess, self.B, self.t_arr, self.soc_arr, self.E_arr, self.t_dep, self.E_rem, self.soc_rem, self.E_t, self.soc_t, self.t_rem]
-
