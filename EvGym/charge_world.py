@@ -135,6 +135,9 @@ class ChargeWorldEnv():
 
         self.tracker.dep_bill.append([self.t, payoff]) 
 
+    def _get_contract(self, sess):
+        pass
+
 
     def _cars_arrive(self):
         df_arrivals = self.df_sessions[self.df_sessions["ts_arr"] == self.t] # This could be sped up a lot
@@ -225,6 +228,7 @@ class ChargeWorldEnv():
         # Experiment tracking
         self.tracker.arr_bill.append([self.t, arr_e_req, arr_e_req * config.elec_retail, assigned_type, realized_type,
                                       fail_time, fail_energy1, fail_energy2, fail_energy_both, fail_IR])
+
 
     def _cars_charge(self, action):
         assert len(action) == self.df_park.shape[0], "There must be as many actions as parking spots"
