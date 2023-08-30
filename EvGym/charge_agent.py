@@ -51,7 +51,9 @@ class agentOptim():
             pred_price = self._get_prediction(t, n)
             
             constraints = []
-            AC = cp.Variable((num_cars, n), nonneg=True) # Action
+            AC = cp.Variable((num_cars, n)) # Charging action
+            AD = cp.Variable((num_cars, n)) # Discharging action
+            Y = cp.Variable((num_cars, n)) # Charging + discharging action
             SOC = cp.Variable((num_cars, n+1 ), nonneg=True) # SOC, need one more since action does not affect first col
             LAX = cp.Variable((num_cars), nonneg=True) # LAX, or cp Variable?
 
@@ -67,26 +69,38 @@ class agentOptim():
             constraints += [AC >= 0]
             constraints += [AC <= config.alpha_c / config.B]
 
+            # Discharging limits
+            constraints += [AD <= 0]
+            constraints += [AD >= -config.alpha_d / config.B]
+
+            # Discharging ammount
+            constraints += [ - AD.sum(axis=1) <= df_state[occ_spots]["soc_dis"]]
+
             for i, car in enumerate(df_state[occ_spots].itertuples()):
                 # End charge
                 j_end = int(min(car.t_dep - t, n))
+                j_dis = int(min(car.t_dis, n))
                 constraints += [SOC[i, j_end:] == config.FINAL_SOC]
+                # Discharging time
+                constraints +=[AD[i, j_dis:] == 0] # Off by 1?
 
                 for j in range(n):
                     # Charge rule
-                    constraints += [SOC[i, j+1] == SOC[i,j] + AC[i,j] * config.eta_c] # Missing discharging
+                    constraints += [SOC[i, j+1] == SOC[i,j] + AC[i,j] * config.eta_c + AD[i,j] / config.eta_d] # Missing discharging
+                    # Discharging time
 
                 if n > 0:
                     constraints += [LAX[i] == (car.t_dep - (t+1) ) - ((config.FINAL_SOC - SOC[i,1]) * config.B) / (config.alpha_c * config.eta_c)]
 
             constraints += [LAX >= 0]
+            constraints += [Y == AC + AD]
 
             if myprint: 
                 print(f"{num_cars=}, {n=}")
                 print("pred_price=", end=' ')
                 print(np.array2string(pred_price, separator=", "))
 
-            objective = cp.Minimize(cp.sum(cp.multiply(np.asmatrix(pred_price), AC))) #  -lambda_lax*cp.sum(LAX)) # Laxity regularization
+            objective = cp.Minimize(cp.sum(cp.multiply(np.asmatrix(pred_price), Y))) #  -lambda_lax*cp.sum(LAX)) # Laxity regularization
             prob = cp.Problem(objective, constraints)
             prob.solve(solver=cp.MOSEK, verbose=False)
             if prob.status != 'optimal':

@@ -135,10 +135,6 @@ class ChargeWorldEnv():
 
         self.tracker.dep_bill.append([self.t, payoff]) 
 
-    def _get_contract(self, sess):
-        pass
-
-
     def _cars_arrive(self):
         df_arrivals = self.df_sessions[self.df_sessions["ts_arr"] == self.t] # This could be sped up a lot
         idx_empty = self.df_park[self.df_park["idSess"] == -1].index
