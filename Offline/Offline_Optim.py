@@ -4,6 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 import argparse
 import os
+import pickle
 
 import sys
 sys.path.append("..")
@@ -107,6 +108,14 @@ def main():
     print("SOLUTION")
     print(best_cost)
 
+    result = {"best_cost": best_cost,
+              "AC_val": AC.val,
+              "AD_val": AD.val,
+              "Y_val": Y.val,
+              "SOC_val": SOC.val}
+
+    with open('res/offline_nv2g.pkl', 'wb') as handle:
+        pickle.dump(result, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == "__main__":
