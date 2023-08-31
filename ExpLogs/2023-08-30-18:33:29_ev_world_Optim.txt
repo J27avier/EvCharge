@@ -1,0 +1,12 @@
+timestamp: 2023-08-30-18:33:29
+
+--Info
+title: EvWorld Optim
+
+--Args
+print_dash: False
+file_price: df_price_2019.csv
+no_save: False
+agent: Optim
+desc: 
+seed: 42

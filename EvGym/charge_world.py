@@ -245,16 +245,36 @@ class ChargeWorldEnv():
         # Charging and discharging inefficiencies
         soc_t = self.df_park["soc_t"].to_numpy()
         soc_temp = np.zeros(soc_t.shape[0])
+        idx_dis = []
         for i, act_c in enumerate(action_clip):
             if act_c >= 0:
                 soc_temp[i] = soc_t[i] + act_c * config.eta_c
             else:
-                soc_temp[i] = soc_t[i] + act_d / config.eta_d
+                soc_temp[i] = soc_t[i] + act_c / config.eta_d
+                if act_c < -config.tol: idx_dis.append(i)
+
             # Check soc bounds
-            if soc_temp[i] < self.min_soc or  self.max_soc + config.tol < soc_temp[i]:
+            if soc_temp[i] < self.min_soc - config.tol or self.max_soc + config.tol < soc_temp[i]:
                 print(f"Warning: Car {i} at time {self.t} would charge to {soc_temp[i]}")
 
-            # TODO: Update contract parameters
+        # Check time of contract
+        idx_zero_t_dis = self.df_park[self.df_park["t_dis"] == 0].index
+        viol_t_dis = list(set(idx_zero_t_dis).intersection(set(idx_dis)))
+        if len(viol_t_dis) > 0:
+            print(self.df_park.iloc[viol_t_dis])
+            print(action_clip[viol_t_dis])
+            raise Exception("Contract time exceeded")
+
+        # Check energy of contract
+        action_dis = np.minimum(action_clip, 0)
+        if any(self.df_park["soc_dis"] + action_dis / config.eta_d < -config.tol):
+            print(self.df_park[self.df_park["soc_dis"] < 0])
+            raise Exception("Contract discharge energy exceeded")
+
+        # Update contract parameters
+        contract_spots = self.df_park["t_dis"] > 0
+        self.df_park.loc[contract_spots, "t_dis"] = self.df_park[contract_spots]["t_dis"] - 1
+        self.df_park["soc_dis"] = self.df_park["soc_dis"] + action_dis / config.eta_d
 
         soc_t_lag = soc_t
 

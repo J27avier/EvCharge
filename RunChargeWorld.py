@@ -54,7 +54,7 @@ def print_welcome(df_sessions, df_price, contract_info):
 
 def main():
     args = parse_args()
-    title = f"EvWorld {args.agent}"
+    title = f"EvWorld {args.agent}{args.desc}"
 
     # Random number generator, same throught the program for reproducibility
     rng = np.random.default_rng(args.seed)
@@ -84,10 +84,13 @@ def main():
     world = ChargeWorldEnv(df_sessions, df_price, contract_info, rng)
     df_state = world.reset()
 
+    # Declare agent
     if args.agent == "ASAP":
         agent = agentASAP()
     elif args.agent == "NoV2G":
-        agent = agentNoV2G(df_price)
+        agent = agentNoV2G(df_price, myprint = False)
+    elif args.agent == "Optim":
+        agent = agent = agentOptim(df_price, myprint = False)
     else:
         raise Exception(f"Agent name not recognized")
 

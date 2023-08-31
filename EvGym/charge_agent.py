@@ -27,9 +27,10 @@ class agentASAP():
         return action
 
 class agentOptim():
-    def __init__(self, df_price, max_cars: int = config.max_cars):
+    def __init__(self, df_price, max_cars: int = config.max_cars, myprint = False):
         self.max_cars = max_cars
         self.df_price = df_price
+        self.myprint = myprint
 
     def _get_prediction(self, t, n):
         l_idx_t0 = self.df_price.index[self.df_price["ts"] == t].to_list()
@@ -39,13 +40,12 @@ class agentOptim():
         pred_price = self.df_price.iloc[idx_t0:idx_tend]["price_im"].values
         return pred_price
 
-    def get_action(self, df_state: pd.DataFrame, t: int, myprint = False) -> npt.NDArray[Any]:
+    def get_action(self, df_state: pd.DataFrame, t: int) -> npt.NDArray[Any]:
         lambda_lax = 0
         action = np.zeros(self.max_cars)
         occ_spots = df_state["idSess"] != -1 # Occupied spots
         num_cars = occ_spots.sum()
         if num_cars > 0:
-            # TODO: Add discharge action
             t_end = df_state[occ_spots]["t_dep"].max()
             n = int(t_end - t ) 
             pred_price = self._get_prediction(t, n)
@@ -56,7 +56,6 @@ class agentOptim():
             Y = cp.Variable((num_cars, n)) # Charging + discharging action
             SOC = cp.Variable((num_cars, n+1 ), nonneg=True) # SOC, need one more since action does not affect first col
             LAX = cp.Variable((num_cars), nonneg=True) # LAX, or cp Variable?
-
 
             # SOC limits
             constraints += [SOC >= 0]
@@ -74,20 +73,19 @@ class agentOptim():
             constraints += [AD >= -config.alpha_d / config.B]
 
             # Discharging ammount
-            constraints += [ - AD.sum(axis=1) <= df_state[occ_spots]["soc_dis"]]
+            constraints += [ - cp.sum(AD, axis=1) / config.eta_d <= df_state[occ_spots]["soc_dis"]]
 
             for i, car in enumerate(df_state[occ_spots].itertuples()):
                 # End charge
-                j_end = int(min(car.t_dep - t, n))
-                j_dis = int(min(car.t_dis, n))
+                j_end = int(min(car.t_dep - t, n)) # Only if n is in terms of t_dep and not t_dis
                 constraints += [SOC[i, j_end:] == config.FINAL_SOC]
                 # Discharging time
-                constraints +=[AD[i, j_dis:] == 0] # Off by 1?
+                j_dis = int(min(car.t_dis, n - 1)) # Only if n is in terms of t_dep and not t_dis
+                constraints +=[AD[i, j_dis:] == 0]
 
                 for j in range(n):
                     # Charge rule
-                    constraints += [SOC[i, j+1] == SOC[i,j] + AC[i,j] * config.eta_c + AD[i,j] / config.eta_d] # Missing discharging
-                    # Discharging time
+                    constraints += [SOC[i, j+1] == SOC[i,j] + AC[i,j] * config.eta_c + AD[i,j] / config.eta_d] 
 
                 if n > 0:
                     constraints += [LAX[i] == (car.t_dep - (t+1) ) - ((config.FINAL_SOC - SOC[i,1]) * config.B) / (config.alpha_c * config.eta_c)]
@@ -95,7 +93,7 @@ class agentOptim():
             constraints += [LAX >= 0]
             constraints += [Y == AC + AD]
 
-            if myprint: 
+            if self.myprint: 
                 print(f"{num_cars=}, {n=}")
                 print("pred_price=", end=' ')
                 print(np.array2string(pred_price, separator=", "))
@@ -107,11 +105,13 @@ class agentOptim():
                 raise Exception("Optimal schedule not found")
                 print("!!! Optimal solution not found")
             best_cost = prob.value
-            AC_val = AC.value
+            Y_val = Y.value
 
-            if myprint:
+            if self.myprint:
                 print("AC=", end=' ')
                 print(np.array2string(AC.value, separator=", "))
+                print("AD=", end=' ')
+                print(np.array2string(AD.value, separator=", "))
                 print("LAX=", end=' ')
                 print(np.array2string(LAX.value, separator=", "))
                 print("SOC=", end=' ')
@@ -122,15 +122,16 @@ class agentOptim():
             j = 0
             for i, car in enumerate(df_state.itertuples()):
                 if car.idSess != -1:
-                    action[i] = AC_val[j,0] # MPC
+                    action[i] = Y_val[j,0] # MPC
                     j += 1
             
         return action
 
 class agentNoV2G():
-    def __init__(self, df_price, max_cars: int = config.max_cars):
+    def __init__(self, df_price, max_cars: int = config.max_cars, myprint = False):
         self.max_cars = max_cars
         self.df_price = df_price
+        self.myprint = myprint
 
     def _get_prediction(self, t, n):
         l_idx_t0 = self.df_price.index[self.df_price["ts"] == t].to_list()
@@ -140,8 +141,8 @@ class agentNoV2G():
         pred_price = self.df_price.iloc[idx_t0:idx_tend]["price_im"].values
         return pred_price
 
-    def get_action(self, df_state: pd.DataFrame, t: int, myprint = False) -> npt.NDArray[Any]:
-        lambda_lax = 0
+    def get_action(self, df_state: pd.DataFrame, t: int) -> npt.NDArray[Any]:
+        lambda_lax = 0.001
         action = np.zeros(self.max_cars)
         occ_spots = df_state["idSess"] != -1 # Occupied spots
         num_cars = occ_spots.sum()
@@ -181,7 +182,7 @@ class agentNoV2G():
 
             constraints += [LAX >= 0]
 
-            if myprint: 
+            if self.myprint: 
                 print(f"{num_cars=}, {n=}")
                 print("pred_price=", end=' ')
                 print(np.array2string(pred_price, separator=", "))
@@ -195,7 +196,7 @@ class agentNoV2G():
             best_cost = prob.value
             AC_val = AC.value
 
-            if myprint:
+            if self.myprint:
                 print("AC=", end=' ')
                 print(np.array2string(AC.value, separator=", "))
                 print("LAX=", end=' ')
