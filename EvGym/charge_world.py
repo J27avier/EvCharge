@@ -18,7 +18,8 @@ sys.path.append("..")
 from ContractDesign.time_contracts import general_contracts, u_ev_general
 
 class ChargeWorldEnv():
-    def __init__(self, df_sessions: pd.DataFrame, df_price: pd.DataFrame, contract_info, rng, max_cars: int = config.max_cars, render_mode: Optional[str]  = None):
+    def __init__(self, df_sessions: pd.DataFrame, df_price: pd.DataFrame, contract_info, rng,
+                 max_cars: int = config.max_cars, skip_contracts = False, render_mode: Optional[str]  = None):
         # Not implemented, for pygame
         self.render_mode = render_mode
         self.window = None
@@ -55,6 +56,7 @@ class ChargeWorldEnv():
         self.L = contract_info["L"]
         self.count_I = len(self.W)
         self.count_J = len(self.L)
+        self.skip_contracts = skip_contracts
 
     def _init_park(self):
         df_park = pd.DataFrame(columns=config.car_columns_full)
@@ -86,8 +88,6 @@ class ChargeWorldEnv():
         self.df_park_lag = self.df_park.copy()
 
         # Apply action
-        # self.state = self.apply_action(action)
-
         self.action = action # For future reference
         self._cars_charge(action)
 
@@ -99,6 +99,7 @@ class ChargeWorldEnv():
         # reward = self.calc_reward(self.state)
 
         self.df_depart = self.df_park[self.df_park["t_dep"] == self.t]
+
         # Check if done
         done = True if self.t > self.t_max else False
 
@@ -139,7 +140,7 @@ class ChargeWorldEnv():
         df_arrivals = self.df_sessions[self.df_sessions["ts_arr"] == self.t] # This could be sped up a lot
         idx_empty = self.df_park[self.df_park["idSess"] == -1].index
         arr_e_req = 0
-
+        
         assigned_type = np.zeros((self.count_I, self.count_J))
         realized_type = np.zeros((self.count_I, self.count_J))
         fail_time = 0
@@ -147,10 +148,10 @@ class ChargeWorldEnv():
         fail_energy2 = 0
         fail_energy_both = 0
         fail_IR = 0
-
+      
         if len(df_arrivals) > len(idx_empty):
             raise Exception(f"Not enough {len(df_arrivals)} empty spots {len(idx_empty)} at timestep {self.t}!!")
-
+        
         # Might be able to be a one liner with 
         #for i, (_, arr_car) in enumerate(df_arrivals.iterrows()):
         for i, arr_car in enumerate(df_arrivals.itertuples()):
@@ -160,67 +161,70 @@ class ChargeWorldEnv():
                            soc_arr = arr_car.soc_arr,
                            t_dep = arr_car.ts_dep,
                           )
-
+            
             # Contracts
-            idx_theta_w = self.rng.choice(list(range(self.count_I)))
-            idx_theta_l = self.rng.choice(list(range(self.count_J)))
-            assigned_type[idx_theta_w, idx_theta_l] += 1
-            lax = sess.t_soj - ((config.FINAL_SOC - sess.soc_arr) * config.B) / (config.alpha_c * config.eta_c)
-            xi_max = lax * config.psi * config.alpha_d
-
-            flag_fail = False
-
-            while True:
-                # Contract parameters
-                w = self.W[idx_theta_w] 
-                soc_dis = w / config.B
-                t_dis = self.L[idx_theta_l]
-                theta_w, theta_l = config.thetas_i[idx_theta_w], config.thetas_j[idx_theta_l]
+            if not self.skip_contracts:
+                idx_theta_w = self.rng.choice(list(range(self.count_I)))
+                idx_theta_l = self.rng.choice(list(range(self.count_J)))
+                assigned_type[idx_theta_w, idx_theta_l] += 1
+                lax = sess.t_soj - ((config.FINAL_SOC - sess.soc_arr) * config.B) / (config.alpha_c * config.eta_c)
+                xi_max = lax * config.psi * config.alpha_d
                 
-                # Entry checks
-                check_time = sess.t_soj >= t_dis
-                check_energy1 = sess.soc_arr >= soc_dis
-                check_energy2 = xi_max >= w
-                check_IR = u_ev_general(self.G[idx_theta_w, idx_theta_l], w, t_dis, theta_w, theta_l, c1 = config.c1, c2 = config.c2) >= 0
-
-                # Contract is accepted 
-                if check_time and check_energy1 and check_energy2 and check_IR: break
-
-                # Otherwise
-                # Slide back in time
-                if (not check_time) or (not check_IR): idx_theta_l -= 1
-
-                # Slide back in energy
-                if (not check_energy1) or (not check_energy2) or (not check_IR): idx_theta_w -= 1 
-
-                # Fail reason
-                if idx_theta_l < 0: 
-                    fail_time += 1
-                    flag_fail = True
-
-                if idx_theta_w < 0:
-                    fail_energy_both += 1
-                    flag_fail = True
-                    if not check_energy1: fail_energy1 += 1
-                    if not check_energy2: fail_energy2 += 1
-
-
-                # Exit with no other options
-                if flag_fail:
-                    if not check_IR: fail_IR += 1
-                    soc_dis, t_dis = 0, 0
-                    break
-
-            if not flag_fail:
-                realized_type[idx_theta_w, idx_theta_l] += 1
-
+                flag_fail = False
+                
+                while True:
+                    # Contract parameters
+                    w = self.W[idx_theta_w] 
+                    soc_dis = w / config.B
+                    t_dis = self.L[idx_theta_l]
+                    theta_w, theta_l = config.thetas_i[idx_theta_w], config.thetas_j[idx_theta_l]
+                    
+                    # Entry checks
+                    check_time = sess.t_soj >= t_dis
+                    check_energy1 = sess.soc_arr >= soc_dis
+                    check_energy2 = xi_max >= w
+                    check_IR = u_ev_general(self.G[idx_theta_w, idx_theta_l], w, t_dis, theta_w, theta_l, c1 = config.c1, c2 = config.c2) >= 0
+                    
+                    # Contract is accepted 
+                    if check_time and check_energy1 and check_energy2 and check_IR: break
+                    
+                    # Otherwise
+                    # Slide back in time
+                    if (not check_time) or (not check_IR): idx_theta_l -= 1
+                    
+                    # Slide back in energy
+                    if (not check_energy1) or (not check_energy2) or (not check_IR): idx_theta_w -= 1 
+                    
+                    # Fail reason
+                    if idx_theta_l < 0: 
+                        fail_time += 1
+                        flag_fail = True
+                    
+                    if idx_theta_w < 0:
+                        fail_energy_both += 1
+                        flag_fail = True
+                        if not check_energy1: fail_energy1 += 1
+                        if not check_energy2: fail_energy2 += 1
+                    
+                    # Exit with no other options
+                    if flag_fail:
+                        if not check_IR: fail_IR += 1
+                        soc_dis, t_dis = 0, 0
+                        break
+                    
+                if not flag_fail:
+                    realized_type[idx_theta_w, idx_theta_l] += 1
+            else:
+                idx_theta_w, idx_theta_l = -1, -1
+                lax, soc_dis, t_dis = 0, 0, 0
+            
             self.df_park.loc[idx_empty[i], config.car_columns_full] = sess.flatten_full()
             self.df_park.loc[idx_empty[i], config.car_columns_proc] = [lax, soc_dis, t_dis, idx_theta_w, idx_theta_l]
-
+            
             arr_e_req += sess.E_req # Accumulate arrival demand
-
-        #self._update_lax()
-
+        
+        if self.skip_contracts: self._update_lax()
+        
         # Experiment tracking
         self.tracker.arr_bill.append([self.t, arr_e_req, arr_e_req * config.elec_retail, assigned_type, realized_type,
                                       fail_time, fail_energy1, fail_energy2, fail_energy_both, fail_IR])

@@ -1,0 +1,12 @@
+timestamp: 2023-08-30-21:30:38
+
+--Info
+title: EvWorld NoV2G_lambda_lax
+
+--Args
+print_dash: False
+file_price: df_price_2019.csv
+no_save: False
+agent: NoV2G
+desc: _lambda_lax
+seed: 42

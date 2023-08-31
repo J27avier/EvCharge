@@ -61,8 +61,8 @@ def main():
 
     # Load datasets
     df_sessions = pd.read_csv(f"{config.data_path}df_elaad_preproc.csv", parse_dates = ["starttime_parking", "endtime_parking"])
-    ts_max = df_sessions["ts_dep"].max()
     ts_min = df_sessions["ts_arr"].min()
+    ts_max = df_sessions["ts_dep"].max()
 
     df_price = pd.read_csv(f"{config.data_path}{args.file_price}", parse_dates=["date"])
 
@@ -80,15 +80,18 @@ def main():
     L = np.round(L_cont,0) # L_cont →  L continuous
     contract_info = {"G": G, "W": W, "L": L}
 
+    # Some agents are not allowed to discharge energy
+    skip_contracts = True if args.agent in ["ASAP", "NoV2G"] else False
+
     # Initialize objects
-    world = ChargeWorldEnv(df_sessions, df_price, contract_info, rng)
+    world = ChargeWorldEnv(df_sessions, df_price, contract_info, rng, skip_contracts = skip_contracts)
     df_state = world.reset()
 
     # Declare agent
     if args.agent == "ASAP":
         agent = agentASAP()
     elif args.agent == "NoV2G":
-        agent = agentNoV2G(df_price, myprint = False)
+        agent = agentNoV2G(df_price, myprint = True)
     elif args.agent == "Optim":
         agent = agent = agentOptim(df_price, myprint = False)
     else:

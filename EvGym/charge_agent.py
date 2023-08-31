@@ -142,7 +142,7 @@ class agentNoV2G():
         return pred_price
 
     def get_action(self, df_state: pd.DataFrame, t: int) -> npt.NDArray[Any]:
-        lambda_lax = 0.001
+        lambda_lax = 0
         action = np.zeros(self.max_cars)
         occ_spots = df_state["idSess"] != -1 # Occupied spots
         num_cars = occ_spots.sum()
@@ -186,8 +186,11 @@ class agentNoV2G():
                 print(f"{num_cars=}, {n=}")
                 print("pred_price=", end=' ')
                 print(np.array2string(pred_price, separator=", "))
+                print(f"{np.asmatrix(pred_price).shape=}")
+                print(f"{AC.shape=}")
 
-            objective = cp.Minimize(cp.sum(cp.multiply(np.asmatrix(pred_price), AC))) #  -lambda_lax*cp.sum(LAX)) # Laxity regularization
+
+            objective = cp.Minimize(cp.sum(cp.multiply(np.asmatrix(pred_price), AC))) # - lambda_lax*cp.sum(LAX)) # Laxity regularization
             prob = cp.Problem(objective, constraints)
             prob.solve(solver=cp.MOSEK, verbose=False)
             if prob.status != 'optimal':
