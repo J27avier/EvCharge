@@ -20,10 +20,10 @@ def parse_args():
 def print_welcome(df_sessions, df_price, info):
     os.system("clear")
     print("df_sessions")
-    print(df_sessions.describe())
+    #print(df_sessions.describe())
     print("="*80)
     print("df_price")
-    print(df_price.describe())
+    #print(df_price.describe())
     print("="*80)
     print("\tInfo")
     for key in info.keys():
