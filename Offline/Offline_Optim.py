@@ -30,7 +30,7 @@ def print_welcome(df_sessions, df_price, info):
     for key in info.keys():
         print(f"{key} = {info[key]}")
 
-
+# Running for 90+ hours, no solution. Must break down in scrolling time windows
 def main():
     df_sessions = pd.read_csv(f"../{config.data_path}df_elaad_preproc.csv", parse_dates = ["starttime_parking", "endtime_parking"])
     ts_min = df_sessions["ts_arr"].min() 
