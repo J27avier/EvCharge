@@ -32,6 +32,7 @@ class agentOptim():
         self.df_price = df_price
         self.myprint = myprint
 
+
     def _get_prediction(self, t, n):
         l_idx_t0 = self.df_price.index[self.df_price["ts"] == t].to_list()
         assert len(l_idx_t0) == 1, "Timestep for prediction not unique or not existent"
