@@ -80,7 +80,7 @@ def main():
 
         # Connected limits
         constraints += [SOC[i, t_arr] == car.soc_arr]
-        constraints += [SOC[i, t_dep] == config.FINAL_SOC]
+        constraints += [SOC[i, t_dep:] == config.FINAL_SOC]
 
         # After departure
         if t_dep < n: constraints += [SOC[i, t_dep+1:] == 0]
