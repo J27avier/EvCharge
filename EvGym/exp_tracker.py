@@ -16,6 +16,9 @@ class ExpTracker():
         self.dep_bill_columns = ["ts", "payoff"]
         self.dep_bill = [] # type: ignore
 
+        self.contract_log_cols = ["idSess", "w", "l", "g", "idx_theta_w", "idx_theta_l"]
+        self.contract_log = [] # type: ignore
+
         self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
         self.tinit = tinit
         self.t_max  = t_max
@@ -32,6 +35,9 @@ class ExpTracker():
 
         # TODO: fillna
         df_log.to_csv(f"{path}{self.timestamp}{self.name}_{args.agent}{args.desc}.csv", index = False)
+        
+        df_contract_log = pd.DataFrame(self.contract_log, columns = self.contract_log_cols)
+        df_contract_log.to_csv(f"{path}{self.timestamp}_Contracts{self.name}_{args.agent}{args.desc}.csv", index = False)
 
     def save_desc(self, args, info, path = "Results/results_log"):
         text = []
