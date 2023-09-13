@@ -36,6 +36,7 @@ class ExpTracker():
         # TODO: fillna
         df_log.to_csv(f"{path}{self.timestamp}{self.name}_{args.agent}{args.desc}.csv", index = False)
         
+    def save_contracts(save, args, path="Results/results_log/"):
         df_contract_log = pd.DataFrame(self.contract_log, columns = self.contract_log_cols)
         df_contract_log.to_csv(f"{path}{self.timestamp}_Contracts{self.name}_{args.agent}{args.desc}.csv", index = False)
 

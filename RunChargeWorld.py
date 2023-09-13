@@ -24,6 +24,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-R", "--print-dash", help = "Print dashboard", action="store_true")
     parser.add_argument("-S", "--no-save", help="Does not save results csv", action="store_true")
+    parser.add_argument("-C", "--save-contracts", help="Saves the contracts accepted to each car", action="store_true")
     parser.add_argument("-A", "--agent", help="Type of agent", type=str, required=True)
     parser.add_argument("-D", "--desc", help="Description of the expereiment, starting with \"_\"", type=str, default="")
     parser.add_argument("-E", "--seed", help="Seed to use for the rng", type=int, default=42)
@@ -129,6 +130,10 @@ def main():
     if not args.no_save:
         world.tracker.save_log(args, path=config.results_path)
         world.tracker.save_desc(args, {"title": title}, path=config.results_path)
+
+    if args.save_contracts:
+        world.tracker.save_contracts(args, path=config.results_path)
+
 
 if __name__ == "__main__":
     main()

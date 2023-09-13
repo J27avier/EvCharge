@@ -219,7 +219,7 @@ class agentNoV2G():
         return action
 
 class agentOracle():
-    def __init__(self, df_price, df_sessions, df_contracts, lookahead = 5, max_cars: int = config.max_cars, myprint = False):
+    def __init__(self, df_price, df_sessions, df_contracts, lookahead = 24, max_cars: int = config.max_cars, myprint = False):
         self.max_cars = max_cars
         self.df_price = df_price
         self.df_sessions = df_sessions
