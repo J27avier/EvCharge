@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 # User defined modules
 from EvGym.charge_world import ChargeWorldEnv
-from EvGym.charge_agent import agentASAP, agentOptim, agentNoV2G
+from EvGym.charge_agent import agentASAP, agentOptim, agentNoV2G, agentOracle
 from EvGym import config
 
 # Contracts
@@ -23,12 +23,16 @@ from ContractDesign.time_contracts import general_contracts
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-R", "--print-dash", help = "Print dashboard", action="store_true")
-    parser.add_argument("-I", "--file_price", help = "Name of imbalance price dataframe", 
-                        type=str, default= "df_price_2019.csv")
     parser.add_argument("-S", "--no-save", help="Does not save results csv", action="store_true")
     parser.add_argument("-A", "--agent", help="Type of agent", type=str, required=True)
     parser.add_argument("-D", "--desc", help="Description of the expereiment, starting with \"_\"", type=str, default="")
     parser.add_argument("-E", "--seed", help="Seed to use for the rng", type=int, default=42)
+
+    # Files
+    parser.add_argument("-I", "--file_price", help = "Name of imbalance price dataframe", 
+                        type=str, default= "df_price_2019.csv")
+    parser.add_argument("-O", "--file_contracts", help = "CSV of contracts offered", 
+                        type=str, default= "ExpLogs/2023-09-11-18:19:52_Contracts_ev_world_Optim.csv")
     return parser.parse_args()
 
 def print_welcome(df_sessions, df_price, contract_info):
@@ -93,7 +97,10 @@ def main():
     elif args.agent == "NoV2G":
         agent = agentNoV2G(df_price, myprint = True)
     elif args.agent == "Optim":
-        agent = agent = agentOptim(df_price, myprint = False)
+        agent = agentOptim(df_price, myprint = False)
+    elif args.agent == "Oracle":
+        df_contracts = pd.read_csv(f"{args.file_contracts}")
+        agent = agentOracle(df_price, df_sessions, df_contracts, myprint = False)
     else:
         raise Exception(f"Agent name not recognized")
 

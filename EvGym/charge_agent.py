@@ -219,13 +219,14 @@ class agentNoV2G():
         return action
 
 class agentOracle():
-    def __init__(self, df_price, df_sessions, df_contracts, max_cars: int = config.max_cars, myprint = False):
+    def __init__(self, df_price, df_sessions, df_contracts, lookahead = 5, max_cars: int = config.max_cars, myprint = False):
         self.max_cars = max_cars
         self.df_price = df_price
         self.df_sessions = df_sessions
         self.df_contracts = df_contracts
         self.myprint = myprint
-
+        self.lookahead = lookahead
+        self.max_t = self.df_price.index.max()+1
 
     def _get_prediction(self, t, n):
         l_idx_t0 = self.df_price.index[self.df_price["ts"] == t].to_list()
@@ -235,60 +236,133 @@ class agentOracle():
         pred_price = self.df_price.iloc[idx_t0:idx_tend]["price_im"].values
         return pred_price
 
+    def _get_future_arrivals(self, t, n):
+        b_future_arrs = (t < self.df_sessions["ts_arr"]) & (self.df_sessions["ts_arr"] < t + n)
+        df_future_arrs = self.df_sessions[b_future_arrs].copy().reset_index(drop = True)
+        if self.myprint: print(df_future_arrs[["ts_arr", "ts_dep", "soc_arr"]])
+        return df_future_arrs
+
+    def _get_contract_params(self, idSess):
+        row = self.df_contracts[self.df_contracts["idSess"] == idSess].iloc[0]
+        return row.w, row.t_dis
+
     def get_action(self, df_state: pd.DataFrame, t: int) -> npt.NDArray[Any]:
         lambda_lax = 0
         action = np.zeros(self.max_cars)
+        # Occupide spots
         occ_spots = df_state["idSess"] != -1 # Occupied spots
-        num_cars = occ_spots.sum()
-        if num_cars > 0:
-            t_end = df_state[occ_spots]["t_dep"].max()
-            n = int(t_end - t ) 
+        num_cars_cur = occ_spots.sum()
+        if num_cars_cur > 0: 
+            n_cur = int(df_state[occ_spots]["t_dep"].max() - t )  # Based on the latest departure time 
+
+            # Get future arrivals
+            df_future_arrs = self._get_future_arrivals(t, self.lookahead)
+            num_cars_fut = len(df_future_arrs)
+            n_fut = int(df_future_arrs["ts_dep"].max()-t) if num_cars_fut > 0 else 0 # Ternary operator
+
+            n = max(n_cur, n_fut)
+            if self.myprint: print(f"{n_cur=}, {n_fut=}, {n=}")
+
+            # Get future price prediction
             pred_price = self._get_prediction(t, n)
             
+            num_cars = num_cars_cur + num_cars_fut 
+            if self.myprint: print(f"{num_cars_cur=}, {num_cars_fut=}, {num_cars=}")
+
             constraints = []
             AC = cp.Variable((num_cars, n)) # Charging action
             AD = cp.Variable((num_cars, n)) # Discharging action
             Y = cp.Variable((num_cars, n)) # Charging + discharging action
             SOC = cp.Variable((num_cars, n+1 ), nonneg=True) # SOC, need one more since action does not affect first col
-            LAX = cp.Variable((num_cars), nonneg=True) # LAX, or cp Variable?
+            LAX = cp.Variable((num_cars_cur), nonneg=True) # LAX, or cp Variable?
+
+            # Print arrays
+            pAC = np.array([['.']*n]*num_cars)
+            pAD = np.array([['.']*n]*num_cars)
+            pY = np.array([['.']*n]*num_cars)
+            pSOC = np.array([['.']*(n+1)]*(num_cars))
+            pLAX = np.array(['.']*num_cars_cur)
 
             # SOC limits
             constraints += [SOC >= 0]
             constraints += [SOC <= config.FINAL_SOC]
 
             # Define the first column of SOC_t0
-            constraints += [SOC[:,0] == df_state[occ_spots]["soc_t"]]
+            constraints += [SOC[:num_cars_cur, 0] == df_state[occ_spots]["soc_t"]]
+            pSOC[:num_cars_cur, 0] = "e"
 
             # Charging limits
             constraints += [AC >= 0]
             constraints += [AC <= config.alpha_c / config.B]
 
             # Discharging limits
-            constraints += [AD <= 0]
+            constraints += [AD == 0]
             constraints += [AD >= -config.alpha_d / config.B]
 
-            # Discharging ammount
-            constraints += [ - cp.sum(AD, axis=1) / config.eta_d <= df_state[occ_spots]["soc_dis"]]
+            # Discharging ammount for current cars
+            constraints += [-cp.sum(AD[:num_cars_cur,:], axis=1) / config.eta_d <= df_state[occ_spots]["soc_dis"]]
 
-            for i, car in enumerate(df_state[occ_spots].itertuples()):
+            for i, car_cur in enumerate(df_state[occ_spots].itertuples()):
                 # End charge
-                j_end = int(min(car.t_dep - t, n)) # Only if n is in terms of t_dep and not t_dis
-                constraints += [SOC[i, j_end:] == config.FINAL_SOC]
+                j_dep = int(min(car_cur.t_dep - t, n)) # Only if n is in terms of t_dep and not t_dis
+                constraints += [SOC[i, j_dep:] == config.FINAL_SOC]
+                pSOC[i,j_dep:] = "f"
                 # Discharging time
-                j_dis = int(min(car.t_dis, n - 1)) # Only if n is in terms of t_dep and not t_dis
+                j_dis = int(min(car_cur.t_dis, n - 1)) # Only if n is in terms of t_dep and not t_dis
                 constraints +=[AD[i, j_dis:] == 0]
-
+                pAD[i,j_dis:] = "z"
+                
                 for j in range(n):
                     # Charge rule
                     constraints += [SOC[i, j+1] == SOC[i,j] + AC[i,j] * config.eta_c + AD[i,j] / config.eta_d] 
-
+                
                 if n > 0:
-                    constraints += [LAX[i] == (car.t_dep - (t+1) ) - ((config.FINAL_SOC - SOC[i,1]) * config.B) / (config.alpha_c * config.eta_c)]
+                    constraints += [LAX[i] == (car_cur.t_dep - (t+1) ) - ((config.FINAL_SOC - SOC[i,1]) * config.B) / (config.alpha_c * config.eta_c)]
 
+            for i_prime, car_fut in enumerate(df_future_arrs.itertuples()):
+                i = i_prime + num_cars_cur
+
+                # SOC Limits
+                j_arr = int(car_fut.ts_arr - t)
+                j_dep = int(min(car_fut.ts_dep - t, n))
+                constraints += [SOC[i, :j_arr] == 0]
+                pSOC[i, :j_arr] = "z"
+
+                constraints += [SOC[i, j_arr] == car_fut.soc_arr]
+                pSOC[i,j_arr] = "a"
+                constraints += [SOC[i, j_dep:] == config.FINAL_SOC]
+                pSOC[i, j_dep:] = "f"
+
+                # Contract limits
+                w, t_dis = self._get_contract_params(car_fut.session)
+
+                # Discharging ammount for future cars
+                constraints += [-cp.sum(AD[i,:]) / config.eta_d <= w]
+
+                ## Discharging time
+                constraints += [AD[i, :j_arr] == 0]
+                pAD[i, :j_arr] = "z"
+                j_dis = int(min(t_dis, n-1))
+                constraints += [AD[i, j_dis:] == 0]
+                pAD[i,j_dis:]="z"
+
+                for j in range(j_arr, j_dep): # !!!! MAYBE?
+                    # Charge rule
+                    constraints += [SOC[i, j+1] == SOC[i,j] + AC[i,j] * config.eta_c + AD[i,j] / config.eta_d] 
+
+                # No need for laxity
+                
             constraints += [LAX >= 0]
             constraints += [Y == AC + AD]
 
+
             if self.myprint: 
+                print("SOC")
+                print(pSOC)
+                print("AC")
+                print(pAC)
+                print("AD")
+                print(pAD)
                 print(f"{num_cars=}, {n=}")
                 print("pred_price=", end=' ')
                 print(np.array2string(pred_price, separator=", "))
@@ -296,6 +370,7 @@ class agentOracle():
             objective = cp.Minimize(cp.sum(cp.multiply(np.asmatrix(pred_price), Y))) #  -lambda_lax*cp.sum(LAX)) # Laxity regularization
             prob = cp.Problem(objective, constraints)
             prob.solve(solver=cp.MOSEK, verbose=False)
+
             if prob.status != 'optimal':
                 raise Exception("Optimal schedule not found")
                 print("!!! Optimal solution not found")
@@ -313,6 +388,7 @@ class agentOracle():
                 print(np.array2string(SOC.value, separator=", "))
                 print("best_cost=", end=' ')
                 print(best_cost)
+                print("-------------------------------\n")
 
             j = 0
             for i, car in enumerate(df_state.itertuples()):
