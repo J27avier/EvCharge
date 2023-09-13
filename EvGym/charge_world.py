@@ -220,7 +220,7 @@ class ChargeWorldEnv():
             
             self.df_park.loc[idx_empty[i], config.car_columns_full] = sess.flatten_full()
             self.df_park.loc[idx_empty[i], config.car_columns_proc] = [lax, soc_dis, t_dis, idx_theta_w, idx_theta_l]
-            self. tracker.contract_log.append([sess.idSess, self.W[idx_theta_w], self.L[idx_theta_l], self.G[idx_theta_w, idx_theta_l],
+            self. tracker.contract_log.append([sess.idSess, soc_dis, t_dis, self.G[idx_theta_w, idx_theta_l],
                                                idx_theta_w, idx_theta_l])
             
             arr_e_req += sess.E_req # Accumulate arrival demand

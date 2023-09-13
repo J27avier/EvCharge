@@ -244,7 +244,7 @@ class agentOracle():
 
     def _get_contract_params(self, idSess):
         row = self.df_contracts[self.df_contracts["idSess"] == idSess].iloc[0]
-        return row.w, row.t_dis
+        return row.soc_dis, row.t_dis
 
     def get_action(self, df_state: pd.DataFrame, t: int) -> npt.NDArray[Any]:
         lambda_lax = 0
@@ -276,27 +276,19 @@ class agentOracle():
             SOC = cp.Variable((num_cars, n+1 ), nonneg=True) # SOC, need one more since action does not affect first col
             LAX = cp.Variable((num_cars_cur), nonneg=True) # LAX, or cp Variable?
 
-            # Print arrays
-            pAC = np.array([['.']*n]*num_cars)
-            pAD = np.array([['.']*n]*num_cars)
-            pY = np.array([['.']*n]*num_cars)
-            pSOC = np.array([['.']*(n+1)]*(num_cars))
-            pLAX = np.array(['.']*num_cars_cur)
-
             # SOC limits
             constraints += [SOC >= 0]
             constraints += [SOC <= config.FINAL_SOC]
 
             # Define the first column of SOC_t0
             constraints += [SOC[:num_cars_cur, 0] == df_state[occ_spots]["soc_t"]]
-            pSOC[:num_cars_cur, 0] = "e"
 
             # Charging limits
             constraints += [AC >= 0]
             constraints += [AC <= config.alpha_c / config.B]
 
             # Discharging limits
-            constraints += [AD == 0]
+            constraints += [AD <= 0]
             constraints += [AD >= -config.alpha_d / config.B]
 
             # Discharging ammount for current cars
@@ -306,11 +298,9 @@ class agentOracle():
                 # End charge
                 j_dep = int(min(car_cur.t_dep - t, n)) # Only if n is in terms of t_dep and not t_dis
                 constraints += [SOC[i, j_dep:] == config.FINAL_SOC]
-                pSOC[i,j_dep:] = "f"
                 # Discharging time
                 j_dis = int(min(car_cur.t_dis, n - 1)) # Only if n is in terms of t_dep and not t_dis
                 constraints +=[AD[i, j_dis:] == 0]
-                pAD[i,j_dis:] = "z"
                 
                 for j in range(n):
                     # Charge rule
@@ -325,28 +315,25 @@ class agentOracle():
                 # SOC Limits
                 j_arr = int(car_fut.ts_arr - t)
                 j_dep = int(min(car_fut.ts_dep - t, n))
-                constraints += [SOC[i, :j_arr] == 0]
-                pSOC[i, :j_arr] = "z"
+                constraints += [SOC[i, :j_arr] == car_fut.soc_arr]
 
                 constraints += [SOC[i, j_arr] == car_fut.soc_arr]
-                pSOC[i,j_arr] = "a"
                 constraints += [SOC[i, j_dep:] == config.FINAL_SOC]
-                pSOC[i, j_dep:] = "f"
 
                 # Contract limits
-                w, t_dis = self._get_contract_params(car_fut.session)
+                soc_dis, t_dis = self._get_contract_params(car_fut.session)
 
                 # Discharging ammount for future cars
-                constraints += [-cp.sum(AD[i,:]) / config.eta_d <= w]
+                constraints += [-cp.sum(AD[i,:]) / config.eta_d <= soc_dis]
 
                 ## Discharging time
-                constraints += [AD[i, :j_arr] == 0]
-                pAD[i, :j_arr] = "z"
-                j_dis = int(min(t_dis, n-1))
+                #constraints += [AD[i, :j_arr] == 0] # Redundant
+                j_dis = int(min(t_dis, n))
                 constraints += [AD[i, j_dis:] == 0]
-                pAD[i,j_dis:]="z"
 
-                for j in range(j_arr, j_dep): # !!!! MAYBE?
+
+                #for j in range(j_arr, j_dep): # !!!! MAYBE?
+                for j in range(n): 
                     # Charge rule
                     constraints += [SOC[i, j+1] == SOC[i,j] + AC[i,j] * config.eta_c + AD[i,j] / config.eta_d] 
 
@@ -357,13 +344,6 @@ class agentOracle():
 
 
             if self.myprint: 
-                print("SOC")
-                print(pSOC)
-                print("AC")
-                print(pAC)
-                print("AD")
-                print(pAD)
-                print(f"{num_cars=}, {n=}")
                 print("pred_price=", end=' ')
                 print(np.array2string(pred_price, separator=", "))
 

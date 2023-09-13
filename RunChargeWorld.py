@@ -33,7 +33,8 @@ def parse_args():
     parser.add_argument("-I", "--file_price", help = "Name of imbalance price dataframe", 
                         type=str, default= "df_price_2019.csv")
     parser.add_argument("-O", "--file_contracts", help = "CSV of contracts offered", 
-                        type=str, default= "ExpLogs/2023-09-11-18:19:52_Contracts_ev_world_Optim.csv")
+                        type=str, default= "ExpLogs/2023-09-13-15:25:05_Contracts_ev_world_Optim.csv")
+
     return parser.parse_args()
 
 def print_welcome(df_sessions, df_price, contract_info):
@@ -101,7 +102,7 @@ def main():
         agent = agentOptim(df_price, myprint = False)
     elif args.agent == "Oracle":
         df_contracts = pd.read_csv(f"{args.file_contracts}")
-        agent = agentOracle(df_price, df_sessions, df_contracts, myprint = False)
+        agent = agentOracle(df_price, df_sessions, df_contracts, lookahead = 24, myprint = False)
     else:
         raise Exception(f"Agent name not recognized")
 
