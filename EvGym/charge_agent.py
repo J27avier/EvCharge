@@ -84,7 +84,7 @@ class agentOptim():
                 j_dis = int(min(car.t_dis, n - 1)) # Only if n is in terms of t_dep and not t_dis
                 constraints +=[AD[i, j_dis:] == 0]
 
-                for j in range(n):
+                for j in range(n): 
                     # Charge rule
                     constraints += [SOC[i, j+1] == SOC[i,j] + AC[i,j] * config.eta_c + AD[i,j] / config.eta_d] 
 
@@ -316,7 +316,6 @@ class agentOracle():
                 j_arr = int(car_fut.ts_arr - t)
                 j_dep = int(min(car_fut.ts_dep - t, n))
                 constraints += [SOC[i, :j_arr] == car_fut.soc_arr]
-
                 constraints += [SOC[i, j_arr] == car_fut.soc_arr]
                 constraints += [SOC[i, j_dep:] == config.FINAL_SOC]
 
@@ -331,8 +330,6 @@ class agentOracle():
                 j_dis = int(min(t_dis, n))
                 constraints += [AD[i, j_dis:] == 0]
 
-
-                #for j in range(j_arr, j_dep): # !!!! MAYBE?
                 for j in range(n): 
                     # Charge rule
                     constraints += [SOC[i, j+1] == SOC[i,j] + AC[i,j] * config.eta_c + AD[i,j] / config.eta_d] 
