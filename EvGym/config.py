@@ -83,6 +83,10 @@ c2 = 0.1
 kappa1 = 0.1
 kappa2 = 0.5
 
+# For synthetic data
+sdg_norm = 16
+sdg_pot = 1.6
+
 # Colors
 class bcolors:
     HEADER = '\033[95m'

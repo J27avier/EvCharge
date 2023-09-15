@@ -30,10 +30,12 @@ def parse_args():
     parser.add_argument("-E", "--seed", help="Seed to use for the rng", type=int, default=42)
 
     # Files
-    parser.add_argument("-I", "--file_price", help = "Name of imbalance price dataframe", 
+    parser.add_argument("-I", "--file-price", help = "Name of imbalance price dataframe", 
                         type=str, default= "df_price_2019.csv")
-    parser.add_argument("-O", "--file_contracts", help = "CSV of contracts offered", 
+    parser.add_argument("-O", "--file-contracts", help = "CSV of contracts offered", 
                         type=str, default= "ExpLogs/2023-09-13-15:25:05_Contracts_ev_world_Optim.csv")
+    parser.add_argument("-N", "--file-sessions", help = "CSV of charging sessions",
+                        type=str, default= "df_elaad_preproc.csv")
 
     return parser.parse_args()
 
@@ -66,7 +68,7 @@ def main():
     rng = np.random.default_rng(args.seed)
 
     # Load datasets
-    df_sessions = pd.read_csv(f"{config.data_path}df_elaad_preproc.csv", parse_dates = ["starttime_parking", "endtime_parking"])
+    df_sessions = pd.read_csv(f"{config.data_path}{args.file_sessions}", parse_dates = ["starttime_parking", "endtime_parking"])
     ts_min = df_sessions["ts_arr"].min()
     ts_max = df_sessions["ts_dep"].max()
 

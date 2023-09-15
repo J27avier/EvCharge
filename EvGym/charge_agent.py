@@ -326,9 +326,11 @@ class agentOracle():
                 constraints += [-cp.sum(AD[i,:]) / config.eta_d <= soc_dis]
 
                 ## Discharging time
-                #constraints += [AD[i, :j_arr] == 0] # Redundant
-                j_dis = int(min(t_dis, n))
-                constraints += [AD[i, j_dis:] == 0]
+                constraints += [AD[i, :j_arr] == 0] # Redundant
+                j_dis = int(j_arr + t_dis)
+                if self.myprint: print(f"{i=}, {j_arr=}, {t_dis=}, {j_dis=}, {n=}")
+                if j_dis < n:
+                    constraints += [AD[i, j_dis:] == 0]
 
                 for j in range(n): 
                     # Charge rule
