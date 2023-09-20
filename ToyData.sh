@@ -1,1 +1,0 @@
-python3 RunChargeWorld.py --agent Optim --print-dash -E 203 --no-save --file-price toy-oracle/PricesToyOracle.csv --file-contracts toy-oracle/ContractsToyOracle.csv --file-sessions toy-oracle/SessionsToyOracle.csv
