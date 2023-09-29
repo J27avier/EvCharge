@@ -115,7 +115,7 @@ class ChargeWorldEnv():
         return self.df_park.copy(), reward, done, info
 
     def _reward(self):
-        return 0
+        return -self.imb_transf
 
     def _cars_depart(self):
         blank_session = Session()
@@ -245,7 +245,7 @@ class ChargeWorldEnv():
             price_im = self.df_price.loc[self.t].price_im
         else:
             price_im = 0
-        x = total_action * price_im * config.B # Transfer to imbalance market
+        self.imb_transf = total_action * price_im * config.B # Transfer to imbalance market
         # Multiplied by config.B because action is in SOC units, not in kWh
 
         # Charging and discharging inefficiencies
@@ -294,7 +294,7 @@ class ChargeWorldEnv():
         self.power_t = soc_temp_clip - soc_t_lag
         self._update_lax() # Updates the laxity of the cars
         avg_lax = self.df_park["lax"].mean()
-        self.tracker.chg_bill.append([self.t, total_action, x, occ_spots.sum(), avg_lax])
+        self.tracker.chg_bill.append([self.t, total_action, self.imb_transf, occ_spots.sum(), avg_lax])
 
 
     def print(self, wait=0, clear = True):

@@ -86,8 +86,8 @@ kappa1 = 0.1
 kappa2 = 0.5
 
 # For synthetic data
-sdg_norm = 16
-sdg_pot = 1.6
+sdg_pot = 1.8
+sdg_norm = 0.28
 
 # Colors
 class bcolors:
