@@ -44,6 +44,7 @@ class agentPPO(nn.Module):
         self.max_cars = max_cars
         self.df_price = df_price
         self.device = device
+        self.envs = envs
         self.n = n
         
 
@@ -51,6 +52,7 @@ class agentPPO(nn.Module):
         return self.critic(x)
 
     def _get_action_and_value(self, x, action=None):
+        print(x.type())
         action_mean = self.actor_mean(x)
         action_logstd = self.actor_logstd.expand_as(action_mean)
         action_std = torch.exp(action_logstd)
@@ -61,19 +63,19 @@ class agentPPO(nn.Module):
 
     def _get_prediction(self, t):
         l_idx_t0 = self.df_price.index[self.df_price["ts"]== t].to_list()
-        assert len(l_idx_t0 == 1) , "Timestep for prediction not unique or non existent"
+        assert len(l_idx_t0) == 1, "Timestep for prediction not unique or non existent"
         idx_t0 = l_idx_t0[0]
         idx_tend = min(idx_t0+self.n, self.df_price.index.max()+1)
         pred_price = self.df_price.iloc[idx_t0:idx_tend]["price_im"].values
         return pred_price
 
     def construct_state(self, df_state, t):
-        state_cars = df_state[["soc_t", "t_rem", "soc_dis", "t_dis"]].values.flatten()
-        pred_price = _get_prediction(t)
+        state_cars = df_state[["soc_t", "t_rem", "soc_dis", "t_dis"]].values.flatten().astype(np.float64)
+        pred_price = self._get_prediction(t)
         hour = np.array([t % 24])
-    
-        x = np.concatenate((state_cars, pred_price, hour))
-        torch.Tensor(x).to(self.device)
+        np_x = np.concatenate((state_cars, pred_price, hour))
+        x = torch.tensor(np_x).to(self.device).float().reshape(1, self.envs["single_observation_space"])
+        self.t = t
         return x
 
     def _enforce_single_safety(self, action_t, x, t):
@@ -137,7 +139,7 @@ class agentPPO(nn.Module):
         action_t_np = action_t.cpu().numpy()
         # Account for batches
         l_actions = []
-        if action_t.n_dim == 2:
+        if action_t.ndim == 2:
             loops = action_t[0]
             for i in loops:
                 action_i = self._enforce_single_safety(action_t[i], x[i], t)
@@ -151,7 +153,7 @@ class agentPPO(nn.Module):
     def get_action_and_value(self, x, action=None):
         #x = self.construct_state(df_state, t) # Gets performed twice (also in main), can streamline later
         action_t, logprob, entropy, value = self._get_action_and_value(x, action)
-        action = self._enforce_safety(action_t, x, t)
+        action = self._enforce_safety(action_t, x, self.t )
         return action, logprob, entropy, value 
 
 

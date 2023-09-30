@@ -25,6 +25,7 @@ from torch.utils.tensorboard import SummaryWriter
 import time
 from distutils.util import strtobool
 import random
+#import pdb; pdb.set_trace()
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -178,7 +179,8 @@ def main():
     world = ChargeWorldEnv(df_sessions, df_price, contract_info, rng, skip_contracts = skip_contracts)
     df_state = world.reset()
 
-    next_obs = agent.construct_state(df_state, ts_min - 1)
+    next_obs = agent.construct_state(df_state, ts_min) # should be ts_min -1 , but only matters for this timestep
+    #next_obs = torch.randn(1,125).to(device)
     next_done = torch.zeros(1).to(device)
     total_timesteps = len(list(range(int(ts_min)-1, int(ts_max))))
     num_updates =  total_timesteps // args.batch_size
