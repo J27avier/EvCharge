@@ -172,3 +172,4 @@ profiling/
 *.swp
 .mypy_cache
 EvGym/.mypy_cache
+runs/
