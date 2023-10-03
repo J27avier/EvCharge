@@ -19,7 +19,6 @@ def layer_init(layer, std=np.sqrt(2), bias_const =0.0):
     return layer
 
 
-
 class agentPPO(nn.Module):
     def __init__(self, envs, df_price, device, n = 24, max_cars: int = config.max_cars):
         super().__init__()
