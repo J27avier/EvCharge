@@ -27,6 +27,7 @@ from distutils.util import strtobool
 import random
 #import pdb; pdb.set_trace()
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-R", "--print-dash", help = "Print dashboard", action="store_true")
@@ -59,12 +60,10 @@ def parse_args():
         help="the number of steps to run in each environment per policy rollout")
     parser.add_argument("--anneal-lr", type=lambda x: bool(strtobool(x)), default=True, nargs="?", const=True,
         help="Toggle learning rate annealing for policy and value networks")
-
     parser.add_argument("--gamma", type=float, default=0.99,
         help="the discount factor gamma")
     parser.add_argument("--gae-lambda", type=float, default=0.95,
         help="the lambda for the general advantage estimation")
-
     parser.add_argument("--num-minibatches", type=int, default=4, # default 32, 
         help="the number of mini-batches")
     parser.add_argument("--update-epochs", type=int, default=10,
@@ -83,6 +82,7 @@ def parse_args():
         help="the maximum norm for the gradient clipping")
     parser.add_argument("--target-kl", type=float, default=None,
         help="the target KL divergence threshold")
+
     args = parser.parse_args()
     args.batch_size = int(1 * args.num_steps)
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
@@ -156,17 +156,18 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
 
     # Agent info
-    envs = {"single_observation_space": config.max_cars*4 + 24 + 1, # max_cars*(soc_t, t_rem, t_dis, soc_dis), 24*(p_im), hr day
+    pred_price_n = 8 # Could be moved to argument
+    envs = {"single_observation_space": config.max_cars*4 + pred_price_n + 1, # max_cars*(soc_t, t_rem, t_dis, soc_dis), 24*(p_im), hr day
             "single_action_space": config.max_cars,
             }
 
-
     # Agents
     if args.agent == "PPO":
-        agent = agentPPO(envs, df_price, device).to(device)
+        agent = agentPPO(envs, df_price, device, pred_price_n=pred_price_n).to(device)
         optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
     else:
         raise Exception(f"Agent name not recognized")
+
 
     obs      = torch.zeros((args.num_steps, 1, envs["single_observation_space"]) ).to(device) # Manual concat
     actions  = torch.zeros((args.num_steps, 1, envs["single_action_space"])).to(device) # Manual concat
@@ -179,7 +180,7 @@ def main():
     world = ChargeWorldEnv(df_sessions, df_price, contract_info, rng, skip_contracts = skip_contracts)
     df_state = world.reset()
 
-    next_obs = agent.construct_state(df_state, ts_min) # should be ts_min -1 , but only matters for this timestep
+    next_obs = agent.df_to_state(df_state, ts_min) # should be ts_min -1 , but only matters for this timestep
     #next_obs = torch.randn(1,125).to(device)
     next_done = torch.zeros(1).to(device)
     total_timesteps = len(list(range(int(ts_min)-1, int(ts_max))))
@@ -193,7 +194,7 @@ def main():
     # Environment loop
     #for t in tqdm(range(int(ts_min)-1, int(ts_max)), desc = f"{title}: "):
     t = int(ts_min - 1)
-    start_time = time.time()
+    start_wallTime = time.time()
 
     while t in range(int(ts_min)-1, int(ts_max)):
         #update = t % num_updates - ((ts_min - 1) % num_updates) + 1
@@ -218,10 +219,8 @@ def main():
                 df_state, reward, done, info = world.step(action)
                 assert t+1 == info['t'], "Main time and env time out of sync"
                 rewards[step] = torch.tensor(reward).to(device).view(-1)
-                next_obs = agent.construct_state(df_state, t)
+                next_obs = agent.df_to_state(df_state, t)
                 next_done = torch.Tensor(done).to(device)
-
-                
 
                 if args.print_dash:
                     if skips > 0: # Logic to jump forward
@@ -324,8 +323,8 @@ def main():
             writer.add_scalar("losses/approx_kl", approx_kl.item(), t)
             writer.add_scalar("losses/clipfrac", np.mean(clipfracs), t)
             writer.add_scalar("losses/explained_variance", explained_var, t)
-            print("SPS:", int(t / (time.time() - start_time)))
-            writer.add_scalar("charts/SPS", int(t / (time.time() - start_time)), t)
+            print("SPS:", int(t / (time.time() - start_wallTime)))
+            writer.add_scalar("charts/SPS", int(t / (time.time() - start_wallTime)), t)
             
             
 
@@ -341,3 +340,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# ACKNOWLEDGMENTS
+# Parts of this code are adapted from https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppo_continuous_action.py
