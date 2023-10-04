@@ -171,7 +171,7 @@ def main():
 
     obs      = torch.zeros((args.num_steps, 1, envs["single_observation_space"]) ).to(device) # Manual concat
     actions  = torch.zeros((args.num_steps, 1, envs["single_action_space"])).to(device) # Manual concat
-    logrpobs = torch.zeros((args.num_steps, 1)).to(device)
+    logprobs = torch.zeros((args.num_steps, 1)).to(device)
     rewards  = torch.zeros((args.num_steps, 1,  envs["single_action_space"])).to(device) # Manual concat
     dones    = torch.zeros((args.num_steps, 1)).to(device)
     values   = torch.zeros((args.num_steps, 1)).to(device)
@@ -212,12 +212,22 @@ def main():
                 with torch.no_grad():
                     action, logprob, _, value = agent.get_action_and_value(next_obs)
                     values[step] = value.flatten()
+
+                print(f"""{action=},
+                        {action.shape=},
+                        {type(action)=},
+                        {actions=},
+                        {actions.shape=}
+                        {type(actions)=}
+                        """)
+
                 actions[step] = action
                 logprobs[step] = logprob
 
                 #-------
-                df_state, reward, done, info = world.step(action)
-                assert t+1 == info['t'], "Main time and env time out of sync"
+                df_state, reward, done, info = world.step(action.cpu().numpy().squeeze())
+                done = np.array([done])
+                assert t == info['t'], "Main time and env time out of sync"
                 rewards[step] = torch.tensor(reward).to(device).view(-1)
                 next_obs = agent.df_to_state(df_state, t)
                 next_done = torch.Tensor(done).to(device)
@@ -231,7 +241,7 @@ def main():
                         skips = int(usr_in)
                         usr_in = ""
                 else:
-                    print(f"{t=}/{ts_max}, {t/ts_max*100}%")
+                    print(f"{t=}/{ts_max}, {(t-ts_min)/(ts_max-ts_min)*100}%")
                 # print("Tracker: ts, chg_e_req, imbalance_bill, n_cars, avg_lax")
                 # print(world.tracker.chg_bill)
             with torch.no_grad():
@@ -260,17 +270,18 @@ def main():
             # Optimizing the policy and value network
             b_inds = np.arange(args.batch_size)
             clipfracs = []
-            for epoc in range(args.update_epocs):
+            for epoch in range(args.update_epochs):
                 np.random.shuffle(b_inds)
                 for start in range(0, args.batch_size, args.minibatch_size):
                     end = start + args.minibatch_size
                     mb_inds = b_inds[start:end]
+
                     _, newlogprob, entropy, newvalue = agent.get_action_and_value(b_obs[mb_inds], b_actions[mb_inds])
                     logratio = newlogprob - b_logprobs[mb_inds] 
                     ratio = logratio.exp()
 
                     with torch.no_grad():
-                        # Calculate approx_kl
+                        # calculate approx_kl http://joschu.net/blog/kl-approx.html
                         old_approx_kl = (-logratio).mean()
                         approx_kl = ((ratio - 1) - logratio).mean()
                         clipfracs += [((ratio - 1.0).abs() > args.clip_coef).float().mean().item()]

@@ -51,7 +51,6 @@ class agentPPO(nn.Module):
         return self.critic(x)
 
     def _get_action_and_value(self, x, action=None):
-        print(x.type())
         action_mean = self.actor_mean(x)
         action_logstd = self.actor_logstd.expand_as(action_mean)
         action_std = torch.exp(action_logstd)
@@ -109,7 +108,7 @@ class agentPPO(nn.Module):
 
             # Discharging limits
             constraints += [AD <= 0]
-            constraints += [AD >= -config.alhpa_d / config.B]
+            constraints += [AD >= -config.alpha_d / config.B]
 
             # Discharging ammount
             constraints += [ - cp.sum(AD, axis=1)/ config.eta_d <= df_state["soc_dis"]]
@@ -127,7 +126,7 @@ class agentPPO(nn.Module):
             constraints += [LAX >= 0]
             constraints += [Y == AC + AD]
 
-            objective = cp.Minimize(cp.sum_squares(Y - action_t))
+            objective = cp.Minimize(cp.sum_squares(Y[:,0] - action_t))
             prob = cp.Problem(objective, constraints)
             prob.solve(solver=cp.MOSEK, verbose=False)
 
@@ -156,18 +155,20 @@ class agentPPO(nn.Module):
         if action_t.ndim == 2:
             loops = action_t.shape[0]
             for i in range(loops):
-                action_i = self._enforce_single_safety(action_t[i], x[i], t)
+                action_i = self._enforce_single_safety(action_t_np[i], x[i], t)
                 l_actions.append(action_i)
-            action = np.array(l_action)
+            action = np.array(l_actions)[0].T
         else:
-            action = self._enforce_single_safety(action_t, x, t)
+            action = self._enforce_single_safety(action_t_np, x, t)
 
         return action
 
     def get_action_and_value(self, x, action=None):
         #x = self.construct_state(df_state, t) # Gets performed twice (also in main), can streamline later
         action_t, logprob, entropy, value = self._get_action_and_value(x, action)
-        action = self._enforce_safety(action_t, x, self.t )
+        action_np = self._enforce_safety(action_t, x, self.t )
+        action = torch.tensor(action_np).to(self.device).float()
+        #x = torch.tensor(np_x).to(self.device).float().reshape(1, self.envs["single_observation_space"])
         return action, logprob, entropy, value 
 
 
