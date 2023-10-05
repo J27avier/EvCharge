@@ -10,7 +10,7 @@ from tqdm import tqdm
 # User defined modules
 from EvGym.charge_world import ChargeWorldEnv
 #from EvGym.charge_agent import agentASAP, agentOptim, agentNoV2G, agentOracle
-from EvGym.charge_rl_agent import agentPPO
+from EvGym.charge_rl_agent import agentPPO, agentPPO_sepCvx
 from EvGym import config
 
 # Contracts
@@ -162,8 +162,8 @@ def main():
             }
 
     # Agents
-    if args.agent == "PPO":
-        agent = agentPPO(envs, df_price, device, pred_price_n=pred_price_n).to(device)
+    if args.agent == "PPO-sep":
+        agent = agentPPO_sepCvx(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
         optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
     else:
         raise Exception(f"Agent name not recognized")
@@ -172,7 +172,8 @@ def main():
     obs      = torch.zeros((args.num_steps, 1, envs["single_observation_space"]) ).to(device) # Manual concat
     actions  = torch.zeros((args.num_steps, 1, envs["single_action_space"])).to(device) # Manual concat
     logprobs = torch.zeros((args.num_steps, 1)).to(device)
-    rewards  = torch.zeros((args.num_steps, 1,  envs["single_action_space"])).to(device) # Manual concat
+    #rewards  = torch.zeros((args.num_steps, 1,  envs["single_action_space"])).to(device) # Manual concat
+    rewards  = torch.zeros((args.num_steps, 1)).to(device) # Manual concat
     dones    = torch.zeros((args.num_steps, 1)).to(device)
     values   = torch.zeros((args.num_steps, 1)).to(device)
 
@@ -196,6 +197,7 @@ def main():
     t = int(ts_min - 1)
     start_wallTime = time.time()
 
+    pbar = tqdm(total=int(ts_max-ts_min), smoothing=0.01)
     while t in range(int(ts_min)-1, int(ts_max)):
         #update = t % num_updates - ((ts_min - 1) % num_updates) + 1
         for update in range(1, num_updates+1):
@@ -206,20 +208,15 @@ def main():
 
             for step in range(0, args.num_steps):
                 t += 1
+                pbar.update(1)
+                print("", end="", flush=True)
+
                 obs[step] = next_obs
                 dones[step] = next_done
 
                 with torch.no_grad():
                     action, logprob, _, value = agent.get_action_and_value(next_obs)
                     values[step] = value.flatten()
-
-                print(f"""{action=},
-                        {action.shape=},
-                        {type(action)=},
-                        {actions=},
-                        {actions.shape=}
-                        {type(actions)=}
-                        """)
 
                 actions[step] = action
                 logprobs[step] = logprob
@@ -241,7 +238,8 @@ def main():
                         skips = int(usr_in)
                         usr_in = ""
                 else:
-                    print(f"{t=}/{ts_max}, {(t-ts_min)/(ts_max-ts_min)*100}%")
+                    pass
+                    #print(f"t={(t-ts_min)}/{(ts_max-ts_min)}, {(t-ts_min)/(ts_max-ts_min):.2%}%")
                 # print("Tracker: ts, chg_e_req, imbalance_bill, n_cars, avg_lax")
                 # print(world.tracker.chg_bill)
             with torch.no_grad():
@@ -264,8 +262,8 @@ def main():
             b_logprobs = logprobs.reshape(-1)
             b_actions = actions.reshape((-1, envs["single_action_space"]))
             b_advantages = advantages.reshape(-1)
+            b_returns = returns.reshape(-1)
             b_values = values.reshape(-1)
-
 
             # Optimizing the policy and value network
             b_inds = np.arange(args.batch_size)
@@ -286,13 +284,13 @@ def main():
                         approx_kl = ((ratio - 1) - logratio).mean()
                         clipfracs += [((ratio - 1.0).abs() > args.clip_coef).float().mean().item()]
 
-                    mb_advantages = b_advantages[mb_indsk]
+                    mb_advantages = b_advantages[mb_inds]
                     if args.norm_adv:
                         mb_advantages = (mb_advantages - mb_advantages.mean()) / (mb_advantages.std() + 1e-8)
 
                     # Policy loss
                     pg_loss1 = -mb_advantages * ratio
-                    pg_loss2 = -mb_advantages * torch.clamp(ratio, 1 -args.clip_coef, 1 + args.clip_coef)
+                    pg_loss2 = -mb_advantages * torch.clamp(ratio, 1 - args.clip_coef, 1 + args.clip_coef)
                     pg_loss = torch.max(pg_loss1, pg_loss2).mean()
 
                     # Value loss
@@ -347,6 +345,7 @@ def main():
         world.tracker.save_contracts(args, path=config.results_path)
 
     writer.close()
+    pbar.close()
 
 
 if __name__ == "__main__":

@@ -109,6 +109,8 @@ class agentOptim():
             Y_val = Y.value
 
             if self.myprint:
+                print("Y=", end=' ')
+                print(np.array2string(Y_val, separator=", "))
                 print("AC=", end=' ')
                 print(np.array2string(AC.value, separator=", "))
                 print("AD=", end=' ')
@@ -125,7 +127,11 @@ class agentOptim():
                 if car.idSess != -1:
                     action[i] = Y_val[j,0] # MPC
                     j += 1
-            
+
+            if self.myprint:
+                print("action=", end=' ')
+                print(np.array2string(action, separator=", "))
+
         return action
 
 class agentNoV2G():

@@ -237,7 +237,7 @@ class ChargeWorldEnv():
         self.power_t = np.zeros(self.max_cars)
         occ_spots = self.df_park["idSess"] != -1 # Occupied spots
         if (action[~occ_spots] != 0).any():
-            raise Exception(f"Agent is trying to charge empty spot. Spot {i} at time {self.t}")
+            raise Exception(f"Agent is trying to charge empty spot. Spots {action[~occ_spots]} at time {self.t}")
 
         action_clip = np.clip(action, -self.alpha_d / config.B, self.alpha_c / config.B)
         total_action = np.sum(action_clip)
@@ -331,7 +331,7 @@ class ChargeWorldEnv():
         for row in self.df_depart.itertuples(): # Get color for each row
             row_print = []
             color = ""
-            if isclose(row.soc_t, config.FINAL_SOC):
+            if isclose(row.soc_t, config.FINAL_SOC, abs_tol = config.tol):
                 color = Back.GREEN
             else:
                 color = Back.MAGENTA
