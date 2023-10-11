@@ -10,7 +10,7 @@ from tqdm import tqdm
 # User defined modules
 from EvGym.charge_world import ChargeWorldEnv
 #from EvGym.charge_agent import agentASAP, agentOptim, agentNoV2G, agentOracle
-from EvGym.charge_rl_agent import agentPPO, agentPPO_sepCvx
+from EvGym.charge_rl_agent import agentPPO_lay, agentPPO_sepCvx
 from EvGym import config
 
 # Contracts
@@ -165,6 +165,9 @@ def main():
     if args.agent == "PPO-sep":
         agent = agentPPO_sepCvx(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
         optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
+    elif args.agent == "PPO-lay":
+        agent = agentPPO_lay(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
+        optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
     else:
         raise Exception(f"Agent name not recognized")
 
@@ -200,7 +203,8 @@ def main():
     pbar = tqdm(total=int(ts_max-ts_min), smoothing=0.01)
     while t in range(int(ts_min)-1, int(ts_max)):
         #update = t % num_updates - ((ts_min - 1) % num_updates) + 1
-        for update in range(1, num_updates+1):
+        for update in range(1, num_updates+1): # TODO: Find a smarter way to do this 
+            if t > ts_max: break
             if args.anneal_lr:
                 frac = 1.0 - (update - 1.0) / num_updates
                 lrnow = frac * args.learning_rate
@@ -209,6 +213,11 @@ def main():
             for step in range(0, args.num_steps):
                 t += 1
                 pbar.update(1)
+                print("t", t)
+                print("Len df state",len(df_state))
+                print("Len agent get_prediction", len(agent._get_prediction(t, agent.pred_price_n)))
+                print("Calc state dim", len(df_state)*4 + len(agent._get_prediction(t, agent.pred_price_n)) + 1)
+                print("Const state dim", envs["single_observation_space"])
                 print("", end="", flush=True)
 
                 obs[step] = next_obs
