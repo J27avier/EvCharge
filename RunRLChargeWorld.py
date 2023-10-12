@@ -214,10 +214,10 @@ def main():
                 t += 1
                 pbar.update(1)
                 print("t", t)
-                print("Len df state",len(df_state))
-                print("Len agent get_prediction", len(agent._get_prediction(t, agent.pred_price_n)))
-                print("Calc state dim", len(df_state)*4 + len(agent._get_prediction(t, agent.pred_price_n)) + 1)
-                print("Const state dim", envs["single_observation_space"])
+#                print("Len df state",len(df_state))
+#                print("Len agent get_prediction", len(agent._get_prediction(t, agent.pred_price_n)))
+#                print("Calc state dim", len(df_state)*4 + len(agent._get_prediction(t, agent.pred_price_n)) + 1)
+#                print("Const state dim", envs["single_observation_space"])
                 print("", end="", flush=True)
 
                 obs[step] = next_obs
