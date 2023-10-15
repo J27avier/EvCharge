@@ -48,6 +48,7 @@ class Safe_Actor_Mean(nn.Module):
         x = self.activation2(x)
         x = self.linear3.forward(x)
         x = x * config.alpha_c / config.B
+        #print(f"pre_action_mean: {x=}")
         x = self.safetyL.forward(x, obs)
         return x
 
@@ -63,6 +64,7 @@ class agentPPO_lay(nn.Module):
                 layer_init(nn.Linear(64,1), std=1.0)
                 )
         self.actor_mean = Safe_Actor_Mean(envs, device)
+
         #self.actor_mean = nn.Sequential(
         #        layer_init(nn.Linear(envs["single_observation_space"], 64)),
         #        nn.Tanh(),
@@ -119,6 +121,7 @@ class agentPPO_lay(nn.Module):
         action_std = torch.exp(action_logstd) / 10
         probs = Normal(action_mean, action_std)
         if action is None:
+            #print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
             action_t = probs.sample()
             # Double safety
             action = self._clamp_bounds(x, action_t)
@@ -129,23 +132,33 @@ class agentPPO_lay(nn.Module):
     def _clamp_bounds(self, x, action_t):
         df_state, _, _ = self.state_to_df(x)
         idx_empty =  df_state[df_state["t_rem"] == 0].index
+        idx_nodis = df_state[df_state["t_dis"] == 0].index
 
-        min_lax = (config.FINAL_SOC - df_state["soc_t"] - config.alpha_c * config.eta_c * (df_state["t_rem"] - 1) / config.B).values
+        min_lax_chr = config.eta_c  *(config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B)
+        min_lax_dis = 1/config.eta_d*(config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B)
+
+        min_lax = np.maximum(min_lax_chr, min_lax_dis)
         min_lax[idx_empty] = 0
-        lower = np.maximum(min_lax, np.maximum(-df_state["soc_dis"].values, -config.alpha_d / config.B))
-        upper = config.alpha_c / config.B * np.ones((config.max_cars))
+
+        contract_dis = (-df_state["soc_dis"].values * config.eta_d)
+        contract_dis[idx_nodis] = 0
+
+        lower = np.maximum(min_lax, np.maximum(contract_dis, -config.alpha_d / config.B))
+        upper_soc = (config.FINAL_SOC - df_state["soc_t"]) / config.eta_c
+        upper = np.minimum(upper_soc,  config.alpha_c / config.B)
         Tlower = torch.tensor(lower)
         Tupper = torch.tensor(upper)
 
-        print(f"{action_t=}, {action_t.shape=}, {type(action_t)=}")
-        print(f"{Tlower=}, {Tlower.shape=}, {type(Tlower)=}")
-        print(f"{Tupper=}, {Tupper.shape=}, {type(Tupper)=}")
 
         action = torch.clamp(action_t, Tlower, Tupper)
 
         action[0, idx_empty] = 0
 
-        print(f"{action=}, {action.shape=}, {type(action)=}")
+        #print(f"{action_t=}, {action_t.shape=}, {type(action_t)=}")
+        #print(f"")
+        #print(f"{Tlower=}, {Tlower.shape=}, {type(Tlower)=}")
+        #print(f"{Tupper=}, {Tupper.shape=}, {type(Tupper)=}")
+        #print(f"{action=}, {action.shape=}, {type(action)=}")
 
         return action
 
