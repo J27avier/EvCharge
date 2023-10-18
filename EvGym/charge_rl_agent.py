@@ -64,16 +64,6 @@ class agentPPO_lay(nn.Module):
                 layer_init(nn.Linear(64,1), std=1.0)
                 )
         self.actor_mean = Safe_Actor_Mean(envs, device)
-
-        #self.actor_mean = nn.Sequential(
-        #        layer_init(nn.Linear(envs["single_observation_space"], 64)),
-        #        nn.Tanh(),
-        #        layer_init(nn.Linear(64,64)),
-        #        nn.Tanh(),
-        #        layer_init(nn.Linear(64, envs["single_action_space"]), std=0.01),
-        #        SafetyLayer(envs["single_action_space"], device)
-        #        )
-
         self.actor_logstd = nn.Parameter(torch.zeros(1, envs["single_action_space"]))
 
 
@@ -168,100 +158,6 @@ class agentPPO_lay(nn.Module):
         action, logprob, entropy, value = self._get_action_and_value(x, action)
         return action, logprob, entropy, value 
 
-#    def _enforce_single_safety(self, action_t, x, t):
-#        df_state, price_pred, hour = self.state_to_df(x, t)
-#        action = np.zeros((config.max_cars,1))
-#
-#        if self.myprint:
-#            str_price_pred = np.array2string(price_pred, separator=", ")
-#            print(f"{str_price_pred=}, {t=}")
-#            print(f"{action_t=}, {action_t.shape=}, {type(action_t)}")
-#
-#        if any(df_state["t_rem"] > 0):
-#            # We only need lax constraint
-#            constraints = []
-#            AC =  cp.Variable((config.max_cars, 1))
-#            AD = cp.Variable((config.max_cars, 1))
-#            Y = cp.Variable((config.max_cars, 1))
-#            SOC = cp.Variable((config.max_cars, 2), nonneg=True)
-#            LAX = cp.Variable((config.max_cars), nonneg = True)
-#
-#            constraints += [SOC  >= 0]
-#            constraints += [SOC <= config.FINAL_SOC]
-#
-#            constraints += [SOC[:,0] ==  df_state["soc_t"]]
-#            
-#            #Charging limits
-#            constraints += [AC >= 0]
-#            constraints += [AC <= config.alpha_c / config.B]
-#
-#            # Discharging limits
-#            constraints += [AD <= 0]
-#            constraints += [AD >= -config.alpha_d / config.B]
-#
-#            # Discharging ammount
-#            constraints += [ - cp.sum(AD, axis=1)/ config.eta_d <= df_state["soc_dis"]]
-#
-#            for i, car in enumerate(df_state.itertuples()):
-#                if car.t_rem == 0:
-#                    constraints += [AD[i,:] == 0]
-#                    constraints += [AC[i,:] == 0]
-#                    constraints += [LAX[i] == 0]
-#                else:
-#                    constraints += [SOC[i,1] == SOC[i,0] + AC[i,0] * config.eta_c + AD[i,0] / config.eta_d]
-#                    constraints += [LAX[i] == (car.t_rem-1) - ((config.FINAL_SOC - SOC[i,1])*config.B) / 
-#                                    (config.alpha_c * config.eta_c)] 
-#                    if car.t_dis <= 0:
-#                        constraints += [AD[i,0] == 0]
-#
-#                    constraints += [LAX[i] >= 0]
-#            constraints += [Y == AC + AD]
-#
-#            #objective = cp.Minimize(cp.sum_squares(Y[:,0] - action_t)/config.max_cars)
-#            objective = cp.Minimize(cp.sum(cp.abs(Y[:,0] - action_t))/config.max_cars)
-#            prob = cp.Problem(objective, constraints)
-#            prob.solve(solver=cp.ECOS, verbose=False,  max_iters = 10_000_000)
-#            #prob.solve(solver=cp.MOSEK, verbose=False)
-#            #prob.solve(solver=cp.MOSEK, mosek_params = {'MSK_IPAR_NUM_THREADS': 8, 'MSK_IPAR_BI_MAX_ITERATIONS': 2_000_000, "MSK_IPAR_INTPNT_MAX_ITERATIONS": 800}, verbose=False)  
-#
-#            if prob.status != 'optimal':
-#                print(f"{prob.status} Optimal solution not found")
-#                raise Exception("Optimal schedule not found")
-#
-#            best_cost = prob.value
-#            action = Y.value
-#
-#
-#            if self.myprint:
-#                print(f"{action[:,0]=}, {action.shape=}, {type(action)=}")
-#                print(f"{AC.value[:,0]=}")
-#                print(f"{AD.value[:,0]=}")
-#
-#        return action
-#
-#    def _enforce_safety(self, action_t, x, t):
-#        action_t_np = action_t.cpu().numpy()
-#        l_actions = []
-#
-#        if False:
-#            print(f"""---action_t---
-#                    {action_t=}
-#                    {type(action_t)=}
-#                    {action_t.shape=}, {action_t.shape[0]=}, {type(action_t.shape[0])=},
-#                    {action_t.ndim=}
-#                    {'-'*6}""")
-#        
-#        # Account for batches
-#        if action_t.ndim == 2:
-#            loops = action_t.shape[0]
-#            for i in range(loops):
-#                action_i = self._enforce_single_safety(action_t_np[i], x[i], t)
-#                l_actions.append(action_i)
-#            action = np.array(l_actions)[0].T
-#        else:
-#            action = self._enforce_single_safety(action_t_np, x, t)
-#
-#        return action
 
 class agentPPO_sepCvx(nn.Module):
     """
