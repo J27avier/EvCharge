@@ -19,11 +19,6 @@ class SafetyLayer(torch.nn.Module):
         super(SafetyLayer, self).__init__()
         self.device = device
         
-        # Input values
-        #self.t_rem   = torch.nn.Parameter(torch.zeros(D)).to(self.device).float() 
-        #self.soc_t   = torch.nn.Parameter(torch.zeros(D)).to(self.device).float()
-        #self.t_dis   = torch.nn.Parameter(torch.zeros(D)).to(self.device).float()
-        #self.soc_dis = torch.nn.Parameter(torch.zeros(D)).to(self.device).float()
         # Data
         self.np_t_rem = np.zeros(D)
         self.np_t_dis = np.zeros(D)
@@ -46,12 +41,6 @@ class SafetyLayer(torch.nn.Module):
         # Constraints
         constraints = []
 
-        # Initializing
-        #constraints += [t_rem   ==   self.t_rem.detach().numpy()]
-        #constraints += [soc_t   ==   self.soc_t.detach().numpy()]
-        #constraints += [t_dis   ==   self.t_dis.detach().numpy()]
-        #constraints += [soc_dis == self.soc_dis.detach().numpy()]
-
         # SOC
         constraints += [SOC >= 0]
         constraints += [SOC <= config.FINAL_SOC]
@@ -67,20 +56,6 @@ class SafetyLayer(torch.nn.Module):
 
         # Discharging ammount
         constraints += [ -cp.sum(AD, axis = 1) / config.eta_d <= soc_dis ]
-        
-        #for i in range(config.max_cars):
-        #    if self.np_t_rem[i] == 0:
-        #        constraints += [AD[i,:] == 0]
-        #        constraints += [AC[i,:] == 0]
-        #        constraints += [LAX[i] == 0]
-        #    else:
-        #        constraints += [SOC[i,1] == SOC[i, 0] + AC[i,0] * config.eta_c + AD[i,0] / config.eta_d]
-        #        constraints += [LAX[i] == (t_rem[i]-1) - ((config.FINAL_SOC - SOC[i,1]) * config.B) /
-        #                        (config.alpha_c * config.eta_c)]
-        #        constraints += [LAX[i] >= 0]
-
-        #        if self.np_t_dis[i] <= 0:
-        #            constraints += [AD[i,0] == 0]
 
         for i in range(config.max_cars):
             # # If t_rem is 0, don't charge or discharge
@@ -94,7 +69,6 @@ class SafetyLayer(torch.nn.Module):
                 constraints += [AC[i,:] == 0]
                 constraints += [LAX[i] == 0]
             else:
-            #if self.np_t_rem[i] != 0:
                 constraints += [SOC[i,1] == SOC[i, 0] + AC[i,0] * config.eta_c + AD[i,0] / config.eta_d]
                 constraints += [LAX[i] == (t_rem[i]-1) - ((config.FINAL_SOC - SOC[i,1]) * config.B) /
                                 (config.alpha_c * config.eta_c)]

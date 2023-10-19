@@ -231,7 +231,8 @@ def main():
                 logprobs[step] = logprob
 
                 #-------
-                df_state, reward, done, info = world.step(action.cpu().numpy().squeeze())
+                #df_state, reward, done, info = world.step(action.cpu().numpy().squeeze())
+                df_state, reward, done, info = world.step(agent.action_to_env(action))
                 done = np.array([done])
                 assert t == info['t'], "Main time and env time out of sync"
                 rewards[step] = torch.tensor(reward).to(device).view(-1)
