@@ -264,7 +264,6 @@ class agentPPO_lay(nn.Module):
 
 
         action = torch.clamp(action_t, Tlower, Tupper)
-
         action[0, idx_empty] = 0
 
         #print(f"{action_t=}, {action_t.shape=}, {type(action_t)=}")
