@@ -80,6 +80,27 @@ class agentPPO_agg(nn.Module):
 
     def df_to_state(self, df_state, t):
         # Aggregate
+        # Get occ spots (Nt)
+        occ_spots = df_state["t_rem"] > 0 # Occupied spots
+        num_cars = occ_spots.sum()
+
+        # Get (ND) 
+        num_cars_dis = (df_state["t_dis"] > 0).sum()
+        # Sum Soc
+        sum_soc = df_state[occ_spots]["soc_t"].sum()
+        # Sum SOC_rem
+        sum_diff_soc = num_cars * config.FINAL_SOC - sum_soc
+
+        # Sum soc_dis
+        sum_soc_dis = df_state["soc_dis"].sum()
+        # Sum Y_min
+        hat_y_lax = config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B
+        y_lax = np.minimum(hat_y_lax * config.eta_c, hat_y_lax / copnfig.eta_d)
+        sum_y_lax = y_lax.sum()
+
+        # p25, p50, p75, max, of soc_t, t_rem, soc_dis, t_dis
+
+
         state_cars = df_state[["soc_t", "t_rem", "soc_dis", "t_dis"]].values.flatten().astype(np.float64)
         pred_price = self._get_prediction(t, self.pred_price_n)
         hour = np.array([t % 24])
@@ -111,6 +132,7 @@ class agentPPO_agg(nn.Module):
         return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), value 
 
     def _clamp_bounds(self, x, action_t):
+        # Aggregate clamp
         df_state, _, _ = self.state_to_df(x)
         idx_empty =  df_state[df_state["t_rem"] == 0].index
         idx_nodis = df_state[df_state["t_dis"] == 0].index
@@ -134,12 +156,6 @@ class agentPPO_agg(nn.Module):
         action = torch.clamp(action_t, Tlower, Tupper)
 
         action[0, idx_empty] = 0
-
-        #print(f"{action_t=}, {action_t.shape=}, {type(action_t)=}")
-        #print(f"")
-        #print(f"{Tlower=}, {Tlower.shape=}, {type(Tlower)=}")
-        #print(f"{Tupper=}, {Tupper.shape=}, {type(Tupper)=}")
-        #print(f"{action=}, {action.shape=}, {type(action)=}")
 
         return action
 

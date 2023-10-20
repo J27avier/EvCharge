@@ -85,6 +85,9 @@ c2 = 0.1
 kappa1 = 0.1
 kappa2 = 0.5
 
+# Aggregate state cols
+
+
 # For synthetic data
 sdg_pot = 1.8
 sdg_norm = 0.28
@@ -100,3 +103,5 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
+
