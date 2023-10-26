@@ -85,19 +85,41 @@ class agentPPO_agg(nn.Module):
 
         # Get (ND) 
         num_cars_dis = (df_state["t_dis"] > 0).sum()
+
         # Sum Soc
         sum_soc = df_state[occ_spots]["soc_t"].sum()
+
         # Sum SOC_rem
         sum_diff_soc = num_cars * config.FINAL_SOC - sum_soc
 
         # Sum soc_dis
         sum_soc_dis = df_state["soc_dis"].sum()
+
         # Sum Y_min
-        hat_y_lax = config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B
-        y_lax = np.minimum(hat_y_lax * config.eta_c, hat_y_lax / copnfig.eta_d)
-        sum_y_lax = y_lax.sum()
+        hat_y_low = config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B
+        y_low = np.minimum(hat_y_low * config.eta_c, hat_y_low / copnfig.eta_d)
+        y_low[~occ_spots] = 0
+
+        sum_y_low = y_low.sum()
 
         # p25, p50, p75, max, of soc_t, t_rem, soc_dis, t_dis
+        p_soc_t = df_state[occ_spots]["soc_t"].quantile([0, 0.25, 0.5, 0.75, 1])
+        p_t_rem = df_state[occ_spots]["t_rem"].quantile([0, 0.25, 0.5, 0.75, 1])
+        p_soc_dis = df_state[occ_spots]["soc_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
+        p_t_dis = df_state[occ_spots]["t_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
+
+
+        # Bounds
+        self.lower = np.maximum(y_low, np.maximum(-config.alpha_d/config.B,
+                                                  -df_state["soc_dis"]))
+        self.lower[~occ_spots] = 0
+
+        upper_soc = (config.FINAL_SOC - df_state["soc_t"]) / config.eta_c
+        self.upper = np.minimum(upper_soc,  config.alpha_c / config.B)
+        self.upper[~occ_spots] = 0
+
+        lower_sum = self.lower.sum()
+        upper_sum = self.upper.sum()
 
 
         state_cars = df_state[["soc_t", "t_rem", "soc_dis", "t_dis"]].values.flatten().astype(np.float64)
@@ -262,16 +284,21 @@ class agentPPO_lay(nn.Module):
         idx_empty =  df_state[df_state["t_rem"] == 0].index
         idx_nodis = df_state[df_state["t_dis"] == 0].index
 
-        min_lax_chr = config.eta_c  *(config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B)
-        min_lax_dis = 1/config.eta_d*(config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B)
+        #min_lax_chr = config.eta_c  *(config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B)
+        #min_lax_dis = 1/config.eta_d*(config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B)
+        hat_y_low = config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B
 
-        min_lax = np.maximum(min_lax_chr, min_lax_dis)
-        min_lax[idx_empty] = 0
+        #min_lax = np.maximum(min_lax_chr, min_lax_dis)
+        y_low = np.maximum(hat_y_low / config.eta_c, hat_y_low * confing.eta_d)
+
+        #min_lax[idx_empty] = 0
+        y_low[idx_empty] = 0
 
         contract_dis = (-df_state["soc_dis"].values * config.eta_d)
         contract_dis[idx_nodis] = 0
 
-        lower = np.maximum(min_lax, np.maximum(contract_dis, -config.alpha_d / config.B))
+        #lower = np.maximum(min_lax, np.maximum(contract_dis, -config.alpha_d / config.B))
+        lower = np.maximum(y_low, np.maximum(contract_dis, -config.alpha_d / config.B))
         upper_soc = (config.FINAL_SOC - df_state["soc_t"]) / config.eta_c
         upper = np.minimum(upper_soc,  config.alpha_c / config.B)
         Tlower = torch.tensor(lower)
