@@ -10,7 +10,7 @@ from tqdm import tqdm
 # User defined modules
 from EvGym.charge_world import ChargeWorldEnv
 #from EvGym.charge_agent import agentASAP, agentOptim, agentNoV2G, agentOracle
-from EvGym.charge_rl_agent import agentPPO_lay, agentPPO_sepCvx
+from EvGym.charge_rl_agent import agentPPO_lay, agentPPO_sepCvx, agentPPO_agg
 from EvGym import config
 
 # Contracts
@@ -154,6 +154,7 @@ def main():
     torch.manual_seed(args.seed)
     torch.backends.cudnn.deterministic = args.torch_deterministic
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
+    print(f"{device=}")
 
     # Agent info
     pred_price_n = 8 # Could be moved to argument
@@ -165,9 +166,16 @@ def main():
     if args.agent == "PPO-sep":
         agent = agentPPO_sepCvx(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
         optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
+
     elif args.agent == "PPO-lay":
         agent = agentPPO_lay(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
         optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
+
+    elif args.agent == "PPO-agg":
+        envs["single_observation_space"] = 37
+        agent = agentPPO_agg(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
+        optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
+
     else:
         raise Exception(f"Agent name not recognized")
 
@@ -200,7 +208,7 @@ def main():
     t = int(ts_min - 1)
     start_wallTime = time.time()
 
-    pbar = tqdm(total=int(ts_max-ts_min), smoothing=0.01)
+    pbar = tqdm(total=int(ts_max-ts_min), smoothing=0)
     while t in range(int(ts_min)-1, int(ts_max)):
         #update = t % num_updates - ((ts_min - 1) % num_updates) + 1
         for update in range(1, num_updates+1): # TODO: Find a smarter way to do this 
@@ -231,7 +239,7 @@ def main():
                 logprobs[step] = logprob
 
                 #-------
-                #df_state, reward, done, info = world.step(action.cpu().numpy().squeeze())
+                #df_state, reward, done, info = world.step(action.cpu().numpy().squeeze()) # previous
                 df_state, reward, done, info = world.step(agent.action_to_env(action))
                 done = np.array([done])
                 assert t == info['t'], "Main time and env time out of sync"

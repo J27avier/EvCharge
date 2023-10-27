@@ -14,6 +14,58 @@ import torch.optim as optim
 from torch.distributions.normal import Normal
 from torch.utils.tensorboard import SummaryWriter
 
+class SafetyLayerAgg(torch.nn.Module):
+    def __init__(self, D, device):
+        super(SafetyLayerAgg, self).__init__()
+        self.device = device
+
+        # Variables
+        Y = cp.Variable(1)
+
+        # Parameters
+        Y_hat = cp.Parameter(1)
+        Y_lower = cp.Parameter(1)
+        Y_upper = cp.Parameter(1)
+
+        # Constraints
+        constraints = []
+
+        # SOC
+        constraints += [Y >= Y_lower]
+        constraints += [Y <= Y_upper]
+        
+        objective = cp.Minimize(cp.square(Y - Y_hat))
+        prob = cp.Problem(objective, constraints)
+
+        self.layer = CvxpyLayer(prob, [Y_hat, Y_lower, Y_upper], [Y])
+
+        #self.solver_args = {"solve_method": "ECOS", "max_iters": 100_000_000} 
+        self.solver_args = {"solve_method": "SCS", "max_iters": 1_000} 
+
+    def forward(self, Y_hat, obs):
+
+        #print(f"{Y_hat=}, {Y_hat.shape=}, {Y_hat.ndim=}")
+        #print(f"{Y_lower=}, {Y_lower.shape=}, {Y_lower.ndim=}")
+
+        if Y_hat.ndim == 2:
+            batch_size = Y_hat.shape[0]
+            Y_lower = obs[:,0].unsqueeze(1)
+            Y_upper = obs[:,1].unsqueeze(1)
+            #print(f"{Y_hat=}, {Y_hat.shape=}")
+            #print(f"{Y_lower}, {Y_lower.shape=}")
+            #print(f"{Y_upper}, {Y_upper.shape=}")
+            #print(f"{obs.shape=}")
+
+            action = self.layer(Y_hat, Y_lower, Y_upper, solver_args = self.solver_args)[0] 
+            return action#.squeeze(dim=2)
+        else:
+            Y_lower = obs[0].unsqueeze(0)
+            Y_upper = obs[1].unsqueeze(0)
+            action = self.layer(Y_hat, Y_lower, Y_upper, solver_args = self.solver_args)[0]
+            action = action.unsqueeze(dim=0)
+            #print(f"{action=}, {action.shape=}, {action.ndim=}")
+            return action
+
 class SafetyLayer(torch.nn.Module):
     def __init__(self, D, device):
         super(SafetyLayer, self).__init__()
@@ -91,7 +143,8 @@ class SafetyLayer(torch.nn.Module):
         self.solver_args = {"solve_method": "SCS", "max_iters": 1_000} 
 
     def forward(self, x, obs):
-        np_obs = obs.detach().numpy()
+        #np_obs = obs.detach().numpy()
+        np_obs = obs.detach().cpu().numpy()
         data_state = np_obs[0, :config.max_cars*4]
         df_state = pd.DataFrame(data = data_state.reshape((config.max_cars, 4)), columns = ["soc_t", "t_rem", "soc_dis", "t_dis"])
 
@@ -115,6 +168,7 @@ class SafetyLayer(torch.nn.Module):
             return action.squeeze(dim=2)
         else:
             return self.layer(x, t_rem, soc_t, t_dis, soc_dis, solver_args = self.solver_args)[2]
+
  
 # Cvxpylayers has some warnings, but ok
 class HiddenPrints:

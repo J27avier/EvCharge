@@ -104,4 +104,15 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+def ic(x, options=""):
+    p_str = ""
+    if "f" in options:
+        p_str += f"{x:.3f=}"
+    else:
+        p_str += f"{x=}"
 
+    if "s" in options: p_str += f", {x.shape=}"
+    if "t" in options: p_str += f", {type(x)=}"
+
+    print(p_str)
+    

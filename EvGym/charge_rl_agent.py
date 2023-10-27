@@ -14,22 +14,43 @@ import torch.optim as optim
 from torch.distributions.normal import Normal
 from torch.utils.tensorboard import SummaryWriter
 
-from .safety_layer import SafetyLayer
+from .safety_layer import SafetyLayer, SafetyLayerAgg
 
 def layer_init(layer, std=np.sqrt(2), bias_const =0.0):
     torch.nn.init.orthogonal_(layer.weight, std)
     torch.nn.init.constant_(layer.bias, bias_const)
     return layer
 
+# Not needed
+#def bounds_from_obs(obs):
+#    np_obs = obs.cpu().numpy()
+#    data_state = np_obs[0, :config.max_cars*4]
+#    df_state = pd.DataFrame(data = data_state.reshape((config.max_cars, 4)), columns = ["soc_t", "t_rem", "soc_dis", "t_dis"])
+#
+#    occ_spots = df_state["t_rem"] > 0 # Occupied spots
+#
+#    hat_y_low = config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B
+#    y_low = np.minimum(hat_y_low * config.eta_c, hat_y_low / copnfig.eta_d)
+#    y_low[~occ_spots] = 0
+#
+#    lower = np.maximum(y_low, np.maximum(-config.alpha_d/config.B,
+#                                              -df_state["soc_dis"]))
+#    lower[~occ_spots] = 0
+#
+#    upper_soc = (config.FINAL_SOC - df_state["soc_t"]) / config.eta_c
+#    upper = np.minimum(upper_soc,  config.alpha_c / config.B)
+#    upper[~occ_spots] = 0
+
+
 class Safe_Actor_Mean_Agg(nn.Module):
     def __init__(self, envs, device):
-        super(Safe_Actor_Mean, self).__init__()
+        super(Safe_Actor_Mean_Agg, self).__init__()
         self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], 64))
         self.activation1 = nn.Tanh()
         self.linear2 = layer_init(nn.Linear(64, 64))
         self.activation2 = nn.Tanh()
-        self.linear3 = layer_init(nn.Linear(64, envs["single_action_space"]), std=0.01)
-        self.safetyL = SafetyLayer(envs["single_action_space"], device)
+        self.linear3 = layer_init(nn.Linear(64, 1), std=0.01)
+        self.safetyL = SafetyLayerAgg(1, device)
 
     def forward(self, x):
         obs = x.detach().clone()
@@ -38,8 +59,6 @@ class Safe_Actor_Mean_Agg(nn.Module):
         x = self.linear2.forward(x)
         x = self.activation2(x)
         x = self.linear3.forward(x)
-        x = x * config.alpha_c / config.B
-        #print(f"pre_action_mean: {x=}")
         x = self.safetyL.forward(x, obs)
         return x
 
@@ -53,8 +72,8 @@ class agentPPO_agg(nn.Module):
                 nn.Tanh(),
                 layer_init(nn.Linear(64,1), std=1.0)
                 )
-        self.actor_mean = Safe_Actor_Mean(envs, device)
-        self.actor_logstd = nn.Parameter(torch.zeros(1, envs["single_action_space"]))
+        self.actor_mean = Safe_Actor_Mean_Agg(envs, device)
+        self.actor_logstd = nn.Parameter(torch.zeros(1,1))
 
         # Ev parameters
         self.max_cars = max_cars
@@ -63,7 +82,6 @@ class agentPPO_agg(nn.Module):
         self.envs = envs
         self.pred_price_n = pred_price_n
         self.myprint = myprint
-        
 
     def get_value(self, x):
         return self.critic(x)
@@ -84,7 +102,8 @@ class agentPPO_agg(nn.Module):
         num_cars = occ_spots.sum()
 
         # Get (ND) 
-        num_cars_dis = (df_state["t_dis"] > 0).sum()
+        cont_spots = df_state["t_dis"] > 0 # Spots with contracts
+        num_cars_dis = (cont_spots).sum() 
 
         # Sum Soc
         sum_soc = df_state[occ_spots]["soc_t"].sum()
@@ -93,14 +112,19 @@ class agentPPO_agg(nn.Module):
         sum_diff_soc = num_cars * config.FINAL_SOC - sum_soc
 
         # Sum soc_dis
-        sum_soc_dis = df_state["soc_dis"].sum()
+        sum_soc_dis = df_state[cont_spots]["soc_dis"].sum()
 
         # Sum Y_min
         hat_y_low = config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B
-        y_low = np.minimum(hat_y_low * config.eta_c, hat_y_low / copnfig.eta_d)
+        y_low = np.maximum(hat_y_low * config.eta_c, hat_y_low / config.eta_d)
         y_low[~occ_spots] = 0
 
         sum_y_low = y_low.sum()
+
+        # Lax
+        lax = df_state["t_rem"] - (config.FINAL_SOC - df_state["soc_t"])*config.B / (config.alpha_c*config.eta_c)
+        lax[~occ_spots] = 0
+        sum_lax = lax.sum()
 
         # p25, p50, p75, max, of soc_t, t_rem, soc_dis, t_dis
         p_soc_t = df_state[occ_spots]["soc_t"].quantile([0, 0.25, 0.5, 0.75, 1])
@@ -108,29 +132,47 @@ class agentPPO_agg(nn.Module):
         p_soc_dis = df_state[occ_spots]["soc_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
         p_t_dis = df_state[occ_spots]["t_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
 
-
         # Bounds
-        self.lower = np.maximum(y_low, np.maximum(-config.alpha_d/config.B,
-                                                  -df_state["soc_dis"]))
+        dis_lim = np.zeros(config.max_cars)
+        dis_lim[cont_spots] += -df_state[cont_spots]["soc_dis"]*config.eta_d
+
+        self.lower = np.maximum(y_low, np.maximum(-config.alpha_d/config.B, dis_lim))
         self.lower[~occ_spots] = 0
 
         upper_soc = (config.FINAL_SOC - df_state["soc_t"]) / config.eta_c
         self.upper = np.minimum(upper_soc,  config.alpha_c / config.B)
         self.upper[~occ_spots] = 0
 
-        lower_sum = self.lower.sum()
-        upper_sum = self.upper.sum()
+        self.sum_lower = self.lower.sum()
+        self.sum_upper = self.upper.sum()
 
+        state_cars = np.concatenate(([self.sum_lower],
+                                     [self.sum_upper],
+                                     [num_cars],
+                                     [num_cars_dis],
+                                     [sum_soc],
+                                     [sum_soc_dis],
+                                     [sum_y_low],
+                                     [sum_lax],
+                                     p_soc_t,
+                                     p_t_rem,
+                                     p_soc_dis,
+                                     p_t_dis)) 
+        # Note, all the "sums"  can be normalized
+        state_cars = np.nan_to_num(state_cars)
+        
 
-        state_cars = df_state[["soc_t", "t_rem", "soc_dis", "t_dis"]].values.flatten().astype(np.float64)
         pred_price = self._get_prediction(t, self.pred_price_n)
         hour = np.array([t % 24])
-        np_x = np.concatenate((state_cars, pred_price, hour))
-        x = torch.tensor(np_x).to(self.device).float().reshape(1, self.envs["single_observation_space"])
+        np_x = np.concatenate((state_cars, pred_price, hour)).astype(float)
+        #print(f"{np_x=}, {np_x.shape=}, {type(np_x)=}")
+        x = torch.tensor(np_x).to(self.device).float()#reshape(1, self.envs["single_observation_space"])
+        #print(f"{x=}, {x.shape=}")
         self.t = t
         return x
 
     def state_to_df(self, obs):
+        raise Exception("Not valid in aggregate")
         np_obs = obs.cpu().numpy()
         data_state = np_obs[0, :config.max_cars*4]
         df_state_simpl = pd.DataFrame(data = data_state.reshape((config.max_cars, 4)), columns = ["soc_t", "t_rem", "soc_dis", "t_dis"])
@@ -147,48 +189,36 @@ class agentPPO_agg(nn.Module):
             #print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
             action_t = probs.sample()
             # Double safety
-            action = self._clamp_bounds(x, action_t)
+            action = self._clamp_bounds(action_t) # before, also needed x
 
         value = self.critic(x)
         return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), value 
 
-    def _clamp_bounds(self, x, action_t):
+    def _clamp_bounds(self, action_t):
         # Aggregate clamp
-        df_state, _, _ = self.state_to_df(x)
-        idx_empty =  df_state[df_state["t_rem"] == 0].index
-        idx_nodis = df_state[df_state["t_dis"] == 0].index
-
-        min_lax_chr = config.eta_c  *(config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B)
-        min_lax_dis = 1/config.eta_d*(config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B)
-
-        min_lax = np.maximum(min_lax_chr, min_lax_dis)
-        min_lax[idx_empty] = 0
-
-        contract_dis = (-df_state["soc_dis"].values * config.eta_d)
-        contract_dis[idx_nodis] = 0
-
-        lower = np.maximum(min_lax, np.maximum(contract_dis, -config.alpha_d / config.B))
-        upper_soc = (config.FINAL_SOC - df_state["soc_t"]) / config.eta_c
-        upper = np.minimum(upper_soc,  config.alpha_c / config.B)
-        Tlower = torch.tensor(lower)
-        Tupper = torch.tensor(upper)
-
+        Tlower = torch.tensor(self.sum_lower)
+        Tupper = torch.tensor(self.sum_upper)
 
         action = torch.clamp(action_t, Tlower, Tupper)
-
-        action[0, idx_empty] = 0
-
         return action
-
 
     def get_action_and_value(self, x,  action=None):
         # Right now it doesn't do anything, but left for consistency with the other method
         action, logprob, entropy, value = self._get_action_and_value(x, action)
         return action, logprob, entropy, value 
 
-    def action_to_env(self, action):
-        # Disaggregate
-        return action.cpu().numpy().squeeze()
+    def action_to_env(self, action_agg):
+        Y_tot = action_agg.cpu().numpy().squeeze()
+        action = self.lower.copy()
+
+        range_y  = self.upper - self.lower
+        if range_y.sum() > 0:
+            n_range_y = range_y  / range_y.sum()
+            action  += (Y_tot - self.lower.sum()) * n_range_y
+
+        #print(f"{action_agg=}")
+        #print(f"{action=}, {action.shape=}, {type(action)=}")
+        return action
 
 class Safe_Actor_Mean(nn.Module):
     def __init__(self, envs, device):
@@ -289,7 +319,7 @@ class agentPPO_lay(nn.Module):
         hat_y_low = config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B
 
         #min_lax = np.maximum(min_lax_chr, min_lax_dis)
-        y_low = np.maximum(hat_y_low / config.eta_c, hat_y_low * confing.eta_d)
+        y_low = np.maximum(hat_y_low / config.eta_c, hat_y_low * config.eta_d)
 
         #min_lax[idx_empty] = 0
         y_low[idx_empty] = 0
@@ -301,21 +331,13 @@ class agentPPO_lay(nn.Module):
         lower = np.maximum(y_low, np.maximum(contract_dis, -config.alpha_d / config.B))
         upper_soc = (config.FINAL_SOC - df_state["soc_t"]) / config.eta_c
         upper = np.minimum(upper_soc,  config.alpha_c / config.B)
-        Tlower = torch.tensor(lower)
-        Tupper = torch.tensor(upper)
-
+        Tlower = torch.tensor(lower).to(self.device)
+        Tupper = torch.tensor(upper).to(self.device)
 
         action = torch.clamp(action_t, Tlower, Tupper)
         action[0, idx_empty] = 0
 
-        #print(f"{action_t=}, {action_t.shape=}, {type(action_t)=}")
-        #print(f"")
-        #print(f"{Tlower=}, {Tlower.shape=}, {type(Tlower)=}")
-        #print(f"{Tupper=}, {Tupper.shape=}, {type(Tupper)=}")
-        #print(f"{action=}, {action.shape=}, {type(action)=}")
-
         return action
-
 
     def get_action_and_value(self, x,  action=None):
         # Right now it doesn't do anything, but left for consistency with the other method
