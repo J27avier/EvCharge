@@ -14,11 +14,14 @@ import torch.optim as optim
 from torch.distributions.normal import Normal
 from torch.utils.tensorboard import SummaryWriter
 
+torch.set_printoptions(linewidth=1000, sci_mode=False)
+
 from .safety_layer import SafetyLayer, SafetyLayerAgg
 from .charge_utils import bounds_from_obs
 
-def layer_init(layer, std=np.sqrt(2), bias_const =0.0):
-    torch.nn.init.orthogonal_(layer.weight, std)
+def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
+    #torch.nn.init.orthogonal_(layer.weight, std)
+    torch.nn.init.normal_(layer.weight, 1, std)
     torch.nn.init.constant_(layer.bias, bias_const)
     return layer
 
@@ -161,6 +164,8 @@ class agentPPO_agg(nn.Module):
         return df_state_simpl, pred_price, hour
 
     def _get_action_and_value(self, x,  action=None):
+        #print(f"-- Agent step --")
+        #print(f"{x.shape=}")
         action_mean = self.actor_mean(x)
         action_logstd = self.actor_logstd.expand_as(action_mean)
         action_std = torch.exp(action_logstd) / 10
@@ -188,6 +193,7 @@ class agentPPO_agg(nn.Module):
         return action, logprob, entropy, value 
 
     def action_to_env(self, action_agg):
+        # Dissagregation
         Y_tot = action_agg.cpu().numpy().squeeze()
         action = self.lower.copy()
 
@@ -196,6 +202,10 @@ class agentPPO_agg(nn.Module):
             n_range_y = range_y  / range_y.sum()
             action  += (Y_tot - self.lower.sum()) * n_range_y
 
+        #print("-- double clip --")
+        #print(f"{self.lower=}, {self.lower.shape=}, {type(self.lower)=}")
+        #print(f"{self.upper=}, {self.upper.shape=}, {type(self.upper)=}")
+        #input()
         #print(f"{action_agg=}")
         #print(f"{action=}, {action.shape=}, {type(action)=}")
         return action
@@ -235,7 +245,6 @@ class agentPPO_lay(nn.Module):
                 )
         self.actor_mean = Safe_Actor_Mean(envs, device)
         self.actor_logstd = nn.Parameter(torch.zeros(1, envs["single_action_space"]))
-
 
         # Ev parameters
         self.max_cars = max_cars
@@ -290,24 +299,15 @@ class agentPPO_lay(nn.Module):
         return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), value 
 
     def _clamp_bounds(self, x, action_t):
-        #df_state, _, _ = self.state_to_df(x)
-        #idx_empty =  df_state[df_state["t_rem"] == 0].index
-        #idx_nodis = df_state[df_state["t_dis"] == 0].index
-        #hat_y_low = config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B
-        #y_low = np.maximum(hat_y_low / config.eta_c, hat_y_low * config.eta_d)
-        #y_low[idx_empty] = 0
-        #contract_dis = (-df_state["soc_dis"].values * config.eta_d)
-        #contract_dis[idx_nodis] = 0
-        #lower = np.maximum(y_low, np.maximum(contract_dis, -config.alpha_d / config.B))
-        #upper_soc = (config.FINAL_SOC - df_state["soc_t"]) / config.eta_c
-        #upper = np.minimum(upper_soc,  config.alpha_c / config.B)
         lower, upper = bounds_from_obs(x)
 
         Tlower = torch.tensor(lower).to(self.device)
         Tupper = torch.tensor(upper).to(self.device)
 
         action = torch.clamp(action_t, Tlower, Tupper)
-        action[0, idx_empty] = 0
+        ##action[0, idx_empty] = 0
+        #print("--- Double clip ---")
+        #print(f"{action=}, {action.shape=}, {action.ndim=}")
 
         return action
 
@@ -317,7 +317,7 @@ class agentPPO_lay(nn.Module):
         return action, logprob, entropy, value 
 
     def action_to_env(self, action):
-        input()
+        #input()
         return action.cpu().numpy().squeeze()
 
 

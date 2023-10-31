@@ -38,7 +38,8 @@ class ExpTracker():
         
     def save_contracts(self, args, path="Results/results_log/"):
         df_contract_log = pd.DataFrame(self.contract_log, columns = self.contract_log_cols)
-        df_contract_log.to_csv(f"{path}{self.timestamp}_Contracts{self.name}_{args.agent}{args.desc}.csv", index = False)
+        df_contract_log.to_csv(f"{path}{self.timestamp}_Contracts{self.name}_{args.agent.split('.')[0]}{args.desc}.csv", 
+                               index = False)
 
     def save_desc(self, args, info, path = "Results/results_log"):
         text = []
@@ -54,7 +55,7 @@ class ExpTracker():
         for key, value in vars(args).items():
             text.append(f"{key}: {value}")
 
-        with open(f"{path}{self.timestamp}{self.name}_{args.agent}{args.desc}.txt", 'w') as f:
+        with open(f"{path}{self.timestamp}{self.name}_{args.agent.split('.')[0]}{args.desc}.txt", 'w') as f:
             for line in text:
                 f.write(line)
                 f.write('\n')

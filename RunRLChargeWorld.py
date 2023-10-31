@@ -36,6 +36,7 @@ def parse_args():
     parser.add_argument("-A", "--agent", help="Type of agent", type=str, required=True)
     parser.add_argument("-D", "--desc", help="Description of the expereiment, starting with \"_\"", type=str, default="")
     parser.add_argument("-E", "--seed", help="Seed to use for the rng", type=int, default=42)
+    parser.add_argument("-G", "--save-agent", help="Saves the agent", action="store_true")
 
     # Files
     parser.add_argument("-I", "--file-price", help = "Name of imbalance price dataframe", 
@@ -82,6 +83,7 @@ def parse_args():
         help="the maximum norm for the gradient clipping")
     parser.add_argument("--target-kl", type=float, default=None,
         help="the target KL divergence threshold")
+
 
     args = parser.parse_args()
     args.batch_size = int(1 * args.num_steps)
@@ -165,20 +167,25 @@ def main():
     # Agents
     if args.agent == "PPO-sep":
         agent = agentPPO_sepCvx(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
-        optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
 
     elif args.agent == "PPO-lay":
         agent = agentPPO_lay(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
-        optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
 
     elif args.agent == "PPO-agg":
         envs["single_observation_space"] = 37
         agent = agentPPO_agg(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
-        optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
 
     else:
-        raise Exception(f"Agent name not recognized")
+        try:
+            if "agg" in args.agent:
+                envs["single_observation_space"] = 37
+            agent = torch.load(f"{config.agents_path}{args.agent}.pt")
+            print(f"Loaded {args.agent}")
+        except Exception:
+            print(f"Agent name not recognized")
+            exit(1)
 
+    optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
 
     obs      = torch.zeros((args.num_steps, 1, envs["single_observation_space"]) ).to(device) # Manual concat
     actions  = torch.zeros((args.num_steps, 1, envs["single_action_space"])).to(device) # Manual concat
@@ -221,12 +228,12 @@ def main():
             for step in range(0, args.num_steps):
                 t += 1
                 pbar.update(1)
-                print("t", t)
-#                print("Len df state",len(df_state))
-#                print("Len agent get_prediction", len(agent._get_prediction(t, agent.pred_price_n)))
-#                print("Calc state dim", len(df_state)*4 + len(agent._get_prediction(t, agent.pred_price_n)) + 1)
-#                print("Const state dim", envs["single_observation_space"])
-                print("", end="", flush=True)
+                #print("t", t)
+                #print("Len df state",len(df_state))
+                #print("Len agent get_prediction", len(agent._get_prediction(t, agent.pred_price_n)))
+                #print("Calc state dim", len(df_state)*4 + len(agent._get_prediction(t, agent.pred_price_n)) + 1)
+                #print("Const state dim", envs["single_observation_space"])
+                #print("", end="", flush=True)
 
                 obs[step] = next_obs
                 dones[step] = next_done
@@ -350,7 +357,7 @@ def main():
             writer.add_scalar("losses/approx_kl", approx_kl.item(), t)
             writer.add_scalar("losses/clipfrac", np.mean(clipfracs), t)
             writer.add_scalar("losses/explained_variance", explained_var, t)
-            print("SPS:", int(t / (time.time() - start_wallTime)))
+            #print("SPS:", int(t / (time.time() - start_wallTime)))
             writer.add_scalar("charts/SPS", int(t / (time.time() - start_wallTime)), t)
             
             
@@ -361,6 +368,10 @@ def main():
 
     if args.save_contracts:
         world.tracker.save_contracts(args, path=config.results_path)
+
+    # Save agent
+    if args.save_agent:
+        torch.save(agent, f"{config.agents_path}{world.tracker.timestamp}_{args.agent.split('.')[0]}{args.desc}.pt")
 
     writer.close()
     pbar.close()

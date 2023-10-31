@@ -45,26 +45,29 @@ class SafetyLayerAgg(torch.nn.Module):
 
     def forward(self, Y_hat, obs):
 
-        #print(f"{Y_hat=}, {Y_hat.shape=}, {Y_hat.ndim=}")
-        #print(f"{Y_lower=}, {Y_lower.shape=}, {Y_lower.ndim=}")
-
         if Y_hat.ndim == 2:
             batch_size = Y_hat.shape[0]
             Y_lower = obs[:,0].unsqueeze(1)
             Y_upper = obs[:,1].unsqueeze(1)
+            #print(f"-- Layer --")
             #print(f"{Y_hat=}, {Y_hat.shape=}")
             #print(f"{Y_lower}, {Y_lower.shape=}")
             #print(f"{Y_upper}, {Y_upper.shape=}")
             #print(f"{obs.shape=}")
 
             action = self.layer(Y_hat, Y_lower, Y_upper, solver_args = self.solver_args)[0] 
-            return action#.squeeze(dim=2)
+            #print(f"{action=}, {action.shape=}")
+            return action
         else:
             Y_lower = obs[0].unsqueeze(0)
             Y_upper = obs[1].unsqueeze(0)
+
+            #print(f"{Y_hat=}, {Y_hat.shape=}")
+            #print(f"{Y_lower=}, {Y_lower.shape=}")
+            #print(f"{Y_upper=}, {Y_upper.shape=}")
             action = self.layer(Y_hat, Y_lower, Y_upper, solver_args = self.solver_args)[0]
             action = action.unsqueeze(dim=0)
-            #print(f"{action=}, {action.shape=}, {action.ndim=}")
+            #print(f"{action=}, {action.shape=}")
             return action
 
 class SafetyLayer(torch.nn.Module):
@@ -94,41 +97,24 @@ class SafetyLayer(torch.nn.Module):
         self.solver_args = {"solve_method": "SCS", "max_iters": 1_000} 
 
     def forward(self, x, obs):
-        batch_size = x.shape[0]
-        np_lower  = np.zeros((batch_size, config.max_cars))
-        np_upper = np.zeros((batch_size, config.max_cars))
-
-        for i in range(batch_size):
-            np_lower[i], np_upper[i] = bounds_from_obs(obs[i])
-
-        lower   = torch.tensor(np_lower).to(self.device).float()
-        soc_t   = torch.tensor(np_upper).to(self.device).float()
+        np_lower, np_upper = bounds_from_obs(obs)
+        lower = torch.tensor(np_lower).to(self.device).float()
+        upper = torch.tensor(np_upper).to(self.device).float()
         #x = x + 1
 
         if x.ndim == 2:
-            batch_size = x.shape[0]
-            print(f"{x=}, {x.shape=}, {x.ndim=}")
-            print(f"{np_obs.shape=}")
-            print(f"time {np_obs[:,-1]}")
-            print(f"{t_rem=}, {t_rem.shape=}, {t_rem.ndim=}")
+            #print("--- Layer prep ---")
+            #print(f"{obs=}, {obs.shape=}, {obs.ndim=}")
+            #print(f"{lower=}, {lower.shape=}, {lower.ndim=}")
+            #print(f"{upper=}, {upper.shape=}, {upper.ndim=}")
+            #print("-- Layer --")
+            #print(f"{x=}, {x.shape=}, {x.ndim=}")
             action = self.layer(x, lower, upper, solver_args = self.solver_args)[0] 
-            print(f"{action}")
-            return action.squeeze(dim=2)
+            #print(f"{action=}, {action.shape=}, {action.ndim=}")
+            #return action.squeeze(dim=2)
+            return action
         else:
             raise Exception("Expected x.ndim == 2")
-        
-        #    return self.layer(x, t_rem, soc_t, t_dis, soc_dis, solver_args = self.solver_args)[2]
-
- 
-# Cvxpylayers has some warnings, but ok
-class HiddenPrints:
-    def __enter__(self):
-        self._original_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        sys.stdout.close()
-        sys.stdout = self._original_stdout
-
 
 class SafetyLayerDep(torch.nn.Module):
     def __init__(self, D, device):
@@ -267,5 +253,3 @@ class SafetyLayerDep(torch.nn.Module):
             raise Exception("Expected x.ndim == 2")
         
         #    return self.layer(x, t_rem, soc_t, t_dis, soc_dis, solver_args = self.solver_args)[2]
-
- 

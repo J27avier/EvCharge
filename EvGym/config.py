@@ -76,6 +76,7 @@ tol = 0.000001 # Tolerance for checking limits
 # Paths
 data_path = "data/"
 results_path = "ExpLogs/"
+agents_path = "Agents/"
 
 # Contract parameters // This could be read later from YAML, but good enough for now
 thetas_i = [1/1.25, 1/1, 1/0.75]
@@ -103,16 +104,3 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
-
-def ic(x, options=""):
-    p_str = ""
-    if "f" in options:
-        p_str += f"{x:.3f=}"
-    else:
-        p_str += f"{x=}"
-
-    if "s" in options: p_str += f", {x.shape=}"
-    if "t" in options: p_str += f", {type(x)=}"
-
-    print(p_str)
-    
