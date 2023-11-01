@@ -37,6 +37,7 @@ def parse_args():
     parser.add_argument("-D", "--desc", help="Description of the expereiment, starting with \"_\"", type=str, default="")
     parser.add_argument("-E", "--seed", help="Seed to use for the rng", type=int, default=42)
     parser.add_argument("-G", "--save-agent", help="Saves the agent", action="store_true")
+    parser.add_argument("--save-name", help="Name to save experiment", type=str, default="")
 
     # Files
     parser.add_argument("-I", "--file-price", help = "Name of imbalance price dataframe", 
@@ -51,6 +52,10 @@ def parse_args():
             const=True, help="if toggled, `torch.backends.cudnn.deterministic=False`")
     parser.add_argument("--cuda", type=lambda x: bool(strtobool(x)), default=True, nargs="?", const=True,
         help="if toggled, cuda will be enabled by default")
+
+    # Reward tuning
+    parser.add_argument("--reward-coef", type=float, default=1)
+    parser.add_argument("--proj-coef", type=float, default=0)
 
     # Algorithm specific
     parser.add_argument("--learning-rate", type=float, default=3e-4,
@@ -177,13 +182,20 @@ def main():
 
     else:
         try:
+            print(f"Attempting to load: {args.agent}")
             if "agg" in args.agent:
                 envs["single_observation_space"] = 37
             agent = torch.load(f"{config.agents_path}{args.agent}.pt")
             print(f"Loaded {args.agent}")
-        except Exception:
+        except Exception as e:
+            print(e)
             print(f"Agent name not recognized")
             exit(1)
+
+    reward_coef = args.reward_coef
+    proj_coef = args.proj_coef
+    #print(f"{reward_coef=}, {type(reward_coef)=}")
+    #print(f"{proj_coef=}, {type(proj_coef)=}")
 
     optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
 
@@ -215,7 +227,7 @@ def main():
     t = int(ts_min - 1)
     start_wallTime = time.time()
 
-    pbar = tqdm(total=int(ts_max-ts_min), smoothing=0)
+    pbar = tqdm(desc=args.save_name, total=int(ts_max-ts_min), smoothing=0)
     while t in range(int(ts_min)-1, int(ts_max)):
         #update = t % num_updates - ((ts_min - 1) % num_updates) + 1
         for update in range(1, num_updates+1): # TODO: Find a smarter way to do this 
@@ -248,6 +260,14 @@ def main():
                 #-------
                 #df_state, reward, done, info = world.step(action.cpu().numpy().squeeze()) # previous
                 df_state, reward, done, info = world.step(agent.action_to_env(action))
+                # Reward tuning
+                #print(f"{reward=}, {type(reward)=}")
+                reward = reward_coef * reward + proj_coef * agent.proj_loss
+                #print(f"{reward_coef=}, {type(reward_coef)=}")
+                #print(f"{reward=}, {type(reward)=}")
+                #print(f"{proj_coef=}, {type(proj_coef)=}")
+                #print(f"{agent.proj_loss=}, {type(agent.proj_loss)=}")
+
                 done = np.array([done])
                 assert t == info['t'], "Main time and env time out of sync"
                 rewards[step] = torch.tensor(reward).to(device).view(-1)
@@ -371,7 +391,10 @@ def main():
 
     # Save agent
     if args.save_agent:
-        torch.save(agent, f"{config.agents_path}{world.tracker.timestamp}_{args.agent.split('.')[0]}{args.desc}.pt")
+        if args.save_name != "":
+            torch.save(agent, f"{config.agents_path}{args.save_name}.pt")
+        else:
+            torch.save(agent, f"{config.agents_path}{world.tracker.timestamp}_{args.agent.split('.')[0]}{args.desc}.pt")
 
     writer.close()
     pbar.close()

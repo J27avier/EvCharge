@@ -42,8 +42,10 @@ class Safe_Actor_Mean_Agg(nn.Module):
         x = self.linear2.forward(x)
         x = self.activation2(x)
         x = self.linear3.forward(x)
-        x = self.safetyL.forward(x, obs)
-        return x
+        x_safe = self.safetyL.forward(x, obs)
+        with torch.no_grad():
+            proj_loss = torch.norm(x - x_safe)
+        return x_safe, proj_loss
 
 class agentPPO_agg(nn.Module):
     def __init__(self, envs, df_price, device, pred_price_n=8, max_cars: int = config.max_cars, myprint = False):
@@ -65,6 +67,7 @@ class agentPPO_agg(nn.Module):
         self.envs = envs
         self.pred_price_n = pred_price_n
         self.myprint = myprint
+        self.proj_loss = 0
 
     def get_value(self, x):
         return self.critic(x)
@@ -166,7 +169,8 @@ class agentPPO_agg(nn.Module):
     def _get_action_and_value(self, x,  action=None):
         #print(f"-- Agent step --")
         #print(f"{x.shape=}")
-        action_mean = self.actor_mean(x)
+        action_mean, proj_loss = self.actor_mean(x)
+        self.proj_loss = proj_loss.cpu().numpy().squeeze()
         action_logstd = self.actor_logstd.expand_as(action_mean)
         action_std = torch.exp(action_logstd) / 10
         probs = Normal(action_mean, action_std)
@@ -229,8 +233,10 @@ class Safe_Actor_Mean(nn.Module):
         x = self.linear3.forward(x)
         x = x * config.alpha_c / config.B
         #print(f"pre_action_mean: {x=}")
-        x = self.safetyL.forward(x, obs)
-        return x
+        x_safe = self.safetyL.forward(x, obs)
+        with torch.no_grad():
+            proj_loss = torch.norm(x - x_safe)
+        return x_safe, proj_loss
 
 
 class agentPPO_lay(nn.Module):
@@ -253,6 +259,7 @@ class agentPPO_lay(nn.Module):
         self.envs = envs
         self.pred_price_n = pred_price_n
         self.myprint = myprint
+        self.proj_loss = 0
         
 
     def get_value(self, x):
@@ -285,7 +292,8 @@ class agentPPO_lay(nn.Module):
         return df_state_simpl, pred_price, hour
 
     def _get_action_and_value(self, x,  action=None):
-        action_mean = self.actor_mean(x)
+        action_mean, proj_loss = self.actor_mean(x)
+        self.proj_loss = proj_loss.cpu().numpy().squeeze()
         action_logstd = self.actor_logstd.expand_as(action_mean)
         action_std = torch.exp(action_logstd) / 10
         probs = Normal(action_mean, action_std)
@@ -351,6 +359,7 @@ class agentPPO_sepCvx(nn.Module):
         self.envs = envs
         self.pred_price_n = pred_price_n
         self.myprint = myprint
+        self.proj_loss = 0
         
 
     def get_value(self, x):

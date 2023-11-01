@@ -161,6 +161,7 @@ cython_debug/
 
 
 # Javier's options
+.~lock*
 data/
 EVSDG/
 .ipynb_checkpoints/
