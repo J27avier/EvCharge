@@ -34,12 +34,15 @@ class ExpTracker():
             df_log = pd.merge(df_log, df_bill, on = ["ts"], how = "outer")
 
         # TODO: fillna
-        df_log.to_csv(f"{path}{self.timestamp}{self.name}_{args.agent}{args.desc}.csv", index = False)
+        if args.save_name != "":
+            df_log.to_csv(f"{path}{args.save_name}.csv", index = False)
+        else:
+            df_log.to_csv(f"{path}{self.timestamp}{self.name}_{args.agent}{args.desc}.csv", index = False)
         
     def save_contracts(self, args, path="Results/results_log/"):
         df_contract_log = pd.DataFrame(self.contract_log, columns = self.contract_log_cols)
         if args.save_name != "":
-            df_contract_log.to_csv(f"{path}{args.save_name}.csv", index = False)
+            df_contract_log.to_csv(f"{path}{args.save_name}_Contracts.csv", index = False)
         else: 
             df_contract_log.to_csv(f"{path}{self.timestamp}_Contracts{self.name}_{args.agent.split('.')[0]}{args.desc}.csv", 
                                    index = False)

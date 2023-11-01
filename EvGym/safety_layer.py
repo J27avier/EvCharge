@@ -7,6 +7,8 @@ import numpy.typing as npt
 from cvxpylayers.torch import CvxpyLayer # type: ignore
 from .charge_utils import bounds_from_obs 
 
+from icecream import ic # type:ignore
+
 np.set_printoptions(linewidth=np.nan) # type: ignore
 
 import torch

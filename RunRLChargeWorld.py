@@ -6,6 +6,7 @@ import pyfiglet # type: ignore
 from colorama import init, Back, Fore
 import argparse
 from tqdm import tqdm
+from icecream import ic # type: ignore
 
 # User defined modules
 from EvGym.charge_world import ChargeWorldEnv
@@ -161,7 +162,7 @@ def main():
     torch.manual_seed(args.seed)
     torch.backends.cudnn.deterministic = args.torch_deterministic
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
-    print(f"{device=}")
+    ic(device)
 
     # Agent info
     pred_price_n = 8 # Could be moved to argument
@@ -194,8 +195,8 @@ def main():
 
     reward_coef = args.reward_coef
     proj_coef = args.proj_coef
-    #print(f"{reward_coef=}, {type(reward_coef)=}")
-    #print(f"{proj_coef=}, {type(proj_coef)=}")
+    #ic(reward_coef, type(reward_coef))
+    #ic(proj_coef, type(proj_coef))
 
     optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
 
@@ -240,9 +241,8 @@ def main():
             for step in range(0, args.num_steps):
                 t += 1
                 pbar.update(1)
-                #print("t", t)
-                #print("Len df state",len(df_state))
-                #print("Len agent get_prediction", len(agent._get_prediction(t, agent.pred_price_n)))
+                #ic(t, len(df_state))
+                #ic(len(agent._get_prediction(t, agent.pred_price_n)))
                 #print("Calc state dim", len(df_state)*4 + len(agent._get_prediction(t, agent.pred_price_n)) + 1)
                 #print("Const state dim", envs["single_observation_space"])
                 #print("", end="", flush=True)
@@ -261,7 +261,7 @@ def main():
                 #df_state, reward, done, info = world.step(action.cpu().numpy().squeeze()) # previous
                 df_state, reward, done, info = world.step(agent.action_to_env(action))
                 # Reward tuning
-                #print(f"{reward=}, {type(reward)=}")
+                #ic(reward, type(reward))
                 reward = reward_coef * reward + proj_coef * agent.proj_loss
                 #print(f"{reward_coef=}, {type(reward_coef)=}")
                 #print(f"{reward=}, {type(reward)=}")

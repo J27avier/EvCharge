@@ -15,7 +15,7 @@ with open(f"{filename}.sh", "w") as f:
             print_str = f"python3 RunRLChargeWorld.py --agent {row.agent} --save-name {row.save_name}"
             if row.save_agent == "T":
                 print_str += f" --save-agent"
-            print_str += f" --reward-coef {row.reward_coef} --learning-rate {row.learning_rate}"
+            print_str += f" --reward-coef {row.reward_coef} --proj-coef {row.proj_coef} --learning-rate {row.learning_rate}"
             print_str += f" --file-price {row.file_price}"
             if row.seq == "s":
                 print_str += " && "

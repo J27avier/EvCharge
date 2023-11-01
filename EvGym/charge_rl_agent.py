@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Any
 import numpy.typing as npt
 from cvxpylayers.torch import CvxpyLayer # type: ignore
 
+from icecream import ic # type:ignore
+
 np.set_printoptions(linewidth=np.nan) # type: ignore
 
 import torch
@@ -151,7 +153,7 @@ class agentPPO_agg(nn.Module):
         pred_price = self._get_prediction(t, self.pred_price_n)
         hour = np.array([t % 24])
         np_x = np.concatenate((state_cars, pred_price, hour)).astype(float)
-        #print(f"{np_x=}, {np_x.shape=}, {type(np_x)=}")
+        #ic(np_x, np_x.shape, type(np_x))
         x = torch.tensor(np_x).to(self.device).float()#reshape(1, self.envs["single_observation_space"])
         #print(f"{x=}, {x.shape=}")
         self.t = t
@@ -298,7 +300,7 @@ class agentPPO_lay(nn.Module):
         action_std = torch.exp(action_logstd) / 10
         probs = Normal(action_mean, action_std)
         if action is None:
-            #print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
+            #ic(action_mean, action_mean.shape, type(action_mean))
             action_t = probs.sample()
             # Double safety
             action = self._clamp_bounds(x, action_t)
@@ -315,7 +317,7 @@ class agentPPO_lay(nn.Module):
         action = torch.clamp(action_t, Tlower, Tupper)
         ##action[0, idx_empty] = 0
         #print("--- Double clip ---")
-        #print(f"{action=}, {action.shape=}, {action.ndim=}")
+        #ic(action, action.shape, action.ndim)
 
         return action
 
@@ -408,8 +410,8 @@ class agentPPO_sepCvx(nn.Module):
 
         if self.myprint:
             str_price_pred = np.array2string(price_pred, separator=", ")
-            print(f"{str_price_pred=}, {t=}")
-            print(f"{action_t=}, {action_t.shape=}, {type(action_t)}")
+            print(f"{str_price_pred}, t= {t}")
+            ic(action_t, action_t.shape, type(action_t))
 
         if any(df_state["t_rem"] > 0):
             # We only need lax constraint
@@ -470,10 +472,10 @@ class agentPPO_sepCvx(nn.Module):
 
 
             if self.myprint:
-                print(f"{prob.status=}")
-                print(f"{action[:,0]=}, {action.shape=}, {type(action)=}")
-                print(f"{AC.value[:,0]=}")
-                print(f"{AD.value[:,0]=}")
+                ic(prob.status)
+                ic(action[:,0], action.shape, type(action))
+                ic(AC.value[:,0])
+                ic(AD.value[:,0])
 
         return action
 
@@ -483,10 +485,10 @@ class agentPPO_sepCvx(nn.Module):
 
         if False:
             print(f"""---action_t---
-                    {action_t=}
-                    {type(action_t)=}
-                    {action_t.shape=}, {action_t.shape[0]=}, {type(action_t.shape[0])=},
-                    {action_t.ndim=}
+                    {action_t}
+                    {type(action_t)}
+                    {action_t.shape}, {action_t.shape[0]}, {type(action_t.shape[0])},
+                    {action_t.ndim}
                     {'-'*6}""")
         
         # Account for batches
