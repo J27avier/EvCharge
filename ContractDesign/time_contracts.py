@@ -1,5 +1,6 @@
 import numpy as np
 import cvxpy as cp
+from icecream import ic # type: ignore
 
 def general_contracts(thetas_i = [1/1.25, 1/1, 1/0.75],
                       thetas_j = [1/1.25, 1/1, 1/0.75],
@@ -104,8 +105,138 @@ def time_var_contracts(thetas = [1/1.5, 1/1.25, 1/1,  1/0.75, 1/0.5],
                        lax_ic_const = True
                       ):
 
-    if my_print: print(f"{thetas=}")
-    if my_print: print(f"{laxes=}")
+    if my_print: ic(thetas)
+    if my_print: ic(laxes)
+
+    M = len(thetas)
+    L = len(laxes)
+    G = cp.Variable((M, L), nonneg=True)
+    W = cp.Variable((M, L), nonneg=True)
+
+    PI = np.ones((M,L)) / (M*L)
+    if my_print: print(f"{PI=}")
+
+    constraints = []
+    objective_func = 0
+
+    # The loops are repetitive, but they are useful for printing everything in order
+
+    # Objective
+    if my_print: print("Maximize over G, W")
+    for i, theta in enumerate(thetas):
+        for j, lax in enumerate(laxes):
+            if u_vpp == "mult":
+                # From a VERY superficial analysis, it doesn't seem to make much of a difference
+                objective_func += PI[i,j] * (kappa1 * cp.log(W[i,j]*lax + kappa2 * lax +1) - G[i,j])
+                if my_print: print(f"PI[{i},{j}] * (kappa1 * cp.log(W[{i},{j}]*{lax} + kappa2 * {lax} + 1) - G[{i},{j}])")
+
+            if u_vpp == "sep":
+                objective_func += PI[i,j] * (kappa1 * cp.log(W[i,j]+1)  + kappa2 * cp.log(lax) - G[i,j])
+                if my_print: print(f" + {PI[i,j]:.1f} * (kappa1 * cp.log(W[{i},{j}]+1) + kappa2 * cp.log({lax}+1) - G[{i},{j}])")
+        if my_print: print("")
+
+    # Constraints
+    if my_print: print("such that:")
+
+    if my_print: print("\nIndividual Rationality")
+    for i, theta in enumerate(thetas):
+        for j, lax in enumerate(laxes):
+            # Individual rationality
+            constraints += [G[i,j] - c1 * W[i,j] / theta  - c2 * lax / theta >= 0]
+            if my_print: print(f"G[{i}, {j}] - {c1} * W[{i}, {j}] / {theta} - {c2} * {lax} >= 0")
+        if my_print: print("")
+
+    if my_print: print("\nIncentive compatibility for degradation")
+    for i, theta in enumerate(thetas):
+        for j, lax in enumerate(laxes):
+            # Incentive compatibiliy for degradation
+            for p, y in enumerate(thetas):
+                if y != theta:
+                    constraints += [G[i,j] - c1 * W[i,j] / theta - c2 * lax / theta >= G[p,j] - c1 * W[p,j] / theta - c2 * lax / theta ]
+                    if my_print: print(f"G[{i},{j}] - {c1} * W[{i},{j}] / {theta} - {c2} * {lax} / {theta} >= G[{p},{j}] - {c1} * W[{p},{j}] / {theta} - {c2} * {lax} / {theta} ")
+        if my_print: print("")
+
+    if lax_ic_const:
+        if my_print: print("\nIncentive compatibility for laxity")
+        for i, theta in enumerate(thetas):
+            for j, lax in enumerate(laxes):
+                # Incentive compatibility for time
+                for q, z in enumerate(laxes):
+                    if z < lax: # z < lax
+                        constraints += [G[i,j] - c1 * W[i,j] / theta - c2 * lax / theta >= G[i,q] - c1 * W[i,q] / theta - c2 * lax / theta ]
+                        if my_print: print(f"G[{i},{j}] - {c1} * W[{i},{j}] / {theta} - {c2} * {lax} >= G[{i},{q}] - {c1} * W[{i},{q}] / {theta} - {c2} * {lax} / {theta}")
+            if my_print: print("")
+            
+            
+    if my_print: print("\nEnergy ordering")
+    for j, lax in enumerate(laxes):
+        for i, theta in enumerate(thetas):
+            # Energy ordering constraint
+            if i == 0:
+                constraints += [0 == W[i,j]]
+                if my_print: print(f"0 == W[{i},{j}]")
+
+            if i == M-1:
+                constraints += [W[i,j] <= lax * psi * alpha_d]
+                if my_print: print(f"W[{i},{j}] <= {lax} * {psi} * {alpha_d}")
+            else:
+                constraints += [W[i,j] <= W[i+1,j]]
+                if my_print: print(f"W[{i},{j}] <= W[{i+1},{j}]")
+        if my_print: print("")
+            
+    if g_const:
+        if my_print: print("\nPayoff ordering by energy")
+        for j, lax in enumerate(laxes):
+            for i, theta in enumerate(thetas):
+                # Payoff ordering constraint
+                if i == 0:
+                    constraints += [0 <= G[i,j]]
+                    if my_print: print(f"0 <= G[{i},{j}]")
+
+                if i < M-1:
+                    constraints += [G[i,j] <= G[i+1,j]]
+                    if my_print: print(f"G[{i},{j}] <= G[{i+1},{j}]")
+            if my_print: print("")
+
+        if my_print: print("\nPayoff ordering by laxity")
+        for i, theta in enumerate(thetas):
+            for j, lax in enumerate(laxes):
+                # Laxity first constraints
+                if j == 0:
+                    constraints +=[0 <= G[i,j]]
+                    if my_print: print(f"0 <= G[{i},{j}]")
+
+                if j < L-1:
+                    constraints += [G[i,j] <= G[i,j+1]]
+                    if my_print: print(f"G[{i},{j}] <= G[{i},{j+1}]")
+            if my_print: print("")
+
+    obj = cp.Maximize(objective_func)
+    prob = cp.Problem(obj, constraints)
+    prob.solve(verbose=False)
+    if prob.status != "optimal":
+        raise Exception("Optimal contracts not found")
+    if my_print: print("G")
+    if my_print: print(G.value)
+    if my_print: print("\nW")
+    if my_print: print(W.value)
+    return G.value, W.value
+
+
+def time_var_contracts_tract(thetas = [1/1.5, 1/1.25, 1/1,  1/0.75, 1/0.5],
+                       laxes = [1,2,3,4,5],
+                       c1 = 0.01,
+                       c2 = 0.5,
+                       kappa1 = 0.1,
+                       kappa2 = 0.5,
+                       alpha_d = 11,
+                       psi = 0.49,
+                       my_print = False,
+                       #u_vpp = "sep",
+                       #g_const = False,
+                       #lax_ic_const = False
+                      ):
+    if my_print: print(f"{
 
     M = len(thetas)
     L = len(laxes)
@@ -236,8 +367,9 @@ def time_var_contracts_typelax(thetas = [1/1.5, 1/1.25, 1/1,  1/0.75, 1/0.5],
                        lax_ic_const = True
                       ):
 
-    if my_print: print(f"{thetas=}")
-    if my_print: print(f"{laxes=}")
+    if my_print: ic(thetas)
+    if my_print: ic(laxes)
+
 
     M = len(thetas)
     L = len(laxes)
@@ -367,8 +499,10 @@ def time_var_contracts_tract(thetas = [1/1.5, 1/1.25, 1/1,  1/0.75, 1/0.5],
                        #g_const = False,
                        #lax_ic_const = False
                       ):
-    if my_print: print(f"{thetas=}")
-    if my_print: print(f"{laxes=}")
+
+    if my_print: ic(thetas)
+    if my_print: ic(laxes)
+
 
     G_acc = []
     W_acc = []
