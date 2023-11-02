@@ -296,8 +296,8 @@ class agentPPO_lay(nn.Module):
     def _get_action_and_value(self, x,  action=None):
         action_mean, proj_loss = self.actor_mean(x)
         self.proj_loss = proj_loss.cpu().numpy().squeeze()
-        action_logstd = self.actor_logstd.expand_as(action_mean)
-        action_std = torch.exp(action_logstd) / 10
+        action_logstd = self.actor_logstd.expand_as(action_mean) # / 10
+        action_std = torch.exp(action_logstd) 
         probs = Normal(action_mean, action_std)
         if action is None:
             #ic(action_mean, action_mean.shape, type(action_mean))

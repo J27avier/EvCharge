@@ -81,7 +81,7 @@ def parse_args():
         help="the surrogate clipping coefficient")
     parser.add_argument("--clip-vloss", type=lambda x: bool(strtobool(x)), default=True, nargs="?", const=True,
         help="Toggles whether or not to use a clipped loss for the value function, as per the paper.")
-    parser.add_argument("--ent-coef", type=float, default=0.0,
+    parser.add_argument("--ent-coef", type=float, default=0.0, # 0.1?
         help="coefficient of the entropy")
     parser.add_argument("--vf-coef", type=float, default=0.5,
         help="coefficient of the value function")
@@ -306,9 +306,10 @@ def main():
             b_obs = obs.reshape((-1, envs["single_observation_space"]))
             b_logprobs = logprobs.reshape(-1)
             b_actions = actions.reshape((-1, envs["single_action_space"]))
-            b_advantages = advantages.reshape(-1)
-            b_returns = returns.reshape(-1)
-            b_values = values.reshape(-1)
+            b_advantages = advantages.reshape(-1) # Normailze
+            b_returns = returns.reshape(-1) #  Normailze"
+            b_values = values.reshape(-1) #Normailze 
+            # deactivate norm in options
 
             # Optimizing the policy and value network
             b_inds = np.arange(args.batch_size)
