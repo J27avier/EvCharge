@@ -29,8 +29,10 @@ from distutils.util import strtobool
 import random
 #import pdb; pdb.set_trace()
 
-def main():
-    args = parse_args()
+def runSim(args = None):
+    if args is None:
+        args = parse_args()
+
     title = f"EvWorld-{args.agent}{args.desc}"
 
     # Writer
@@ -312,7 +314,21 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+
+    if args.year is None:
+        runSim(args)
+    else:
+        og_save_name = args.save_name
+        for i in args.year():
+            if og_save_name != "":
+                args.save_name = og_save_name + f"_{i}"
+                if i > 0:
+                    args.agent = og_save_name + f"_{i-1}"
+                runSim(args)
+            else:
+                raise Exception("You must specify save name to run multiple years")
+
 
 # ACKNOWLEDGMENTS
 # Parts of this code are adapted from https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppo_continuous_action.py
