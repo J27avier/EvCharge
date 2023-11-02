@@ -114,7 +114,7 @@ def time_var_contracts(thetas = [1/1.5, 1/1.25, 1/1,  1/0.75, 1/0.5],
     W = cp.Variable((M, L), nonneg=True)
 
     PI = np.ones((M,L)) / (M*L)
-    if my_print: print(f"{PI=}")
+    if my_print: ic(PI)
 
     constraints = []
     objective_func = 0
@@ -236,7 +236,9 @@ def time_var_contracts_tract(thetas = [1/1.5, 1/1.25, 1/1,  1/0.75, 1/0.5],
                        #g_const = False,
                        #lax_ic_const = False
                       ):
-    if my_print: print(f"{
+
+    if my_print: ic(thetas)
+    if my_print: ic(laxes)
 
     M = len(thetas)
     L = len(laxes)
@@ -244,7 +246,7 @@ def time_var_contracts_tract(thetas = [1/1.5, 1/1.25, 1/1,  1/0.75, 1/0.5],
     W = cp.Variable((M, L), nonneg=True)
 
     PI = np.ones((M,L)) / (M*L)
-    if my_print: print(f"{PI=}")
+    if my_print: ic(PI)
 
     constraints = []
     objective_func = 0
@@ -370,14 +372,13 @@ def time_var_contracts_typelax(thetas = [1/1.5, 1/1.25, 1/1,  1/0.75, 1/0.5],
     if my_print: ic(thetas)
     if my_print: ic(laxes)
 
-
     M = len(thetas)
     L = len(laxes)
     G = cp.Variable((M, L), nonneg=True)
     W = cp.Variable((M, L), nonneg=True)
 
     PI = np.ones((M,L)) / (M*L)
-    if my_print: print(f"{PI=}")
+    if my_print: ic(PI)
 
     constraints = []
     objective_func = 0
@@ -516,7 +517,7 @@ def time_var_contracts_tract(thetas = [1/1.5, 1/1.25, 1/1,  1/0.75, 1/0.5],
         G = cp.Variable((M), nonneg=True)
         W = cp.Variable((M), nonneg=True)
         PI = np.ones((M)) / (M)
-        if my_print: print(f"{PI=}")
+        if my_print: ic(PI)
 
         if my_print: print("Maximize over G, W")
         for i, theta in enumerate(thetas):
