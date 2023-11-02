@@ -41,8 +41,8 @@ class SafetyLayerAgg(torch.nn.Module):
 
         self.layer = CvxpyLayer(prob, [Y_hat, Y_lower, Y_upper], [Y])
 
-        self.solver_args = {"solve_method": "ECOS", "max_iters": 100_000} 
-        #self.solver_args = {"solve_method": "SCS", "max_iters": 1_000} 
+        #self.solver_args = {"solve_method": "ECOS", "max_iters": 100_000} 
+        self.solver_args = {"solve_method": "SCS", "max_iters": 1_000} 
 
     def forward(self, Y_hat, obs):
 
@@ -94,8 +94,8 @@ class SafetyLayer(torch.nn.Module):
         prob = cp.Problem(objective, constraints)
         self.layer = CvxpyLayer(prob, [x, lower, upper], [Y])
 
-        self.solver_args = {"solve_method": "ECOS", "max_iters": 100_000} 
-        #self.solver_args = {"solve_method": "SCS", "max_iters": 1_000} 
+        #self.solver_args = {"solve_method": "ECOS", "max_iters": 100_000} 
+        self.solver_args = {"solve_method": "SCS", "max_iters": 1_000} 
 
     def forward(self, x, obs):
         np_lower, np_upper = bounds_from_obs(obs)
