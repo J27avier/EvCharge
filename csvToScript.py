@@ -19,7 +19,7 @@ with open(f"{filename}.sh", "w") as f:
             print_str += f" --file-price {row.file_price} --years {row.years}"
             if row.seq == "s":
                 print_str += " && "
-            elif row.seq == "e":
+            else:
                 print_str += f" && echo \"Done {row.save_name}!\" &\n"
             f.write(print_str)
 
