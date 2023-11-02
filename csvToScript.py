@@ -16,7 +16,7 @@ with open(f"{filename}.sh", "w") as f:
             if row.save_agent == "T":
                 print_str += f" --save-agent"
             print_str += f" --reward-coef {row.reward_coef} --proj-coef {row.proj_coef} --learning-rate {row.learning_rate}"
-            print_str += f" --file-price {row.file_price}"
+            print_str += f" --file-price {row.file_price} --years {row.years}"
             if row.seq == "s":
                 print_str += " && "
             elif row.seq == "e":
