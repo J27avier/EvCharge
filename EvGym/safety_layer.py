@@ -234,10 +234,10 @@ class SafetyLayerDep(torch.nn.Module):
 
         if x.ndim == 2:
             batch_size = x.shape[0]
-            print(f"{x=}, {x.shape=}, {x.ndim=}")
-            print(f"{np_obs.shape=}")
+            ic(x, x.shape, x.ndim)
+            ic(np_obs.shape)
             print(f"time {np_obs[:,-1]}")
-            print(f"{t_rem=}, {t_rem.shape=}, {t_rem.ndim=}")
+            ic(t_rem, t_rem.shape, t_rem.ndim)
 
             # [0] is AC, [1] is AD, [2] is Y ... (in order of declaration)
             action = self.layer(x, t_rem, soc_t, t_dis, soc_dis, solver_args = self.solver_args)[2] 
