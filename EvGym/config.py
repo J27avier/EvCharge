@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 
 # Dummy imports for stubs
-import scipy # type: ignore
 import cvxpy as cp # type: ignore
 import matplotlib.pyplot as plt # type: ignore
 
