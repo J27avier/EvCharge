@@ -3,7 +3,6 @@ import cvxpy as cp # type: ignore
 import pandas as pd
 from . import config
 from typing import TYPE_CHECKING, Any
-import numpy.typing as npt
 from cvxpylayers.torch import CvxpyLayer # type: ignore
 from .charge_utils import bounds_from_obs 
 
