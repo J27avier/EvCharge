@@ -6,7 +6,6 @@ from colorama import init, Back, Fore
 from typing import TYPE_CHECKING, Any, Optional, Dict, Tuple, Union, List
 import time
 import os
-import numpy.typing as npt
 from math import isclose
 
 # User defined
@@ -82,7 +81,7 @@ class ChargeWorldEnv():
         self.df_park_lag = self.df_park.copy()
         return self.df_park.copy()
 
-    def step(self, action: npt.NDArray[Any]) -> Tuple[pd.DataFrame, config.Number, bool, dict]:
+    def step(self, action) -> Tuple[pd.DataFrame, config.Number, bool, dict]:
         """ Applies the charging action, cars depart and then new cars arrive """
 
         self.df_park_lag = self.df_park.copy()
