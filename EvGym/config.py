@@ -7,7 +7,6 @@ import pandas as pd
 import scipy # type: ignore
 import cvxpy as cp # type: ignore
 import matplotlib.pyplot as plt # type: ignore
-from scipy.stats import truncnorm # type: ignore
 
 # 
 Number = Union[int, float, np.number]
