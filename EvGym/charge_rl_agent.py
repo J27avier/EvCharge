@@ -463,7 +463,7 @@ class agentPPO_sepCvx(nn.Module):
             #prob.solve(solver=cp.MOSEK, mosek_params = {'MSK_IPAR_NUM_THREADS': 8, 'MSK_IPAR_BI_MAX_ITERATIONS': 2_000_000, "MSK_IPAR_INTPNT_MAX_ITERATIONS": 800}, verbose=False)  
 
             if prob.status not in  ['optimal', 'optimal_inaccurate']:
-                print(f"{prob.status=}")
+                ic(prob.status)
                 raise Exception("Optimal schedule not found")
 
             best_cost = prob.value
