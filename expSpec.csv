@@ -31,3 +31,5 @@
 "F","PPO-lay","ppo_lay","T",1,0,0.0003,"df_price_2019_pad.csv","e",3
 "F","PPO-lay","lay_act_crit","T",1,0,0.0003,"df_price_2019_pad.csv","e",30
 "F","PPO-lay","lay_act_crit_smalrwd","T",0.001,0,0.0003,"df_price_2019_pad.csv","e",30
+"F","PPO-sep","sep","T",1,0,0.0003,"df_price_2019_pad.csv","e",10
+"T","PPO-lay","lay_small_lr","T",1,0,0.00001,"df_price_2019_pad.csv","e",10
