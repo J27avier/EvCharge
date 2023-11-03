@@ -361,6 +361,7 @@ class agentPPO_sep(nn.Module):
         self.envs = envs
         self.pred_price_n = pred_price_n
         self.myprint = myprint
+        self.proj_loss = 0
         self.x = None
         
 
