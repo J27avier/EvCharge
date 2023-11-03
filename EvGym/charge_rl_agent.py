@@ -187,8 +187,8 @@ class agentPPO_agg(nn.Module):
 
     def _clamp_bounds(self, action_t):
         # Aggregate clamp
-        Tlower = torch.tensor(self.sum_lower)
-        Tupper = torch.tensor(self.sum_upper)
+        Tlower = torch.tensor(self.sum_lower).to(self.device)
+        Tupper = torch.tensor(self.sum_upper).to(self.device)
 
         action = torch.clamp(action_t, Tlower, Tupper)
         return action
@@ -331,7 +331,7 @@ class agentPPO_lay(nn.Module):
         return action.cpu().numpy().squeeze()
 
 
-class agentPPO_sepCvx(nn.Module):
+class agentPPO_sep(nn.Module):
     """
     WARNING: This is proof of concept, and constraint enforcement is separate from model
     """
@@ -361,7 +361,7 @@ class agentPPO_sepCvx(nn.Module):
         self.envs = envs
         self.pred_price_n = pred_price_n
         self.myprint = myprint
-        self.proj_loss = 0
+        self.x = None
         
 
     def get_value(self, x):
@@ -374,7 +374,7 @@ class agentPPO_sepCvx(nn.Module):
         probs = Normal(action_mean, action_std)
         if action is None:
             action = probs.sample()
-            action = action*config.alpha_c / config.B
+            #action = action*config.alpha_c / config.B
         value = self.critic(x)
         return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), value 
 
@@ -405,6 +405,7 @@ class agentPPO_sepCvx(nn.Module):
         return df_state_simpl, pred_price, hour
 
     def _enforce_single_safety(self, action_t, x, t):
+        raise Exception("Deprecated for now")
         df_state, price_pred, hour = self.state_to_df(x, t)
         action = np.zeros((config.max_cars,1))
 
@@ -480,6 +481,7 @@ class agentPPO_sepCvx(nn.Module):
         return action
 
     def _enforce_safety(self, action_t, x, t):
+        raise Exception("Deprecated for now")
         action_t_np = action_t.cpu().numpy()
         l_actions = []
 
@@ -504,12 +506,23 @@ class agentPPO_sepCvx(nn.Module):
         return action
 
     def get_action_and_value(self, x, action=None):
-        #x = self.construct_state(df_state, t) # Gets performed twice (also in main), can streamline later
+        self.x = x.detach().clone()
         action_t, logprob, entropy, value = self._get_action_and_value(x, action)
-        action_np = self._enforce_safety(action_t, x, self.t )
-        action = torch.tensor(action_np).to(self.device).float()
-        #x = torch.tensor(np_x).to(self.device).float().reshape(1, self.envs["single_observation_space"])
-        return action, logprob, entropy, value 
 
-    def action_to_env(self, action):
+        # Clamping will be done at the VERY LAST STEP NOW
+        #action_np = self._enforce_safety(action_t, x, self.t )
+        #action = torch.tensor(action_np).to(self.device).float()
+
+        #return action, logprob, entropy, value 
+        return action_t, logprob, entropy, value 
+
+    def action_to_env(self, action_t):
+        # Clipping
+        np_lower, np_upper = bounds_from_obs(self.x)
+
+        Tlower = torch.tensor(lower).to(self.device)
+        Tupper = torch.tensor(upper).to(self.device)
+
+        action = torch.clamp(action_t, Tlower, Tupper)
+
         return action.cpu().numpy().squeeze()

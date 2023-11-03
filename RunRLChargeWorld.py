@@ -11,7 +11,7 @@ from icecream import ic # type: ignore
 # User defined modules
 from EvGym.charge_world import ChargeWorldEnv
 #from EvGym.charge_agent import agentASAP, agentOptim, agentNoV2G, agentOracle
-from EvGym.charge_rl_agent import agentPPO_lay, agentPPO_sepCvx, agentPPO_agg
+from EvGym.charge_rl_agent import agentPPO_sep, agentPPO_lay, agentPPO_agg
 from EvGym.charge_utils import parse_args, print_welcome
 from EvGym import config
 
@@ -86,7 +86,7 @@ def runSim(args = None):
 
     # Agents
     if args.agent == "PPO-sep":
-        agent = agentPPO_sepCvx(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
+        agent = agentPPO_sep(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
 
     elif args.agent == "PPO-lay":
         agent = agentPPO_lay(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
