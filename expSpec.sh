@@ -1,1 +1,1 @@
-python3 RunRLChargeWorld.py --agent PPO-lay --save-name lay_slr_numsteps --save-agent --reward-coef 1.0 --proj-coef 0 --learning-rate 1e-05 --file-price df_price_2019_pad.csv --years 10 --num-steps 240 --anneal-lr False  --update-epochs 10 && echo "Done lay_slr_numsteps!" &
+python3 RunRLChargeWorld.py --agent PPO-lay --save-name lay_slr_numsteps --save-agent --reward-coef 1.0 --proj-coef 0 --learning-rate 1e-05 --file-price df_price_2019_pad.csv --years 10 --num-steps 240 --anneal-lr False  --update-epochs 10 --num-minibatches 40 && echo "Done lay_slr_numsteps!" &
