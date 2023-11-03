@@ -28,4 +28,5 @@
 "F","b_agg_8","b_agg_9","T",0.5,0,0.001,"df_price_2019_pad.csv","s",1
 "F","b_agg_9","b_agg_10","T",0.5,0,0.001,"df_price_2019_pad.csv","s",1
 "F","b_agg_10","b_agg_11","T",0.5,0,0.001,"df_price_2019_pad.csv","e",1
-"T","PPO-lay","ppo_lay","T",1,0,0.0003,"df_price_2019_pad.csv","e",3
+"F","PPO-lay","ppo_lay","T",1,0,0.0003,"df_price_2019_pad.csv","e",3
+"T","PPO-lay","lay_act_crit","T",1,0,0.0003,"df_price_2019_pad.csv","e",30

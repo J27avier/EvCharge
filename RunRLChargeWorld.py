@@ -316,11 +316,11 @@ def runSim(args = None):
 if __name__ == "__main__":
     args = parse_args()
 
-    if args.year is None:
+    if args.years is None:
         runSim(args)
     else:
         og_save_name = args.save_name
-        for i in args.year():
+        for i in range(args.years):
             if og_save_name != "":
                 args.save_name = og_save_name + f"_{i}"
                 if i > 0:
