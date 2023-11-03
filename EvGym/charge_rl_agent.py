@@ -518,7 +518,7 @@ class agentPPO_sep(nn.Module):
 
     def action_to_env(self, action_t):
         # Clipping
-        np_lower, np_upper = bounds_from_obs(self.x)
+        lower, upper = bounds_from_obs(self.x)
 
         Tlower = torch.tensor(lower).to(self.device)
         Tupper = torch.tensor(upper).to(self.device)
