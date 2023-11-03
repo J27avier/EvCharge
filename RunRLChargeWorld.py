@@ -143,6 +143,7 @@ def runSim(args = None):
     start_wallTime = time.time()
 
     pbar = tqdm(desc=args.save_name, total=int(ts_max-ts_min), smoothing=0)
+    ts_max = int(ts_min + 24 * 31)
     while t in range(int(ts_min)-1, int(ts_max)):
         #update = t % num_updates - ((ts_min - 1) % num_updates) + 1
         for update in range(1, num_updates+1): # TODO: Find a smarter way to do this 
