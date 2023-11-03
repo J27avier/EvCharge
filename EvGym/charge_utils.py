@@ -3,7 +3,7 @@ import pandas as pd
 import sys
 import os
 import argparse
-from distutils import strtobool
+from distutils.util import strtobool
 
 from . import config
 
