@@ -57,6 +57,7 @@ class agentPPO_agg(nn.Module):
                 layer_init(nn.Linear(64, 64)),
                 nn.Tanh(),
                 layer_init(nn.Linear(64,1), std=1.0),
+                nn.Tanh(),
                 )
         self.actor_mean = Safe_Actor_Mean_Agg(envs, device)
         self.actor_logstd = nn.Parameter(torch.zeros(1,1))
@@ -248,7 +249,8 @@ class agentPPO_lay(nn.Module):
                 nn.Tanh(),
                 layer_init(nn.Linear(64, 64)),
                 nn.Tanh(),
-                layer_init(nn.Linear(64,1), std=1.0)
+                layer_init(nn.Linear(64,1), std=1.0),
+                nn.Tanh(),
                 )
         self.actor_mean = Safe_Actor_Mean(envs, device)
         self.actor_logstd = nn.Parameter(torch.zeros(1, envs["single_action_space"]))
