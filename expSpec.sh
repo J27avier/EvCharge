@@ -1,1 +1,1 @@
-python3 RunRLChargeWorld.py --agent PPO-lay --save-name lay_act_crit --save-agent --reward-coef 1.0 --proj-coef 0 --learning-rate 0.0003 --file-price df_price_2019_pad.csv --years 30 && echo "Done lay_act_crit!" &
+python3 RunRLChargeWorld.py --agent PPO-lay --save-name lay_act_crit_smalrwd --save-agent --reward-coef 0.001 --proj-coef 0 --learning-rate 0.0003 --file-price df_price_2019_pad.csv --years 30 && echo "Done lay_act_crit_smalrwd!" &
