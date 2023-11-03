@@ -353,7 +353,6 @@ class agentPPO_sep(nn.Module):
                 )
         self.actor_logstd = nn.Parameter(torch.zeros(1, envs["single_action_space"]))
 
-
         # Ev parameters
         self.max_cars = max_cars
         self.df_price = df_price
