@@ -34,7 +34,11 @@ F,PPO-lay,lay_act_crit_smalrwd,T,0.001,0,0.0003,df_price_2019_pad.csv,e,30,24,TR
 F,PPO-sep,sep,T,1,0,0.0003,df_price_2019_pad.csv,e,10,24,TRUE,10,4
 F,PPO-lay,lay_small_lr,T,1,0,1E-05,df_price_2019_pad.csv,e,10,24,TRUE,10,4
 F,PPO-lay,lay_slr_numsteps,T,1,0,1E-05,df_price_2019_pad.csv,e,10,240,FALSE,10,40
-T,PPO-agg,month_agg,T,1,0,0.0003,df_price_2019_pad.csv,e,1000,24,TRUE,10,12
-T,PPO-agg,month_agg_nomini,T,1,0,0.0003,df_price_2019_pad.csv,e,1000,24,TRUE,10,1
-T,PPO-lay,month_ind,T,1,0,0.0003,df_price_2019_pad.csv,e,1000,24,TRUE,10,12
-T,PPO-lay,month_ind_nomini,T,1,0,0.0003,df_price_2019_pad.csv,e,1000,24,TRUE,10,1
+T,PPO-agg,month_agg,T,1,0,0.0003,df_price_2019_pad.csv,e,100,24,TRUE,10,24
+T,PPO-agg,month_agg_nomini,T,1,0,0.0003,df_price_2019_pad.csv,e,100,24,TRUE,10,1
+T,PPO-lay,month_ind,T,1,0,0.0003,df_price_2019_pad.csv,e,100,24,TRUE,10,24
+T,PPO-lay,month_ind_nomini,T,1,0,0.0003,df_price_2019_pad.csv,e,100,24,TRUE,10,1
+T,PPO-agg,month_agg_moresteps,T,1,0,0.0003,df_price_2019_pad.csv,e,100,240,TRUE,10,24
+T,PPO-agg,month_agg_nomini_moresteps,T,1,0,0.0003,df_price_2019_pad.csv,e,100,240,TRUE,10,1
+T,PPO-lay,month_ind_moresteps,T,1,0,0.0003,df_price_2019_pad.csv,e,100,240,TRUE,10,24
+T,PPO-lay,month_ind_nomini_moresteps,T,1,0,0.0003,df_price_2019_pad.csv,e,100,240,TRUE,10,1
