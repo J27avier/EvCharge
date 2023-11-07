@@ -176,10 +176,17 @@ class agentPPO_agg(nn.Module):
         action_std = torch.exp(action_logstd) / 10
         probs = Normal(action_mean, action_std)
         if action is None:
-            #print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
-            action_t = probs.sample()
-            # Double safety
-            action = self._clamp_bounds(action_t) # before, also needed x
+            ##print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
+            #action_t = probs.sample()
+            ## Double safety
+            #action = self._clamp_bounds(action_t) # before, also needed x
+            ## Deterministic
+            ic(action_mean, action_mean.shape)
+            action = self._clamp_bounds(action_mean) # before, also needed x
+            ic(action, action.shape)
+            if torch.norm(action_mean - action) > 0.001:
+                print("Clipping")
+                exit(1)
 
         value = self.critic(x)
         return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), value 
