@@ -2,8 +2,6 @@ import pandas as pd
 import numpy as np
 from tabulate import tabulate
 import os
-import pyfiglet # type: ignore
-from colorama import init, Back, Fore
 import argparse
 from tqdm import tqdm
 from icecream import ic # type: ignore
