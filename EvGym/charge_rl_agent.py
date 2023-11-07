@@ -29,13 +29,13 @@ def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
 class Safe_Actor_Mean_Agg(nn.Module):
     def __init__(self, envs, device):
         super(Safe_Actor_Mean_Agg, self).__init__()
-        self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], 256))
+        self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], 64))
         self.activation1 = nn.Tanh()
         #self.activation1 = nn.ReLU()
-        self.linear2 = layer_init(nn.Linear(256, 256))
+        self.linear2 = layer_init(nn.Linear(64, 64))
         self.activation2 = nn.Tanh()
         #self.activation2 = nn.ReLU()
-        self.linear3 = layer_init(nn.Linear(256, 1), std=0.01)
+        self.linear3 = layer_init(nn.Linear(64, 1), std=0.01)
         self.safetyL = SafetyLayerAgg(1, device)
 
     def forward(self, x):
@@ -227,11 +227,13 @@ class agentPPO_agg(nn.Module):
 class Safe_Actor_Mean(nn.Module):
     def __init__(self, envs, device):
         super(Safe_Actor_Mean, self).__init__()
-        self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], 256))
-        self.activation1 = nn.Tanh()
-        self.linear2 = layer_init(nn.Linear(256, 256))
-        self.activation2 = nn.Tanh()
-        self.linear3 = layer_init(nn.Linear(256, envs["single_action_space"]), std=0.01)
+        self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], 64))
+        #self.activation1 = nn.Tanh()
+        self.activation1 = nn.ReLU()
+        self.linear2 = layer_init(nn.Linear(64, 64))
+        #self.activation2 = nn.Tanh()
+        self.activation2 = nn.ReLU()
+        self.linear3 = layer_init(nn.Linear(64, envs["single_action_space"]), std=0.01)
         self.safetyL = SafetyLayer(envs["single_action_space"], device)
 
     def forward(self, x):
