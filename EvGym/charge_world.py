@@ -118,6 +118,7 @@ class ChargeWorldEnv():
         n_cars = occ_spots.sum()
         #norm = (config.FINAL_SOC - self.df_park[occ_spots]["soc_t"]).sum()
         return -self.imb_transf/n_cars if n_cars > 0 else 0 #and norm > 0 else 0
+        #return -self.imb_transf
 
     def _cars_depart(self):
         blank_session = Session()
