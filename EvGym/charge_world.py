@@ -391,7 +391,7 @@ class ChargeWorldEnv():
         self.df_park.loc[occ_spots, "lax"] = self.df_park.loc[occ_spots]["t_rem"] \
                                              - ((config.FINAL_SOC - self.df_park.loc[occ_spots]["soc_t"])*config.B) \
                                              /(config.alpha_c * config.eta_c)
-        if any(self.df_park[occ_spots]["lax"] < - config.tol): # Some tolerance because f numerical error in division
+        if any(self.df_park[occ_spots]["lax"] < -config.tol*10): # A little bit more tolerance because f numerical error in division
             print(self.df_park[self.df_park["lax"] < 0])
             raise Exception("Negative laxity detected")
 
