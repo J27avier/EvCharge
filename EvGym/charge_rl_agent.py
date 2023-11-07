@@ -312,6 +312,10 @@ class agentPPO_lay(nn.Module):
             action_t = probs.sample()
             # Double safety
             action = self._clamp_bounds(x, action_t)
+            ic(action_t)
+            ic(action)
+
+
 
         value = self.critic(x)
         return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), value 
