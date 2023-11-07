@@ -30,9 +30,11 @@ class Safe_Actor_Mean_Agg(nn.Module):
     def __init__(self, envs, device):
         super(Safe_Actor_Mean_Agg, self).__init__()
         self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], 64))
-        self.activation1 = nn.Tanh()
+        #self.activation1 = nn.Tanh()
+        self.activation1 = nn.ReLU()
         self.linear2 = layer_init(nn.Linear(64, 64))
-        self.activation2 = nn.Tanh()
+        #self.activation2 = nn.Tanh()
+        self.activation2 = nn.ReLU()
         self.linear3 = layer_init(nn.Linear(64, 1), std=0.01)
         self.safetyL = SafetyLayerAgg(1, device)
 
@@ -177,16 +179,16 @@ class agentPPO_agg(nn.Module):
         probs = Normal(action_mean, action_std)
         if action is None:
             ##print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
-            #action_t = probs.sample()
+            action_t = probs.sample()
             ## Double safety
-            #action = self._clamp_bounds(action_t) # before, also needed x
-            ## Deterministic
-            ic(action_mean, action_mean.shape)
-            action = self._clamp_bounds(action_mean) # before, also needed x
-            ic(action, action.shape)
-            if torch.norm(action_mean - action) > 0.001:
-                print("Clipping")
-                exit(1)
+            action = self._clamp_bounds(action_t) # before, also needed x
+            # Deterministic
+            #ic(action_mean, action_mean.shape)
+            #action = self._clamp_bounds(action_mean) # before, also needed x
+            #ic(action, action.shape)
+            #if torch.norm(action_mean - action) > 0.001:
+            #    print("Clipping")
+            #    exit(1)
 
         value = self.critic(x)
         return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), value 
