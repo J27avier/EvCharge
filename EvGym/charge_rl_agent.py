@@ -176,7 +176,8 @@ class agentPPO_agg(nn.Module):
         self.proj_loss = proj_loss.cpu().numpy().squeeze()
         action_logstd = self.actor_logstd.expand_as(action_mean)
         action_std = torch.exp(action_logstd) / 10
-        probs = Normal(action_mean, action_std)
+        #probs = Normal(action_mean, action_std)
+        probs = Normal(action_mean, 0.05)
         if action is None:
             ##print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
             action_t = probs.sample()
@@ -228,11 +229,11 @@ class Safe_Actor_Mean(nn.Module):
     def __init__(self, envs, device):
         super(Safe_Actor_Mean, self).__init__()
         self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], 64))
-        #self.activation1 = nn.Tanh()
-        self.activation1 = nn.ReLU()
+        self.activation1 = nn.Tanh()
+        #self.activation1 = nn.ReLU()
         self.linear2 = layer_init(nn.Linear(64, 64))
-        #self.activation2 = nn.Tanh()
-        self.activation2 = nn.ReLU()
+        self.activation2 = nn.Tanh()
+        #self.activation2 = nn.ReLU()
         self.linear3 = layer_init(nn.Linear(64, envs["single_action_space"]), std=0.01)
         self.safetyL = SafetyLayer(envs["single_action_space"], device)
 
@@ -308,7 +309,8 @@ class agentPPO_lay(nn.Module):
         self.proj_loss = proj_loss.cpu().numpy().squeeze()
         action_logstd = self.actor_logstd.expand_as(action_mean) # / 10
         action_std = torch.exp(action_logstd) 
-        probs = Normal(action_mean, action_std)
+        #probs = Normal(action_mean, action_std)
+        probs = Normal(action_mean, 0.02)
         if action is None:
             #ic(action_mean, action_mean.shape, type(action_mean))
             action_t = probs.sample()
