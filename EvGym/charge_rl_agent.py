@@ -174,10 +174,9 @@ class agentPPO_agg(nn.Module):
         #print(f"{x.shape=}")
         action_mean, proj_loss = self.actor_mean(x)
         self.proj_loss = proj_loss.cpu().numpy().squeeze()
-        action_logstd = self.actor_logstd.expand_as(action_mean)
-        action_std = torch.exp(action_logstd) / 10
-        #probs = Normal(action_mean, action_std)
-        probs = Normal(action_mean, 0.05)
+        action_logstd = self.actor_logstd.expand_as(action_mean) # / 10
+        action_std = torch.exp(action_logstd) 
+        probs = Normal(action_mean, action_std)
         if action is None:
             ##print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
             action_t = probs.sample()
@@ -309,8 +308,7 @@ class agentPPO_lay(nn.Module):
         self.proj_loss = proj_loss.cpu().numpy().squeeze()
         action_logstd = self.actor_logstd.expand_as(action_mean) # / 10
         action_std = torch.exp(action_logstd) 
-        #probs = Normal(action_mean, action_std)
-        probs = Normal(action_mean, 0.02)
+        probs = Normal(action_mean, action_std)
         if action is None:
             #ic(action_mean, action_mean.shape, type(action_mean))
             action_t = probs.sample()
