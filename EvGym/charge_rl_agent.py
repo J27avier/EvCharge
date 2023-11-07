@@ -30,11 +30,11 @@ class Safe_Actor_Mean_Agg(nn.Module):
     def __init__(self, envs, device):
         super(Safe_Actor_Mean_Agg, self).__init__()
         self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], 64))
-        #self.activation1 = nn.Tanh()
-        self.activation1 = nn.ReLU()
+        self.activation1 = nn.Tanh()
+        #self.activation1 = nn.ReLU()
         self.linear2 = layer_init(nn.Linear(64, 64))
-        #self.activation2 = nn.Tanh()
-        self.activation2 = nn.ReLU()
+        self.activation2 = nn.Tanh()
+        #self.activation2 = nn.ReLU()
         self.linear3 = layer_init(nn.Linear(64, 1), std=0.01)
         self.safetyL = SafetyLayerAgg(1, device)
 
@@ -312,10 +312,8 @@ class agentPPO_lay(nn.Module):
             action_t = probs.sample()
             # Double safety
             action = self._clamp_bounds(x, action_t)
-            ic(action_t)
-            ic(action)
-
-
+            #ic(action_t)
+            #ic(action)
 
         value = self.critic(x)
         return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), value 
