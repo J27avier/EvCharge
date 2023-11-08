@@ -31,10 +31,10 @@ class Safe_Actor_Mean_Agg(nn.Module):
         super(Safe_Actor_Mean_Agg, self).__init__()
         self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], 64))
         #self.activation1 = nn.Tanh()
-        self.activation1 = nn.ReLU()
+        self.activation1 = nn.LeakyReLU()
         self.linear2 = layer_init(nn.Linear(64, 64))
         #self.activation2 = nn.Tanh()
-        self.activation2 = nn.ReLU()
+        self.activation2 = nn.LeakyReLU()
         self.linear3 = layer_init(nn.Linear(64, 1), std=0.01)
         self.safetyL = SafetyLayerAgg(1, device)
 
