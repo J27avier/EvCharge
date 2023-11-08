@@ -1,0 +1,29 @@
+l_month_agg_crit_moremini_n = [f"month_agg_crit_moremini_n_{i}" for i in range(49)]
+l_month_agg_crit_n = [f"month_agg_crit_n_{i}" for i in range(49)]
+l_month_agg_crit_n_less_steps = [f"month_agg_crit_n_less_steps_{i}" for i in range(49)]
+l_month_agg_crit_n_nalr = [f"month_agg_crit_n_nalr_{i}" for i in range(49)]
+l_month_agg_crit_proj001_n = [f"month_agg_crit_proj001_n_{i}" for i in range(49)]
+l_month_agg_crit_proj01_n = [f"month_agg_crit_proj01_n_{i}" for i in range(49)]
+l_month_agg_crit_proj1_n = [f"month_agg_crit_proj1_n_{i}" for i in range(49)]
+l_month_agg_moremini_n = [f"month_agg_moremini_n_{i}" for i in range(49)]
+l_month_agg_n = [f"month_agg_n_{i}" for i in range(49)]
+l_month_agg_n_less_steps = [f"month_agg_n_less_steps_{i}" for i in range(49)]
+l_month_agg_n_nalr = [f"month_agg_n_nalr_{i}" for i in range(49)]
+l_month_agg_proj001_n = [f"month_agg_proj001_n_{i}" for i in range(49)]
+l_month_agg_proj01_n = [f"month_agg_proj01_n_{i}" for i in range(49)]
+l_month_agg_proj1_n = [f"month_agg_proj1_n_{i}" for i in range(49)]
+
+l_month_agg_crit_moremini_n 
+l_month_agg_crit_n 
+l_month_agg_crit_n_less_steps 
+l_month_agg_crit_n_nalr 
+l_month_agg_crit_proj001_n 
+l_month_agg_crit_proj01_n 
+l_month_agg_crit_proj1_n 
+l_month_agg_moremini_n 
+l_month_agg_n 
+l_month_agg_n_less_steps 
+l_month_agg_n_nalr 
+l_month_agg_proj001_n 
+l_month_agg_proj01_n 
+l_month_agg_proj1_n 

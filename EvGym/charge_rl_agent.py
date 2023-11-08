@@ -30,11 +30,11 @@ class Safe_Actor_Mean_Agg(nn.Module):
     def __init__(self, envs, device):
         super(Safe_Actor_Mean_Agg, self).__init__()
         self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], 64))
-        self.activation1 = nn.Tanh()
-        #self.activation1 = nn.ReLU()
+        #self.activation1 = nn.Tanh()
+        self.activation1 = nn.ReLU()
         self.linear2 = layer_init(nn.Linear(64, 64))
-        self.activation2 = nn.Tanh()
-        #self.activation2 = nn.ReLU()
+        #self.activation2 = nn.Tanh()
+        self.activation2 = nn.ReLU()
         self.linear3 = layer_init(nn.Linear(64, 1), std=0.01)
         self.safetyL = SafetyLayerAgg(1, device)
 
@@ -59,7 +59,6 @@ class agentPPO_agg(nn.Module):
                 layer_init(nn.Linear(64, 64)),
                 nn.Tanh(),
                 layer_init(nn.Linear(64,1), std=1.0),
-                nn.Tanh(),
                 )
         self.actor_mean = Safe_Actor_Mean_Agg(envs, device)
         self.actor_logstd = nn.Parameter(torch.zeros(1,1))
