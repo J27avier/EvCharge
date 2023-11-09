@@ -68,6 +68,8 @@ l_month_ind_norma           = [f"month/batch_7/month_ind_norma_{i}" for i in ran
 l_month_ind_norma_moresteps = [f"month/batch_7/month_ind_norma_moresteps_{i}" for i in range(49)] 
 lus_month_agg_norma         = [f"month/batch_7/lus_month_agg_norma_{i}" for i in range(10)]
 lus_month_ind_norma         = [f"month/batch_7/lus_month_agg_norma_{i}" for i in range(10)]
+l_month_agg_init_norm       = [f"month_agg_init_norm_{i}" for i in range(10)]
+l_month_sep_init_norm       = [f"month_sep_init_norm_{i}" for i in range(10)]
 
 # Batch 1
 df_month_agg_crit              = summ_table( l_month_agg_crit , l_month_agg_crit )
@@ -135,3 +137,5 @@ df_month_ind_norma           = summ_table(l_month_ind_norma ,l_month_ind_norma )
 df_month_ind_norma_moresteps = summ_table(l_month_ind_norma_moresteps ,l_month_ind_norma_moresteps ) 
 df_lus_month_agg_norma       = summ_table(lus_month_agg_norma, lus_month_agg_norma) 
 df_lus_month_ind_norma       = summ_table(lus_month_agg_norma, lus_month_agg_norma) 
+df_month_agg_init_norm       = summ_table( l_month_agg_init_norm, l_month_agg_init_norm)
+df_month_sep_init_norm       = summ_table( l_month_sep_init_norm, l_month_sep_init_norm)
