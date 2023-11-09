@@ -1,17 +1,17 @@
-timestamp: 2023-11-09-18:11:46
+timestamp: 2023-11-09-18:15:51
 
 --Info
-title: EvWorld-month_agg_xyz_5
+title: EvWorld-month_agg_xyz_10
 
 --Args
 print_dash: False
 no_save: False
 save_contracts: False
-agent: month_agg_xyz_5
+agent: month_agg_xyz_10
 desc: 
 seed: 20
 save_agent: True
-save_name: month_agg_xyz_6
+save_name: month_agg_xyz_11
 years: None
 file_price: df_price_2019_pad.csv
 file_contracts: ExpLogs/2023-09-13-15:25:05_Contracts_ev_world_Optim.csv

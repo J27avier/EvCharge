@@ -1,4 +1,4 @@
-timestamp: 2023-11-09-04:13:45
+timestamp: 2023-11-09-18:14:13
 
 --Info
 title: EvWorld-month_agg_xyz_8
@@ -9,7 +9,7 @@ no_save: False
 save_contracts: False
 agent: month_agg_xyz_8
 desc: 
-seed: 42
+seed: 20
 save_agent: True
 save_name: month_agg_xyz_9
 years: None
@@ -20,10 +20,10 @@ torch_deterministic: True
 cuda: True
 reward_coef: 1.0
 proj_coef: 0.0
-learning_rate: 0.03
+learning_rate: 0.001
 total_timesteps: 1000000
 num_steps: 24
-anneal_lr: True
+anneal_lr: False
 gamma: 0.99
 gae_lambda: 0.95
 num_minibatches: 1
