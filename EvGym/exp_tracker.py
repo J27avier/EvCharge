@@ -34,7 +34,7 @@ class ExpTracker():
             df_log = pd.merge(df_log, df_bill, on = ["ts"], how = "outer")
 
         # TODO: fillna
-        print(f"Imbalance bill: {df_log["imbalance_bill"].sum():.2f}")
+        print(f"Imbalance bill:", df_log["imbalance_bill"].sum())
         if args.save_name is None or args.save_name != "":
             df_log.to_csv(f"{path}{args.save_name}.csv", index = False)
         else:

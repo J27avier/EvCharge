@@ -26,7 +26,7 @@ import time
 from distutils.util import strtobool
 import random
 #import pdb; pdb.set_trace()
-#torch.set_num_threads(8)
+torch.set_num_threads(8)
 
 def runSim(args = None):
     if args is None:
