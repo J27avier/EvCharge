@@ -175,7 +175,7 @@ def runSim(args = None):
                 df_state, reward, done, info = world.step(agent.action_to_env(action))
                 # Reward tuning
                 #ic(reward, type(reward))
-                reward = reward_coef * reward + proj_coef * agent.proj_loss
+                reward = reward_coef * reward #+ proj_coef * agent.proj_loss
                 #print(f"{reward_coef=}, {type(reward_coef)=}")
                 #print(f"{reward=}, {type(reward)=}")
                 #print(f"{proj_coef=}, {type(proj_coef)=}")
