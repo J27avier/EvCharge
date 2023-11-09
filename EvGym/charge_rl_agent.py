@@ -459,8 +459,7 @@ class agentPPO_sagg(nn.Module):
     def _get_action_and_value(self, x,  action=None):
         #print(f"-- Agent step --")
         #print(f"{x.shape=}")
-        action_mean, proj_loss = self.actor_mean(x)
-        self.proj_loss = proj_loss.cpu().numpy().squeeze()
+        action_mean = self.actor_mean(x)
         action_logstd = self.actor_logstd.expand_as(action_mean)
         action_std = torch.exp(action_logstd) / 30
         probs = Normal(action_mean, action_std)
