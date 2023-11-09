@@ -118,6 +118,7 @@ class ChargeWorldEnv():
         n_cars = occ_spots.sum()
         return -self.imb_transf/ n_cars if n_cars > 0 else 0
 
+
     def _cars_depart(self):
         blank_session = Session()
         #Check that cars have finished charging
