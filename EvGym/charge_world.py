@@ -114,9 +114,7 @@ class ChargeWorldEnv():
         return self.df_park.copy(), reward, done, info
 
     def _reward(self):
-        occ_spots = self.df_park["idSess"] != -1 # Occupied spots
-        n_cars = occ_spots.sum()
-        return -self.imb_transf/ n_cars if n_cars > 0 else 0
+        return -self.imb_transf
 
 
     def _cars_depart(self):
