@@ -41,6 +41,7 @@ class ExpTracker():
         
     def save_contracts(self, args, path="Results/results_log/"):
         df_contract_log = pd.DataFrame(self.contract_log, columns = self.contract_log_cols)
+        print("Imbalance bill:", df_contract_log["imbalance_bill"].sum())
         if args.save_name != "":
             df_contract_log.to_csv(f"{path}{args.save_name}_Contracts.csv", index = False)
         else: 

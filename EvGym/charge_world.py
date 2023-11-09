@@ -94,7 +94,7 @@ class ChargeWorldEnv():
         self.t += 1
 
         # Calculate reward
-        reward = np.random.randint(-100, 100)#self._reward()
+        reward = self._reward()
         # reward = self.calc_reward(self.state)
 
         self.df_depart = self.df_park[self.df_park["t_dep"] == self.t]
