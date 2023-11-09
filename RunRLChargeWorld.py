@@ -73,7 +73,7 @@ def runSim(args = None):
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     torch.backends.cudnn.deterministic = args.torch_deterministic
-    device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
+    device = torch.device("cuda:2" if torch.cuda.is_available() and args.cuda else "cpu")
     ic(device)
 
     # Agent info
