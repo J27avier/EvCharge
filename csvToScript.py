@@ -26,3 +26,5 @@ with open(f"{filename}.sh", "w") as f:
             f.write(print_str)
 
 os.system(f"cat {filename}.sh")
+
+# YOU'VE FOUND THE SECRET MESSAGE XD
