@@ -199,6 +199,9 @@ class agentPPO_agg(nn.Module):
         Tupper = torch.tensor(self.sum_upper)#.to(self.device)
 
         action = torch.clamp(action_t, Tlower, Tupper)
+        ic(Tlower)
+        ic(ation_t)
+        ic(TUpper)
         return action
 
     def get_action_and_value(self, x,  action=None):
