@@ -16,7 +16,7 @@ def parse_args():
     parser.add_argument("-C", "--save-contracts", help="Saves the contracts accepted to each car", action="store_true")
     parser.add_argument("-A", "--agent", help="Type of agent", type=str, required=True)
     parser.add_argument("-D", "--desc", help="Description of the expereiment, starting with \"_\"", type=str, default="")
-    parser.add_argument("-E", "--seed", help="Seed to use for the rng", type=int, default=42)
+    parser.add_argument("-E", "--seed", help="Seed to use for the rng", type=int, default=20)
     parser.add_argument("-G", "--save-agent", help="Saves the agent", action="store_true")
     parser.add_argument("--save-name", help="Name to save experiment", type=str, default="")
     parser.add_argument("-Y", "--years", help="Number of years to run the simulation for", type=int)
