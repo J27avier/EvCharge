@@ -1,4 +1,4 @@
-timestamp: 2023-11-09-04:06:31
+timestamp: 2023-11-09-04:50:25
 
 --Info
 title: EvWorld-PPO-agg
@@ -23,7 +23,7 @@ proj_coef: 0.0
 learning_rate: 0.03
 total_timesteps: 1000000
 num_steps: 24
-anneal_lr: True
+anneal_lr: False
 gamma: 0.99
 gae_lambda: 0.95
 num_minibatches: 1
