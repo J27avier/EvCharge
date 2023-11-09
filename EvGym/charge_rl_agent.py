@@ -341,13 +341,13 @@ class agentPPO_sagg(nn.Module):
                 layer_init(nn.Linear(64,1), std=1.0),
                 )
         self.actor_mean = nn.Sequential(
-            layer_init(nn.Linear(envs["single_observation_space"], 64)),
-            nn.Tanh(),
-            layer_init(nn.Linear(64, 64)),
-            nn.Tanh(),
-            layer_init(nn.Linear(64, 1), std=0.01),
-            nn.Sigmoid(),
-        )
+                layer_init(nn.Linear(envs["single_observation_space"], 64)),
+                nn.Tanh(),
+                layer_init(nn.Linear(64, 64)),
+                nn.Tanh(),
+                layer_init(nn.Linear(64, 1), std=0.01),
+                nn.Sigmoid(),
+            )
         self.actor_logstd = nn.Parameter(torch.zeros(1,1))
 
         # Ev parameters
@@ -459,7 +459,14 @@ class agentPPO_sagg(nn.Module):
     def _get_action_and_value(self, x,  action=None):
         #print(f"-- Agent step --")
         #print(f"{x.shape=}")
-        action_mean = self.actor_mean(x)
+        if x.ndim == 1:
+            action_mean = self.actor_mean(x).unsqueeze(1)
+        else:
+            action_mean = self.actor_mean(x)
+        ic(action_mean)
+        ic(action_mean.shape)
+        ic(self.actor_logstd)
+        ic(self.actor_logstd.shape)
         action_logstd = self.actor_logstd.expand_as(action_mean)
         action_std = torch.exp(action_logstd) / 30
         probs = Normal(action_mean, action_std)
