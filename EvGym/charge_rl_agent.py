@@ -330,6 +330,182 @@ class agentPPO_lay(nn.Module):
         return action.cpu().numpy().squeeze()
 
 
+class agentPPO_sagg(nn.Module):
+    def __init__(self, envs, df_price, device, pred_price_n=8, max_cars: int = config.max_cars, myprint = False):
+        super().__init__()
+        self.critic = nn.Sequential(
+                layer_init(nn.Linear(envs["single_observation_space"], 64)),
+                nn.Tanh(),
+                layer_init(nn.Linear(64, 64)),
+                nn.Tanh(),
+                layer_init(nn.Linear(64,1), std=1.0),
+                )
+        self.actor_mean = nn.Sequential(
+            layer_init(nn.Linear(envs["single_observation_space"], 64)),
+            nn.Tanh(),
+            layer_init(nn.Linear(64, 64)),
+            nn.Tanh(),
+            layer_init(nn.Linear(64, 1), std=0.01),
+            nn.Sigmoid(),
+        )
+        self.actor_logstd = nn.Parameter(torch.zeros(1,1))
+
+        # Ev parameters
+        self.max_cars = max_cars
+        self.df_price = df_price
+        self.device = device
+        self.envs = envs
+        self.pred_price_n = pred_price_n
+        self.myprint = myprint
+        self.proj_loss = 0
+
+    def get_value(self, x):
+        return self.critic(x)
+
+    def _get_prediction(self, t, n):
+        l_idx_t0 = self.df_price.index[self.df_price["ts"]== t].to_list()
+        assert len(l_idx_t0) == 1, "Timestep for prediction not unique or non existent"
+        idx_t0 = l_idx_t0[0]
+        #idx_tend = min(idx_t0+n, self.df_price.index.max()+1)
+        idx_tend = idx_t0+n
+        pred_price = self.df_price.iloc[idx_t0:idx_tend]["price_im"].values
+        return pred_price
+
+    def df_to_state(self, df_state, t):
+        # Aggregate
+        # Get occ spots (Nt)
+        occ_spots = df_state["t_rem"] > 0 # Occupied spots
+        num_cars = occ_spots.sum()
+
+        # Get (ND) 
+        cont_spots = df_state["t_dis"] > 0 # Spots with contracts
+        num_cars_dis = (cont_spots).sum() 
+
+        # Sum Soc
+        sum_soc = df_state[occ_spots]["soc_t"].sum()
+
+        # Sum SOC_rem
+        sum_diff_soc = num_cars * config.FINAL_SOC - sum_soc
+
+        # Sum soc_dis
+        sum_soc_dis = df_state[cont_spots]["soc_dis"].sum()
+
+        # Sum Y_min
+        hat_y_low = config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B
+        y_low = np.maximum(hat_y_low * config.eta_c, hat_y_low / config.eta_d)
+        y_low[~occ_spots] = 0
+
+        sum_y_low = y_low.sum()
+
+        # Lax
+        lax = df_state["t_rem"] - (config.FINAL_SOC - df_state["soc_t"])*config.B / (config.alpha_c*config.eta_c)
+        lax[~occ_spots] = 0
+        sum_lax = lax.sum()
+
+        # p25, p50, p75, max, of soc_t, t_rem, soc_dis, t_dis
+        p_soc_t = df_state[occ_spots]["soc_t"].quantile([0, 0.25, 0.5, 0.75, 1])
+        p_t_rem = df_state[occ_spots]["t_rem"].quantile([0, 0.25, 0.5, 0.75, 1])
+        p_soc_dis = df_state[occ_spots]["soc_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
+        p_t_dis = df_state[occ_spots]["t_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
+
+        # Bounds
+        dis_lim = np.zeros(config.max_cars)
+        dis_lim[cont_spots] += -df_state[cont_spots]["soc_dis"]*config.eta_d
+
+        self.lower = np.maximum(y_low, np.maximum(-config.alpha_d/config.B, dis_lim))
+        self.lower[~occ_spots] = 0
+
+        upper_soc = (config.FINAL_SOC - df_state["soc_t"]) / config.eta_c
+        self.upper = np.minimum(upper_soc,  config.alpha_c / config.B)
+        self.upper[~occ_spots] = 0
+
+        self.sum_lower = self.lower.sum()
+        self.sum_upper = self.upper.sum()
+
+        state_cars = np.concatenate(([self.sum_lower],
+                                     [self.sum_upper],
+                                     [num_cars],
+                                     [num_cars_dis],
+                                     [sum_soc],
+                                     [sum_soc_dis],
+                                     [sum_y_low],
+                                     [sum_lax],
+                                     p_soc_t,
+                                     p_t_rem,
+                                     p_soc_dis,
+                                     p_t_dis)) 
+        # Note, all the "sums"  can be normalized
+        state_cars = np.nan_to_num(state_cars)
+        
+
+        pred_price = self._get_prediction(t, self.pred_price_n)
+        hour = np.array([t % 24])
+        np_x = np.concatenate((state_cars, pred_price, hour)).astype(float)
+        #ic(np_x, np_x.shape, type(np_x))
+        x = torch.tensor(np_x).to(self.device).float()#reshape(1, self.envs["single_observation_space"])
+        #print(f"{x=}, {x.shape=}")
+        self.t = t
+        return x
+
+    def state_to_df(self, obs):
+        raise Exception("Not valid in aggregate")
+        np_obs = obs.cpu().numpy()
+        data_state = np_obs[0, :config.max_cars*4]
+        df_state_simpl = pd.DataFrame(data = data_state.reshape((config.max_cars, 4)), columns = ["soc_t", "t_rem", "soc_dis", "t_dis"])
+        pred_price = np_obs[config.max_cars*4:config.max_cars*4+self.pred_price_n]
+        hour = np_obs[-1]
+        return df_state_simpl, pred_price, hour
+
+    def _get_action_and_value(self, x,  action=None):
+        #print(f"-- Agent step --")
+        #print(f"{x.shape=}")
+        action_n, proj_loss = self.actor_mean(x)
+        action_mean = self.sum_upper*(action_n) + self.sum_lower(1-action_n)
+        self.proj_loss = proj_loss.cpu().numpy().squeeze()
+        action_logstd = self.actor_logstd.expand_as(action_mean)
+        action_std = torch.exp(action_logstd) / 30
+        probs = Normal(action_mean, action_std)
+        if action is None:
+            #print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
+            
+            action_t = probs.sample()
+            # Double safety
+            action = self._clamp_bounds(action_t) # before, also needed x
+
+        value = self.critic(x)
+        return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), value 
+
+    def _clamp_bounds(self, action_t):
+        # Aggregate clamp
+        Tlower = torch.tensor(self.sum_lower).to(self.device)
+        Tupper = torch.tensor(self.sum_upper).to(self.device)
+
+        action = torch.clamp(action_t, Tlower, Tupper)
+        return action
+
+    def get_action_and_value(self, x,  action=None):
+        # Right now it doesn't do anything, but left for consistency with the other method
+        action, logprob, entropy, value = self._get_action_and_value(x, action)
+        return action, logprob, entropy, value 
+
+    def action_to_env(self, action_agg):
+        # Dissagregation
+        Y_tot = action_agg.cpu().numpy().squeeze()
+        action = self.lower.copy()
+
+        range_y  = self.upper - self.lower
+        if range_y.sum() > 0:
+            n_range_y = range_y  / range_y.sum()
+            action  += (Y_tot - self.lower.sum()) * n_range_y
+
+        #print("-- double clip --")
+        #print(f"{self.lower=}, {self.lower.shape=}, {type(self.lower)=}")
+        #print(f"{self.upper=}, {self.upper.shape=}, {type(self.upper)=}")
+        #input()
+        #print(f"{action_agg=}")
+        #print(f"{action=}, {action.shape=}, {type(action)=}")
+        return action
+
 class agentPPO_sep(nn.Module):
     """
     WARNING: This is proof of concept, and constraint enforcement is separate from model
