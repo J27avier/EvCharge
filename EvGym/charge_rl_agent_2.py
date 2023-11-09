@@ -31,10 +31,8 @@ class Safe_Actor_Mean_Agg(nn.Module):
         super(Safe_Actor_Mean_Agg, self).__init__()
         self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], 64))
         self.activation1 = nn.Tanh()
-        #self.activation1 = nn.LeakyReLU()
         self.linear2 = layer_init(nn.Linear(64, 64))
         self.activation2 = nn.Tanh()
-        #self.activation2 = nn.LeakyReLU()
         self.linear3 = layer_init(nn.Linear(64, 1), std=0.01)
         self.safetyL = SafetyLayerAgg(1, device)
 
@@ -58,7 +56,7 @@ class agentPPO_agg(nn.Module):
                 nn.Tanh(),
                 layer_init(nn.Linear(64, 64)),
                 nn.Tanh(),
-                layer_init(nn.Linear(64,1), std=1.0),
+                layer_init(nn.Linear(64,1), std=1.0)
                 )
         self.actor_mean = Safe_Actor_Mean_Agg(envs, device)
         self.actor_logstd = nn.Parameter(torch.zeros(1,1))
@@ -174,29 +172,22 @@ class agentPPO_agg(nn.Module):
         #print(f"{x.shape=}")
         action_mean, proj_loss = self.actor_mean(x)
         self.proj_loss = proj_loss.cpu().numpy().squeeze()
-        action_logstd = self.actor_logstd.expand_as(action_mean) # / 10
-        action_std = torch.exp(action_logstd) 
+        action_logstd = self.actor_logstd.expand_as(action_mean)
+        action_std = torch.exp(action_logstd) / 10
         probs = Normal(action_mean, action_std)
         if action is None:
-            ##print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
+            #print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
             action_t = probs.sample()
-            ## Double safety
+            # Double safety
             action = self._clamp_bounds(action_t) # before, also needed x
-            # Deterministic
-            #ic(action_mean, action_mean.shape)
-            #action = self._clamp_bounds(action_mean) # before, also needed x
-            #ic(action, action.shape)
-            #if torch.norm(action_mean - action) > 0.001:
-            #    print("Clipping")
-            #    exit(1)
 
         value = self.critic(x)
         return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), value 
 
     def _clamp_bounds(self, action_t):
         # Aggregate clamp
-        Tlower = torch.tensor(self.sum_lower)#.to(self.device)
-        Tupper = torch.tensor(self.sum_upper)#.to(self.device)
+        Tlower = torch.tensor(self.sum_lower)
+        Tupper = torch.tensor(self.sum_upper)
 
         action = torch.clamp(action_t, Tlower, Tupper)
         return action
@@ -229,10 +220,8 @@ class Safe_Actor_Mean(nn.Module):
         super(Safe_Actor_Mean, self).__init__()
         self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], 64))
         self.activation1 = nn.Tanh()
-        #self.activation1 = nn.ReLU()
         self.linear2 = layer_init(nn.Linear(64, 64))
         self.activation2 = nn.Tanh()
-        #self.activation2 = nn.ReLU()
         self.linear3 = layer_init(nn.Linear(64, envs["single_action_space"]), std=0.01)
         self.safetyL = SafetyLayer(envs["single_action_space"], device)
 
@@ -259,7 +248,7 @@ class agentPPO_lay(nn.Module):
                 nn.Tanh(),
                 layer_init(nn.Linear(64, 64)),
                 nn.Tanh(),
-                layer_init(nn.Linear(64,1), std=1.0),
+                layer_init(nn.Linear(64,1), std=1.0)
                 )
         self.actor_mean = Safe_Actor_Mean(envs, device)
         self.actor_logstd = nn.Parameter(torch.zeros(1, envs["single_action_space"]))
@@ -314,8 +303,6 @@ class agentPPO_lay(nn.Module):
             action_t = probs.sample()
             # Double safety
             action = self._clamp_bounds(x, action_t)
-            #ic(action_t)
-            #ic(action)
 
         value = self.critic(x)
         return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), value 
@@ -343,7 +330,7 @@ class agentPPO_lay(nn.Module):
         return action.cpu().numpy().squeeze()
 
 
-class agentPPO_sep(nn.Module):
+class agentPPO_sepCvx(nn.Module):
     """
     WARNING: This is proof of concept, and constraint enforcement is separate from model
     """
@@ -365,6 +352,7 @@ class agentPPO_sep(nn.Module):
                 )
         self.actor_logstd = nn.Parameter(torch.zeros(1, envs["single_action_space"]))
 
+
         # Ev parameters
         self.max_cars = max_cars
         self.df_price = df_price
@@ -373,7 +361,6 @@ class agentPPO_sep(nn.Module):
         self.pred_price_n = pred_price_n
         self.myprint = myprint
         self.proj_loss = 0
-        self.x = None
         
 
     def get_value(self, x):
@@ -386,7 +373,7 @@ class agentPPO_sep(nn.Module):
         probs = Normal(action_mean, action_std)
         if action is None:
             action = probs.sample()
-            #action = action*config.alpha_c / config.B
+            action = action*config.alpha_c / config.B
         value = self.critic(x)
         return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), value 
 
@@ -417,7 +404,6 @@ class agentPPO_sep(nn.Module):
         return df_state_simpl, pred_price, hour
 
     def _enforce_single_safety(self, action_t, x, t):
-        raise Exception("Deprecated for now")
         df_state, price_pred, hour = self.state_to_df(x, t)
         action = np.zeros((config.max_cars,1))
 
@@ -493,7 +479,6 @@ class agentPPO_sep(nn.Module):
         return action
 
     def _enforce_safety(self, action_t, x, t):
-        raise Exception("Deprecated for now")
         action_t_np = action_t.cpu().numpy()
         l_actions = []
 
@@ -518,23 +503,12 @@ class agentPPO_sep(nn.Module):
         return action
 
     def get_action_and_value(self, x, action=None):
-        self.x = x.detach().clone()
+        #x = self.construct_state(df_state, t) # Gets performed twice (also in main), can streamline later
         action_t, logprob, entropy, value = self._get_action_and_value(x, action)
+        action_np = self._enforce_safety(action_t, x, self.t )
+        action = torch.tensor(action_np).to(self.device).float()
+        #x = torch.tensor(np_x).to(self.device).float().reshape(1, self.envs["single_observation_space"])
+        return action, logprob, entropy, value 
 
-        # Clamping will be done at the VERY LAST STEP NOW
-        #action_np = self._enforce_safety(action_t, x, self.t )
-        #action = torch.tensor(action_np).to(self.device).float()
-
-        #return action, logprob, entropy, value 
-        return action_t, logprob, entropy, value 
-
-    def action_to_env(self, action_t):
-        # Clipping
-        lower, upper = bounds_from_obs(self.x)
-
-        Tlower = torch.tensor(lower).to(self.device)
-        Tupper = torch.tensor(upper).to(self.device)
-
-        action = torch.clamp(action_t, Tlower, Tupper)
-
+    def action_to_env(self, action):
         return action.cpu().numpy().squeeze()

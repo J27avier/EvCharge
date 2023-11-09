@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 from tabulate import tabulate
 import os
+import pyfiglet # type: ignore
+from colorama import init, Back, Fore
 import argparse
 from tqdm import tqdm
 from icecream import ic # type: ignore
@@ -9,8 +11,7 @@ from icecream import ic # type: ignore
 # User defined modules
 from EvGym.charge_world import ChargeWorldEnv
 #from EvGym.charge_agent import agentASAP, agentOptim, agentNoV2G, agentOracle
-from EvGym.charge_rl_agent import agentPPO_sep, agentPPO_lay, agentPPO_agg
-from EvGym.charge_utils import parse_args, print_welcome
+from EvGym.charge_rl_agent import agentPPO_lay, agentPPO_sepCvx, agentPPO_agg
 from EvGym import config
 
 # Contracts
@@ -28,10 +29,97 @@ import random
 #import pdb; pdb.set_trace()
 torch.set_num_threads(8)
 
-def runSim(args = None):
-    if args is None:
-        args = parse_args()
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-R", "--print-dash", help = "Print dashboard", action="store_true")
+    parser.add_argument("-S", "--no-save", help="Does not save results csv", action="store_true")
+    parser.add_argument("-C", "--save-contracts", help="Saves the contracts accepted to each car", action="store_true")
+    parser.add_argument("-A", "--agent", help="Type of agent", type=str, required=True)
+    parser.add_argument("-D", "--desc", help="Description of the expereiment, starting with \"_\"", type=str, default="")
+    parser.add_argument("-E", "--seed", help="Seed to use for the rng", type=int, default=42)
+    parser.add_argument("-G", "--save-agent", help="Saves the agent", action="store_true")
+    parser.add_argument("--save-name", help="Name to save experiment", type=str, default="")
+
+    # Files
+    parser.add_argument("-I", "--file-price", help = "Name of imbalance price dataframe", 
+                        type=str, default= "df_price_2019.csv")
+    parser.add_argument("-O", "--file-contracts", help = "CSV of contracts offered", 
+                        type=str, default= "ExpLogs/2023-09-13-15:25:05_Contracts_ev_world_Optim.csv")
+    parser.add_argument("-N", "--file-sessions", help = "CSV of charging sessions",
+                        type=str, default= "df_elaad_preproc.csv")
+
+    # Torch
+    parser.add_argument("--torch-deterministic", type=lambda x: bool(strtobool(x)), default=True, nargs="?",
+            const=True, help="if toggled, `torch.backends.cudnn.deterministic=False`")
+    parser.add_argument("--cuda", type=lambda x: bool(strtobool(x)), default=True, nargs="?", const=True,
+        help="if toggled, cuda will be enabled by default")
+
+    # Reward tuning
+    parser.add_argument("--reward-coef", type=float, default=1)
+    parser.add_argument("--proj-coef", type=float, default=0)
+
+    # Algorithm specific
+    parser.add_argument("--learning-rate", type=float, default=3e-4,
+        help="the learning rate of the optimizer")
+    parser.add_argument("--total-timesteps", type=int, default=1000000,
+        help="total timesteps of the experiments")
+    parser.add_argument("--num-steps", type=int, default = 24, #default=2048,
+        help="the number of steps to run in each environment per policy rollout")
+    parser.add_argument("--anneal-lr", type=lambda x: bool(strtobool(x)), default=True, nargs="?", const=True,
+        help="Toggle learning rate annealing for policy and value networks")
+    parser.add_argument("--gamma", type=float, default=0.99,
+        help="the discount factor gamma")
+    parser.add_argument("--gae-lambda", type=float, default=0.95,
+        help="the lambda for the general advantage estimation")
+    parser.add_argument("--num-minibatches", type=int, default=4, # default 32, 
+        help="the number of mini-batches")
+    parser.add_argument("--update-epochs", type=int, default=10,
+        help="the K epochs to update the policy")
+    parser.add_argument("--norm-adv", type=lambda x: bool(strtobool(x)), default=True, nargs="?", const=True,
+        help="Toggles advantages normalization")
+    parser.add_argument("--clip-coef", type=float, default=0.2,
+        help="the surrogate clipping coefficient")
+    parser.add_argument("--clip-vloss", type=lambda x: bool(strtobool(x)), default=True, nargs="?", const=True,
+        help="Toggles whether or not to use a clipped loss for the value function, as per the paper.")
+    parser.add_argument("--ent-coef", type=float, default=0.0, # 0.1?
+        help="coefficient of the entropy")
+    parser.add_argument("--vf-coef", type=float, default=0.5,
+        help="coefficient of the value function")
+    parser.add_argument("--max-grad-norm", type=float, default=0.5,
+        help="the maximum norm for the gradient clipping")
+    parser.add_argument("--target-kl", type=float, default=None,
+        help="the target KL divergence threshold")
+
+
+    args = parser.parse_args()
+    args.batch_size = int(1 * args.num_steps)
+    args.minibatch_size = int(args.batch_size // args.num_minibatches)
+    return args
+
+def print_welcome(df_sessions, df_price, contract_info):
+    G, W, L = contract_info["G"], contract_info["W"], contract_info["L"]
+    os.system("clear")
+    print(Fore.BLUE, pyfiglet.figlet_format("Welcome to Ev Charge World"), Fore.RESET)
+    print("df_sessions:")
+    print(df_sessions.describe())
+    print("="*80)
+    print("df_price:")
+    print(df_price.describe())
+    print("Press Enter to begin...")
+    print("="*80)
+    print("Contracts")
+    print("G ", G.shape)
+    print(G)
+    print("\nW", W.shape)
+    print(W)
+    print("\nL", L.shape)
+    print(L)
+    input()
+    os.system("clear")
+
+def main():
+    args = parse_args()
     title = f"EvWorld-{args.agent}{args.desc}"
 
     # Writer
@@ -68,12 +156,13 @@ def runSim(args = None):
     # Some agents are not allowed to discharge energy
     skip_contracts = True if args.agent in ["ASAP", "NoV2G"] else False
 
+
     # Torch options
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     torch.backends.cudnn.deterministic = args.torch_deterministic
-    device = torch.device("cuda:2" if torch.cuda.is_available() and args.cuda else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
     ic(device)
 
     # Agent info
@@ -84,7 +173,7 @@ def runSim(args = None):
 
     # Agents
     if args.agent == "PPO-sep":
-        agent = agentPPO_sep(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
+        agent = agentPPO_sepCvx(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
 
     elif args.agent == "PPO-lay":
         agent = agentPPO_lay(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
@@ -141,7 +230,6 @@ def runSim(args = None):
     start_wallTime = time.time()
 
     pbar = tqdm(desc=args.save_name, total=int(ts_max-ts_min), smoothing=0)
-    ts_max = int(ts_min + 24 * 31)
     while t in range(int(ts_min)-1, int(ts_max)):
         #update = t % num_updates - ((ts_min - 1) % num_updates) + 1
         for update in range(1, num_updates+1): # TODO: Find a smarter way to do this 
@@ -175,7 +263,7 @@ def runSim(args = None):
                 df_state, reward, done, info = world.step(agent.action_to_env(action))
                 # Reward tuning
                 #ic(reward, type(reward))
-                reward = reward_coef * reward #+ proj_coef * agent.proj_loss
+                reward = reward_coef * reward + proj_coef * agent.proj_loss
                 #print(f"{reward_coef=}, {type(reward_coef)=}")
                 #print(f"{reward=}, {type(reward)=}")
                 #print(f"{proj_coef=}, {type(proj_coef)=}")
@@ -220,11 +308,9 @@ def runSim(args = None):
             b_logprobs = logprobs.reshape(-1)
             b_actions = actions.reshape((-1, envs["single_action_space"]))
             b_advantages = advantages.reshape(-1) # Normailze
-            #b_advantages = (b_advantages - b_advantages.mean()) - (b_advantages.std() + 1e-8)
             b_returns = returns.reshape(-1) #  Normailze"
-            #b_returns = (b_returns - b_returns.mean()) - (b_returns.std() + 1e-8)
             b_values = values.reshape(-1) #Normailze 
-            #b_values = (b_values - b_values.mean()) - (b_values.std() + 1e-8)
+            # deactivate norm in options
 
             # Optimizing the policy and value network
             b_inds = np.arange(args.batch_size)
@@ -247,7 +333,6 @@ def runSim(args = None):
 
                     mb_advantages = b_advantages[mb_inds]
                     if args.norm_adv:
-                        #pass
                         mb_advantages = (mb_advantages - mb_advantages.mean()) / (mb_advantages.std() + 1e-8)
 
                     # Policy loss
@@ -297,6 +382,7 @@ def runSim(args = None):
             #print("SPS:", int(t / (time.time() - start_wallTime)))
             writer.add_scalar("charts/SPS", int(t / (time.time() - start_wallTime)), t)
             
+            
 
     if not args.no_save:
         world.tracker.save_log(args, path=config.results_path)
@@ -317,21 +403,7 @@ def runSim(args = None):
 
 
 if __name__ == "__main__":
-    args = parse_args()
-
-    if args.years is None:
-        runSim(args)
-    else:
-        og_save_name = args.save_name
-        for i in range(args.years):
-            if og_save_name != "":
-                args.save_name = og_save_name + f"_{i}"
-                if i > 0:
-                    args.agent = og_save_name + f"_{i-1}"
-                runSim(args)
-            else:
-                raise Exception("You must specify save name to run multiple years")
-
+    main()
 
 # ACKNOWLEDGMENTS
 # Parts of this code are adapted from https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppo_continuous_action.py
