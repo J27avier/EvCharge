@@ -176,7 +176,7 @@ class agentPPO_agg(nn.Module):
         action_std = torch.exp(action_logstd) / 30
         probs = Normal(action_mean, action_std)
         if action is None:
-            probs = Normal(action_mean, (self.sum_upper-self.sum_lower)/10)
+            probs = Normal(action_mean, (self.sum_upper-self.sum_lower)/10+0.0001)
             #print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
             action_t = probs.sample()
             # Double safety
