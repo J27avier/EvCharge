@@ -314,6 +314,7 @@ def runSim(args = None):
 
     writer.close()
     pbar.close()
+    agent.close()
 
 
 if __name__ == "__main__":
