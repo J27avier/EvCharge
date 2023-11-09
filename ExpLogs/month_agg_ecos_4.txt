@@ -1,4 +1,4 @@
-timestamp: 2023-11-09-03:03:48
+timestamp: 2023-11-09-03:32:09
 
 --Info
 title: EvWorld-month_agg_ecos_3
@@ -26,7 +26,7 @@ num_steps: 24
 anneal_lr: True
 gamma: 0.99
 gae_lambda: 0.95
-num_minibatches: 1
+num_minibatches: 2
 update_epochs: 10
 norm_adv: True
 clip_coef: 0.2
@@ -36,4 +36,4 @@ vf_coef: 0.5
 max_grad_norm: 0.5
 target_kl: None
 batch_size: 24
-minibatch_size: 24
+minibatch_size: 12
