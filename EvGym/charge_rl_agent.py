@@ -459,8 +459,7 @@ class agentPPO_sagg(nn.Module):
     def _get_action_and_value(self, x,  action=None):
         #print(f"-- Agent step --")
         #print(f"{x.shape=}")
-        action_n, proj_loss = self.actor_mean(x)
-        action_mean = self.sum_upper*(action_n) + self.sum_lower(1-action_n)
+        action_mean, proj_loss = self.actor_mean(x)
         self.proj_loss = proj_loss.cpu().numpy().squeeze()
         action_logstd = self.actor_logstd.expand_as(action_mean)
         action_std = torch.exp(action_logstd) / 30
@@ -468,8 +467,9 @@ class agentPPO_sagg(nn.Module):
         if action is None:
             #print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
             
-            action_t = probs.sample()
+            action_n = probs.sample()
             # Double safety
+            action_t = action_n * (self.sum_upper) + (1- action_n)*(self.sum_lower)
             action = self._clamp_bounds(action_t) # before, also needed x
 
         value = self.critic(x)
