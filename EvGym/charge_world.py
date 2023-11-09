@@ -114,10 +114,6 @@ class ChargeWorldEnv():
         return self.df_park.copy(), reward, done, info
 
     def _reward(self):
-        #occ_spots = self.df_park["idSess"] != -1 # Occupied spots
-        #n_cars = occ_spots.sum()
-        #norm = (config.FINAL_SOC - self.df_park[occ_spots]["soc_t"]).sum()
-        #return -self.imb_transf/n_cars if n_cars > 0 else 0 #and norm > 0 else 0
         return -self.imb_transf
 
     def _cars_depart(self):
@@ -395,7 +391,7 @@ class ChargeWorldEnv():
         self.df_park.loc[occ_spots, "lax"] = self.df_park.loc[occ_spots]["t_rem"] \
                                              - ((config.FINAL_SOC - self.df_park.loc[occ_spots]["soc_t"])*config.B) \
                                              /(config.alpha_c * config.eta_c)
-        if any(self.df_park[occ_spots]["lax"] < -config.tol*10): # A little bit more tolerance because f numerical error in division
+        if any(self.df_park[occ_spots]["lax"] < - config.tol): # Some tolerance because f numerical error in division
             print(self.df_park[self.df_park["lax"] < 0])
             raise Exception("Negative laxity detected")
 
