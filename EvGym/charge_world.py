@@ -94,7 +94,7 @@ class ChargeWorldEnv():
         self.t += 1
 
         # Calculate reward
-        reward = self._reward()
+        reward = np.random.randint(-100, 100)#self._reward()
         # reward = self.calc_reward(self.state)
 
         self.df_depart = self.df_park[self.df_park["t_dep"] == self.t]
@@ -114,8 +114,8 @@ class ChargeWorldEnv():
         return self.df_park.copy(), reward, done, info
 
     def _reward(self):
-        occ_spots = self.df_park["idSess"] != -1 # Occupied spots
-        n_cars = occ_spots.sum()
+        #occ_spots = self.df_park["idSess"] != -1 # Occupied spots
+        #n_cars = occ_spots.sum()
         #norm = (config.FINAL_SOC - self.df_park[occ_spots]["soc_t"]).sum()
         #return -self.imb_transf/n_cars if n_cars > 0 else 0 #and norm > 0 else 0
         return -self.imb_transf
