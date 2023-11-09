@@ -323,8 +323,8 @@ class agentPPO_lay(nn.Module):
     def _clamp_bounds(self, x, action_t):
         lower, upper = bounds_from_obs(x)
 
-        Tlower = torch.tensor(lower).to(self.device)
-        Tupper = torch.tensor(upper).to(self.device)
+        Tlower = torch.tensor(lower)#.to(self.device)
+        Tupper = torch.tensor(upper)#.to(self.device)
 
         action = torch.clamp(action_t, Tlower, Tupper)
         ##action[0, idx_empty] = 0
