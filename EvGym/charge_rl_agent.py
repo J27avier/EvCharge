@@ -463,10 +463,10 @@ class agentPPO_sagg(nn.Module):
             action_mean = self.actor_mean(x).unsqueeze(1)
         else:
             action_mean = self.actor_mean(x)
-        ic(action_mean)
-        ic(action_mean.shape)
-        ic(self.actor_logstd)
-        ic(self.actor_logstd.shape)
+        #ic(action_mean)
+        #ic(action_mean.shape)
+        #ic(self.actor_logstd)
+        #ic(self.actor_logstd.shape)
         action_logstd = self.actor_logstd.expand_as(action_mean)
         action_std = torch.exp(action_logstd) / 30
         probs = Normal(action_mean, action_std)
