@@ -173,7 +173,8 @@ class agentPPO_agg(nn.Module):
         #print(f"-- Agent step --")
         #print(f"{x.shape=}")
         action_mean, proj_loss = self.actor_mean(x)
-        self.proj_loss = proj_loss.cpu().numpy().squeeze()
+        #self.proj_loss = proj_loss.cpu().numpy().squeeze()
+        self.proj_loss = 0
         action_logstd = self.actor_logstd.expand_as(action_mean) # / 10
         action_std = torch.exp(action_logstd) 
         probs = Normal(action_mean, action_std)
