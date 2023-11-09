@@ -175,3 +175,5 @@ profiling/
 EvGym/.mypy_cache
 runs/
 ExpLogs/old/
+Agents/old
+ExpLogs/month
