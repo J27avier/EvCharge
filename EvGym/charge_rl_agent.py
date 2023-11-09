@@ -201,7 +201,7 @@ class agentPPO_agg(nn.Module):
         action = torch.clamp(action_t, Tlower, Tupper)
         ic(Tlower)
         ic(action_t)
-        ic(TUpper)
+        ic(Tupper)
         return action
 
     def get_action_and_value(self, x,  action=None):
