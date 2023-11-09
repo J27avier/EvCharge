@@ -27,4 +27,4 @@ with open(f"{filename}.sh", "w") as f:
 
 os.system(f"cat {filename}.sh")
 
-# YOU'VE FOUND THE SECRET MESSAGE XD
+# YOU'VE FOUND THE SECRET MESSAGE XD!
