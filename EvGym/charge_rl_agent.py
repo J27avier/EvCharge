@@ -171,7 +171,11 @@ class agentPPO_agg(nn.Module):
     def _get_action_and_value(self, x,  action=None):
         #print(f"-- Agent step --")
         #print(f"{x.shape=}")
-        action_mean, proj_loss = self.actor_mean(x)
+        #action_mean, proj_loss = self.actor_mean(x)
+        if x.ndim == 1:
+            action_mean, proj_loss = self.actor_mean(x).unsqueeze(1)
+        else:
+            action_mean, proj_loss = self.actor_mean(x)
         self.proj_loss = proj_loss.cpu().numpy().squeeze()
         action_logstd = self.actor_logstd.expand_as(action_mean)
         action_std = torch.exp(action_logstd) / 30
