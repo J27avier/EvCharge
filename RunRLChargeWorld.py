@@ -86,23 +86,24 @@ def runSim(args = None):
 
     # Agents
     if args.agent == "PPO-sep":
-        agent = agentPPO_sep(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
+        logstd = args.logstd
+        agent = agentPPO_sep(envs, df_price, device, pred_price_n=pred_price_n, logstd = logstd, myprint = False).to(device)
 
     elif args.agent == "PPO-lay":
         agent = agentPPO_lay(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
 
     elif args.agent == "PPO-agg":
-        envs["single_observation_space"] = 37
+        envs["single_observation_space"] = args.n_state
         agent = agentPPO_agg(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
     elif args.agent == "PPO-sagg":
-        envs["single_observation_space"] = 37
+        envs["single_observation_space"] = args.n_state
         agent = agentPPO_sagg(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
 
     else:
         try:
             print(f"Attempting to load: {args.agent}")
             if "agg" in args.agent:
-                envs["single_observation_space"] = 37
+                envs["single_observation_space"] = args.n_state
             agent = torch.load(f"{config.agents_path}{args.agent}.pt")
             print(f"Loaded {args.agent}")
             #agent.actor_logstd = nn.Parameter(-2*torch.ones(1,1)) 
@@ -127,7 +128,7 @@ def runSim(args = None):
     values   = torch.zeros((args.num_steps, 1)).to(device)
 
     # Initialize objects
-    world = ChargeWorldEnv(df_sessions, df_price, contract_info, rng, skip_contracts = skip_contracts)
+    world = ChargeWorldEnv(df_sessions, df_price, contract_info, rng, skip_contracts = skip_contracts, norm_reward = args.norm_reward, coef_lax = args.coef_lax)
     df_state = world.reset()
 
     next_obs = agent.df_to_state(df_state, ts_min) # should be ts_min -1 , but only matters for this timestep

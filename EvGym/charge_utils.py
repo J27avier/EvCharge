@@ -33,9 +33,18 @@ def parse_args():
     parser.add_argument("--cuda", type=lambda x: bool(strtobool(x)), default=True, nargs="?", const=True,
         help="if toggled, cuda will be enabled by default")
 
-    # Reward tuning
+    # Train tuning
     parser.add_argument("--reward-coef", type=float, default=1)
     parser.add_argument("--proj-coef", type=float, default=0)
+    parser.add_argument("--lax-coef", type=float, default=0)
+    parser.add_argument("--logstd", type=float, default=-2)
+    parser.add_argument("--n-state", type=int, default = 38)
+    parser.add_argument("--hidden", type=int, default=64)
+    parser.add_argument("--relu", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
+    parser.add_argument("--no-safety", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
+    parser.add_argument("--norm-state", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
+    parser.add_argument("--without-perc", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
+    parser.add_argument("--norm-reward", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
 
     # Algorithm specific
     parser.add_argument("--learning-rate", type=float, default=3e-4,

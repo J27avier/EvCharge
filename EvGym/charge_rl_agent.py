@@ -27,13 +27,21 @@ def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
     return layer
 
 class Safe_Actor_Mean_Agg(nn.Module):
-    def __init__(self, envs, device):
+    def __init__(self, envs, args,  device):
         super(Safe_Actor_Mean_Agg, self).__init__()
-        self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], 64))
-        self.activation1 = nn.Tanh()
-        self.linear2 = layer_init(nn.Linear(64, 64))
-        self.activation2 = nn.Tanh()
-        self.linear3 = layer_init(nn.Linear(64, 1), std=0.01)
+        self.no_safety = args.no_safety
+        hidden = args.hidden
+        self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], hidden))
+        if args.relu:
+            self.activation1 = nn.ReLU()
+        else:
+            self.activation1 = nn.Tanh()
+        self.linear2 = layer_init(nn.Linear(hidden, hidden))
+        if args.relu:
+            self.activation2 = nn.Tanh()
+        else:
+            self.activation2 = nn.ReLU()
+        self.linear3 = layer_init(nn.Linear(hidden, 1), std=0.01)
         self.safetyL = SafetyLayerAgg(1, device)
 
     def forward(self, x):
@@ -43,14 +51,18 @@ class Safe_Actor_Mean_Agg(nn.Module):
         x = self.linear2.forward(x)
         x = self.activation2(x)
         x = self.linear3.forward(x)
-        x_safe = self.safetyL.forward(x, obs)
-        with torch.no_grad():
-            proj_loss = torch.norm(x - x_safe)
-        return x_safe, torch.tensor(0)
+        if self.no_safety:
+            return x, torch.tensor(0)
+        else:
+            x_safe = self.safetyL.forward(x, obs)
+            with torch.no_grad():
+                proj_loss = torch.norm(x - x_safe)
+            return x_safe, proj_loss 
 
 class agentPPO_agg(nn.Module):
-    def __init__(self, envs, df_price, device, pred_price_n=8, max_cars: int = config.max_cars, myprint = False):
+    def __init__(self, envs, df_price, device, args, pred_price_n=8, max_cars: int = config.max_cars, myprint = False):
         super().__init__()
+        self.args = args
         self.critic = nn.Sequential(
                 layer_init(nn.Linear(envs["single_observation_space"], 64)),
                 nn.Tanh(),
@@ -58,10 +70,9 @@ class agentPPO_agg(nn.Module):
                 nn.Tanh(),
                 layer_init(nn.Linear(64,1), std=1.0),
                 )
-        self.actor_mean = Safe_Actor_Mean_Agg(envs, device)
+        self.actor_mean = Safe_Actor_Mean_Agg(envs, args, device)
         #self.actor_logstd = nn.Parameter(torch.zeros(1,1))
-        self.actor_logstd = nn.Parameter(-2*torch.ones(1,1)) 
-        #self.actor_logstd = torch.tensor([[-2]])
+        self.actor_logstd = nn.Parameter(args.logstd*torch.ones(1,1)) 
 
         # Ev parameters
         self.max_cars = max_cars
@@ -135,18 +146,36 @@ class agentPPO_agg(nn.Module):
         self.sum_lower = self.lower.sum() + 0.0001
         self.sum_upper = self.upper.sum()
 
-        state_cars = np.concatenate(([self.sum_lower],
-                                     [self.sum_upper],
-                                     [num_cars],
-                                     [num_cars_dis],
-                                     [sum_soc],
-                                     [sum_soc_dis],
-                                     [sum_y_low],
-                                     [sum_lax],
-                                     p_soc_t,
-                                     p_t_rem,
-                                     p_soc_dis,
-                                     p_t_dis)) 
+        if args.norm_state and num_cars > 0:
+            sum_soc /= num_cars
+            sum_diff_soc /= num_cars
+            sum_y_low /= num_cars
+            sum_lax /= num_cars
+
+        if args.without_perc:
+            state_cars = np.concatenate(([self.sum_lower],
+                                         [self.sum_upper],
+                                         [num_cars],
+                                         [num_cars_dis],
+                                         [sum_soc],
+                                         [sum_diff_soc],
+                                         [sum_soc_dis],
+                                         [sum_y_low],
+                                         [sum_lax],)) 
+        else:
+            state_cars = np.concatenate(([self.sum_lower],
+                                         [self.sum_upper],
+                                         [num_cars],
+                                         [num_cars_dis],
+                                         [sum_soc],
+                                         [sum_diff_soc],
+                                         [sum_soc_dis],
+                                         [sum_y_low],
+                                         [sum_lax],
+                                         p_soc_t,
+                                         p_t_rem,
+                                         p_soc_dis,
+                                         p_t_dis)) 
         # Note, all the "sums"  can be normalized
         state_cars = np.nan_to_num(state_cars)
         
@@ -172,11 +201,12 @@ class agentPPO_agg(nn.Module):
     def _get_action_and_value(self, x,  action=None):
         #print(f"-- Agent step --")
         #print(f"{x.shape=}")
-        action_mean, proj_loss = self.actor_mean(x)
-        #if x.ndim == 1:
-        #    action_mean, proj_loss = self.actor_mean(x).unsqueeze(1)
-        #else:
-        #    action_mean, proj_loss = self.actor_mean(x)
+        #action_mean, proj_loss = self.actor_mean(x)
+        if x.ndim == 1:
+            action_mean, proj_loss = self.actor_mean(x)
+            action_mean = action_mean.unsqueeze(1)
+        else:
+            action_mean, proj_loss = self.actor_mean(x)
         self.proj_loss = proj_loss.cpu().numpy().squeeze()
         action_logstd = self.actor_logstd.expand_as(action_mean)
         action_std = torch.exp(action_logstd) #/ 10

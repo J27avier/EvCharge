@@ -18,6 +18,9 @@ with open(f"{filename}.sh", "w") as f:
             print_str += f" --reward-coef {row.reward_coef} --proj-coef {row.proj_coef} --learning-rate {row.learning_rate}"
             print_str += f" --file-price {row.file_price} --years {row.years}"
             print_str += f" --num-steps {row.num_steps} --anneal-lr {row.anneal_lr}  --update-epochs {row.update_epochs} --num-minibatches {row.num_minibatches}"
+            print_str += f" --lax-coef {row.lax_coef} --logstd {row.logstd} --n-state {row.n_state} --hidden {row.hidden}"
+            print_str += f" --relu {row.relu} --no-safety {row.no_safety} --norm-state {row.norm_state}"
+            print_str += f" --without-perc {row.without_perc} --norm-reward {row.norm_reward}"
 
             if row.seq == "s":
                 print_str += " && "
