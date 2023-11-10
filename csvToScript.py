@@ -22,7 +22,7 @@ with open(f"{filename}.sh", "w") as f:
             print_str += f" --relu {row.relu} --no-safety {row.no_safety} --norm-state {row.norm_state}"
             print_str += f" --without-perc {row.without_perc} --norm-reward {row.norm_reward} --reset-std {row.reset_std} --optimizer {row.optimizer}"
             print_str += f" --grad-std {row.grad_std} --gamma {row.gamma} --gae-lambda {row.gae_lambda} --clip-coef {row.clip_coef} --vf-coef {row.vf_coef}"
-            print_str += f" --max-grad-norm {row.max_grad_norm}"
+            print_str += f" --max-grad-norm {row.max_grad_norm} --ent-coef {row.ent_coef}"
 
             if row.seq == "s":
                 print_str += " && "
