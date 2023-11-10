@@ -105,7 +105,7 @@ def runSim(args = None):
                 envs["single_observation_space"] = 37
             agent = torch.load(f"{config.agents_path}{args.agent}.pt")
             print(f"Loaded {args.agent}")
-            agent.actor_logstd = nn.Parameter(torch.zeros(1,1))
+            agent.actor_logstd = nn.Parameter(torch.ones(1,1))
         except Exception as e:
             print(e)
             print(f"Agent name not recognized")
