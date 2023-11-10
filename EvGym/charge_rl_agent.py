@@ -43,7 +43,7 @@ class Safe_Actor_Mean_Agg(nn.Module):
         x = self.linear2.forward(x)
         x = self.activation2(x)
         x = self.linear3.forward(x)
-        x_safe = self.safetyL.forward(x, obs)
+        #x_safe = self.safetyL.forward(x, obs)
         with torch.no_grad():
             proj_loss = torch.norm(x - x_safe)
         return x_safe, proj_loss
