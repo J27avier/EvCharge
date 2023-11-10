@@ -1,4 +1,4 @@
-timestamp: 2023-11-10-07:52:51
+timestamp: 2023-11-10-08:38:22
 
 --Info
 title: EvWorld-mont_agg_nomini_dstd3_2
@@ -12,14 +12,14 @@ desc:
 seed: 42
 save_agent: True
 save_name: mont_agg_nomini_dstd3_3
-years: 20
+years: 50
 file_price: df_price_2019_pad.csv
 file_contracts: ExpLogs/2023-09-13-15:25:05_Contracts_ev_world_Optim.csv
 file_sessions: df_elaad_preproc.csv
 torch_deterministic: True
 cuda: True
 reward_coef: 1.0
-proj_coef: 0.0
+proj_coef: 0.01
 learning_rate: 0.0003
 total_timesteps: 1000000
 num_steps: 24
