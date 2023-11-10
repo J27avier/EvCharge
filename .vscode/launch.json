@@ -14,8 +14,9 @@
             //"args": ["--agent", "PPO-agg"],
             //"args": ["--agent", "mont_20_n_agg_moresteps_53"],
             //"args": ["--agent", "mont_30_n_agg_nomini_moresteps_31"],
-            "args": ["--agent", "mont_20_n_agg_nomini_moresteps_31"],
-            "args": ["--agent", "mont_agg_nomini_dstd4_10"], 
+            //"args": ["--agent", "mont_20_n_agg_nomini_moresteps_31"],
+            //"args": ["--agent", "mont_agg_nomini_dstd4_10"], 
+            "args": ["--agent", "mont_agg_nomini_dstd3_7"],
 
         }
     ]
