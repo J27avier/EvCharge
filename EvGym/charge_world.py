@@ -62,6 +62,9 @@ class ChargeWorldEnv():
         self.norm_reward = norm_reward
         if df_imit is not None and df_imit != "":
             self.df_imit = pd.read_csv(f"{config.results_path}{df_imit}")
+            self.imit = True
+        else:
+            self.imit = False
 
     def _init_park(self):
         df_park = pd.DataFrame(columns=config.car_columns_full)
@@ -120,16 +123,16 @@ class ChargeWorldEnv():
         return self.df_park.copy(), reward, done, info
 
     def _reward(self):
-        if self.df_imit is None or self.df_imit == "":
+        if self.imit:
+            optim_rew = df_imit["ts"== self.t]["imbalance_bill"].iloc[0]
+            reward = - (self.imb_transf - optim_rew)**2
+        else:
             occ_spots = self.df_park["idSess"] != -1 # Occupied spots
             n_cars = occ_spots.sum()
             reward = -self.imb_transf
             if self.norm_reward and n_cars > 0:
                 reward /= n_cars
             reward += self.lax_coef*self.df_park["lax"].sum()
-        else:
-            optim_rew = df_imit["ts"== self.t]["imbalance_bill"].iloc[0]
-            reward = - (self.imb_transf - optim_rew)**2
 
         return reward 
 
