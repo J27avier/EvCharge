@@ -1,4 +1,4 @@
-timestamp: 2023-11-10-07:14:48
+timestamp: 2023-11-10-07:59:21
 
 --Info
 title: EvWorld-mont_agg_nomini_dstd1_12
@@ -20,7 +20,7 @@ torch_deterministic: True
 cuda: True
 reward_coef: 1.0
 proj_coef: 0.0
-learning_rate: 0.003
+learning_rate: 0.0003
 total_timesteps: 1000000
 num_steps: 24
 anneal_lr: True

@@ -60,8 +60,8 @@ class agentPPO_agg(nn.Module):
                 )
         self.actor_mean = Safe_Actor_Mean_Agg(envs, device)
         #self.actor_logstd = nn.Parameter(torch.zeros(1,1))
-        #self.actor_logstd = nn.Parameter(-2*torch.ones(1,1)) 
-        self.actor_logstd = torch.tensor([[-2]])
+        self.actor_logstd = nn.Parameter(-2*torch.ones(1,1)) 
+        #self.actor_logstd = torch.tensor([[-2]])
 
         # Ev parameters
         self.max_cars = max_cars
