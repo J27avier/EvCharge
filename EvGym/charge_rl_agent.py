@@ -59,7 +59,8 @@ class agentPPO_agg(nn.Module):
                 layer_init(nn.Linear(64,1), std=1.0),
                 )
         self.actor_mean = Safe_Actor_Mean_Agg(envs, device)
-        self.actor_logstd = nn.Parameter(torch.zeros(1,1))
+        #self.actor_logstd = nn.Parameter(torch.zeros(1,1))
+        self.actor_logstd = nn.Parameter(-2*torch.ones(1,1)) 
 
         # Ev parameters
         self.max_cars = max_cars
@@ -178,7 +179,7 @@ class agentPPO_agg(nn.Module):
         self.proj_loss = proj_loss.cpu().numpy().squeeze()
         action_logstd = self.actor_logstd.expand_as(action_mean)
         action_std = torch.exp(action_logstd) #/ 10
-        probs = Normal(action_mean, action_std + 0.5)
+        probs = Normal(action_mean, action_std)
         if action is None:
             #probs = Normal(action_mean, (self.sum_upper-self.sum_lower)+0.0001)
             #print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
