@@ -55,8 +55,8 @@ class Safe_Actor_Mean_Agg(nn.Module):
             return x, torch.tensor(0)
         else:
             x_safe = self.safetyL.forward(x, obs)
-            #with torch.no_grad():
-            proj_loss = torch.norm(x - x_safe)
+            with torch.no_grad():
+                proj_loss = torch.norm(x - x_safe)
             return x_safe, proj_loss 
 
 class agentPPO_agg(nn.Module):
