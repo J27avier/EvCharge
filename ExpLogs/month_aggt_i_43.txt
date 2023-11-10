@@ -1,4 +1,4 @@
-timestamp: 2023-11-10-21:14:34
+timestamp: 2023-11-10-23:22:44
 
 --Info
 title: EvWorld-month_aggt_i_42
@@ -22,7 +22,7 @@ reward_coef: 1.0
 proj_coef: 0.0
 lax_coef: 0.0
 logstd: -1.8
-n_state: 18
+n_state: 19
 hidden: 64
 relu: False
 no_safety: False
@@ -35,8 +35,8 @@ optimizer: Adam
 learning_rate: 0.0003
 total_timesteps: 1000000
 num_steps: 24
-anneal_lr: True
-gamma: 0.9
+anneal_lr: False
+gamma: 0.8
 gae_lambda: 0.85
 num_minibatches: 1
 update_epochs: 10
