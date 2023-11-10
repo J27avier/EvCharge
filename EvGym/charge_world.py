@@ -124,7 +124,7 @@ class ChargeWorldEnv():
 
     def _reward(self):
         if self.imit:
-            optim_rew = df_imit["ts"== self.t]["imbalance_bill"].iloc[0]
+            optim_rew = self.df_imit[self.df_imit["ts"] == self.t]["imbalance_bill"].iloc[0]
             reward = - (self.imb_transf - optim_rew)**2
         else:
             occ_spots = self.df_park["idSess"] != -1 # Occupied spots
