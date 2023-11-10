@@ -18,7 +18,7 @@ from ContractDesign.time_contracts import general_contracts, u_ev_general
 
 class ChargeWorldEnv():
     def __init__(self, df_sessions: pd.DataFrame, df_price: pd.DataFrame, contract_info, rng,
-                 max_cars: int = config.max_cars, skip_contracts = False, render_mode: Optional[str]  = None, lax_coef = 0, norm_reward = False):
+                 max_cars: int = config.max_cars, skip_contracts = False, render_mode: Optional[str]  = None, coef_lax = 0, norm_reward = False):
         # Not implemented, for pygame
         self.render_mode = render_mode
         self.window = None
@@ -58,7 +58,7 @@ class ChargeWorldEnv():
         self.skip_contracts = skip_contracts
 
         # Environment args
-        self.lax_coef = lax_coef
+        self.coef_lax = coef_lax
         self.norm_reward = norm_reward
 
     def _init_park(self):
