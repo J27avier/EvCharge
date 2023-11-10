@@ -124,7 +124,7 @@ class ChargeWorldEnv():
         if self.norm_reward and n_cars > 0:
             reward /= n_cars
 
-        return reward + self.lax_coef*df_park["lax"].sum()
+        return reward + self.lax_coef*self.df_park["lax"].sum()
 
 
     def _cars_depart(self):
