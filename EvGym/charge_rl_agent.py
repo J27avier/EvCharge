@@ -55,8 +55,8 @@ class Safe_Actor_Mean_Agg(nn.Module):
             return x, torch.tensor(0)
         else:
             x_safe = self.safetyL.forward(x, obs)
-            with torch.no_grad():
-                proj_loss = torch.norm(x - x_safe)
+            #with torch.no_grad():
+            proj_loss = torch.norm(x - x_safe)
             return x_safe, proj_loss 
 
 class agentPPO_agg(nn.Module):
@@ -146,13 +146,13 @@ class agentPPO_agg(nn.Module):
         self.sum_lower = self.lower.sum() + 0.0001
         self.sum_upper = self.upper.sum()
 
-        if args.norm_state and num_cars > 0:
+        if self.args.norm_state and num_cars > 0:
             sum_soc /= num_cars
             sum_diff_soc /= num_cars
             sum_y_low /= num_cars
             sum_lax /= num_cars
 
-        if args.without_perc:
+        if self.args.without_perc:
             state_cars = np.concatenate(([self.sum_lower],
                                          [self.sum_upper],
                                          [num_cars],
