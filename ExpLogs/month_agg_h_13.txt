@@ -1,4 +1,4 @@
-timestamp: 2023-11-10-17:22:21
+timestamp: 2023-11-10-18:21:11
 
 --Info
 title: EvWorld-month_agg_h_12
@@ -39,7 +39,7 @@ anneal_lr: True
 gamma: 0.99
 gae_lambda: 0.95
 num_minibatches: 1
-update_epochs: 10
+update_epochs: 3
 norm_adv: True
 clip_coef: 0.2
 clip_vloss: True

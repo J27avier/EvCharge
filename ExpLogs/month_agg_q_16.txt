@@ -1,4 +1,4 @@
-timestamp: 2023-11-10-17:25:34
+timestamp: 2023-11-10-18:22:40
 
 --Info
 title: EvWorld-month_agg_q_15
@@ -29,8 +29,8 @@ no_safety: False
 norm_state: False
 without_perc: True
 norm_reward: False
-reset_std: True
-grad_std: False
+reset_std: False
+grad_std: True
 optimizer: Adam
 learning_rate: 0.0003
 total_timesteps: 1000000
@@ -39,7 +39,7 @@ anneal_lr: True
 gamma: 0.99
 gae_lambda: 0.95
 num_minibatches: 1
-update_epochs: 10
+update_epochs: 3
 norm_adv: True
 clip_coef: 0.2
 clip_vloss: True
