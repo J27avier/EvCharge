@@ -21,6 +21,7 @@ with open(f"{filename}.sh", "w") as f:
             print_str += f" --lax-coef {row.lax_coef} --logstd {row.logstd} --n-state {row.n_state} --hidden {row.hidden}"
             print_str += f" --relu {row.relu} --no-safety {row.no_safety} --norm-state {row.norm_state}"
             print_str += f" --without-perc {row.without_perc} --norm-reward {row.norm_reward} --reset-std {row.reset_std} --optimizer {row.optimizer}"
+            print_str += f" --grad-std {row.grad_std}"
 
             if row.seq == "s":
                 print_str += " && "
