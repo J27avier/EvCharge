@@ -34,7 +34,7 @@ class Safe_Actor_Mean_Agg(nn.Module):
         self.linear2 = layer_init(nn.Linear(64, 64))
         self.activation2 = nn.Tanh()
         self.linear3 = layer_init(nn.Linear(64, 1), std=0.01)
-        #self.safetyL = SafetyLayerAgg(1, device)
+        self.safetyL = SafetyLayerAgg(1, device)
 
     def forward(self, x):
         obs = x.detach().clone()
