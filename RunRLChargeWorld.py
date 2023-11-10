@@ -107,7 +107,8 @@ def runSim(args = None):
                 envs["single_observation_space"] = args.n_state
             agent = torch.load(f"{config.agents_path}{args.agent}.pt")
             print(f"Loaded {args.agent}")
-            #agent.actor_logstd = nn.Parameter(-2*torch.ones(1,1)) 
+            if args.reset_std:
+                agent.actor_logstd = nn.Parameter(args.logstd*torch.ones(1,1)) 
         except Exception as e:
             print(e)
             print(f"Agent name not recognized")
@@ -118,7 +119,10 @@ def runSim(args = None):
     #ic(reward_coef, type(reward_coef))
     #ic(proj_coef, type(proj_coef))
 
-    optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
+    if args.optimizer == "Adam":
+        optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
+    else:
+        optimizer = optim.SGD(agent.parameters(), lr = args.learning_rate)
 
     obs      = torch.zeros((args.num_steps, 1, envs["single_observation_space"]) ).to(device) # Manual concat
     actions  = torch.zeros((args.num_steps, 1, envs["single_action_space"])).to(device) # Manual concat

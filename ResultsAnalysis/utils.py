@@ -32,4 +32,10 @@ def summ_table(l_names, l_files, verbose = False):
     df_sum["total"] = df_sum["client"] - df_sum["transf"] - df_sum["payoff"]
     return df_sum
 
+def drawLearn(name, count, ax):
+    l_sum = [f"{name}_{i}" for i in range(count)] 
+    df_sum = summ_table(l_sum, l_sum) 
+    ax.plot(df_sum["transf"], label=name.split('/')[-1])
+    return ax
+
 
