@@ -120,7 +120,7 @@ class ChargeWorldEnv():
         return self.df_park.copy(), reward, done, info
 
     def _reward(self):
-        if self.df_imit is not None and self.df_imit != "":
+        if self.df_imit is None or self.df_imit == "":
             occ_spots = self.df_park["idSess"] != -1 # Occupied spots
             n_cars = occ_spots.sum()
             reward = -self.imb_transf
