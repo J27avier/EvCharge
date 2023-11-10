@@ -127,10 +127,14 @@ class agentPPO_agg(nn.Module):
         sum_lax = lax.sum()
 
         # p25, p50, p75, max, of soc_t, t_rem, soc_dis, t_dis
-        p_soc_t = df_state[occ_spots]["soc_t"].quantile([0, 0.25, 0.5, 0.75, 1])
-        p_t_rem = df_state[occ_spots]["t_rem"].quantile([0, 0.25, 0.5, 0.75, 1])
-        p_soc_dis = df_state[cont_spots]["soc_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
-        p_t_dis = df_state[cont_spots]["t_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
+        #p_soc_t = df_state[occ_spots]["soc_t"].quantile([0, 0.25, 0.5, 0.75, 1])
+        #p_t_rem = df_state[occ_spots]["t_rem"].quantile([0, 0.25, 0.5, 0.75, 1])
+        #p_soc_dis = df_state[occ_spots]["soc_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
+        #p_t_dis = df_state[occ_spots]["t_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
+        p_soc_t = df_state[occ_spots]["soc_t"].quantile([0.5])
+        p_t_rem = df_state[occ_spots]["t_rem"].quantile([0.5])
+        p_soc_dis = df_state[occ_spots]["soc_dis"].quantile([0.5])
+        p_t_dis = df_state[occ_spots]["t_dis"].quantile([0.5])
 
         # Bounds
         dis_lim = np.zeros(config.max_cars)
@@ -147,10 +151,11 @@ class agentPPO_agg(nn.Module):
         self.sum_upper = self.upper.sum()
 
         if self.args.norm_state and num_cars > 0:
-            sum_soc /= num_cars
-            sum_diff_soc /= num_cars
-            sum_y_low /= num_cars
-            sum_lax /= num_cars
+            sum_soc      /= (num_cars*0.1)
+            sum_diff_soc /= (num_cars*0.1)
+            sum_y_low    /= (num_cars*0.1)
+            sum_lax      /= (num_cars*0.1)
+            sum_soc_dis  /= (num_cars*0.1)
 
         if self.args.without_perc:
             state_cars = np.concatenate(([self.sum_lower],
