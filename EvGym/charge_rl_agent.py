@@ -106,7 +106,7 @@ class agentPPO_agg(nn.Module):
         y_low = np.maximum(hat_y_low * config.eta_c, hat_y_low / config.eta_d)
         y_low[~occ_spots] = 0
 
-        sum_y_low = y_low.sum()
+        sum_y_low = y_low.sum() + 0.00001
 
         # Lax
         lax = df_state["t_rem"] - (config.FINAL_SOC - df_state["soc_t"])*config.B / (config.alpha_c*config.eta_c)
