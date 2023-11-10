@@ -128,7 +128,7 @@ def runSim(args = None):
     values   = torch.zeros((args.num_steps, 1)).to(device)
 
     # Initialize objects
-    world = ChargeWorldEnv(df_sessions, df_price, contract_info, rng, skip_contracts = skip_contracts, norm_reward = args.norm_reward, coef_lax = args.coef_lax)
+    world = ChargeWorldEnv(df_sessions, df_price, contract_info, rng, skip_contracts = skip_contracts, norm_reward = args.norm_reward, lax_coef = args.lax_coef)
     df_state = world.reset()
 
     next_obs = agent.df_to_state(df_state, ts_min) # should be ts_min -1 , but only matters for this timestep
