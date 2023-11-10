@@ -1,4 +1,4 @@
-timestamp: 2023-11-10-19:16:16
+timestamp: 2023-11-10-20:37:56
 
 --Info
 title: EvWorld-month_aggt_h_6
@@ -36,7 +36,7 @@ learning_rate: 0.0003
 total_timesteps: 1000000
 num_steps: 24
 anneal_lr: True
-gamma: 0.9
+gamma: 0.95
 gae_lambda: 0.9
 num_minibatches: 1
 update_epochs: 10
