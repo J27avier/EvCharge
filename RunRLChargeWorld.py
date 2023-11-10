@@ -94,7 +94,8 @@ def runSim(args = None):
 
     elif args.agent == "PPO-agg":
         envs["single_observation_space"] = args.n_state
-        agent = agentPPO_agg(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
+        agent = agentPPO_agg(envs, df_price, device, args, pred_price_n=pred_price_n, myprint = False).to(device)
+
     elif args.agent == "PPO-sagg":
         envs["single_observation_space"] = args.n_state
         agent = agentPPO_sagg(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
