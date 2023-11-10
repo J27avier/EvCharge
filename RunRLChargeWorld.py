@@ -94,7 +94,6 @@ def runSim(args = None):
     elif args.agent == "PPO-agg":
         envs["single_observation_space"] = 37
         agent = agentPPO_agg(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
-        agent.actor_logstd = nn.Parameter(torch.zeros(1,1))
     elif args.agent == "PPO-sagg":
         envs["single_observation_space"] = 37
         agent = agentPPO_sagg(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
@@ -106,6 +105,7 @@ def runSim(args = None):
                 envs["single_observation_space"] = 37
             agent = torch.load(f"{config.agents_path}{args.agent}.pt")
             print(f"Loaded {args.agent}")
+            agent.actor_logstd = nn.Parameter(torch.zeros(1,1))
         except Exception as e:
             print(e)
             print(f"Agent name not recognized")
