@@ -187,7 +187,7 @@ class agentPPO_agg(nn.Module):
 
         pred_price = self._get_prediction(t, self.pred_price_n)
         hour = np.array([t%24 ]) # 
-        day =  np.array([(t//24 % 7]) # 
+        day =  np.array([(t//24) % 7]) # 
         np_x = np.concatenate((state_cars, pred_price, hour, day)).astype(float)
         #ic(np_x, np_x.shape, type(np_x))
         x = torch.tensor(np_x).to(self.device).float()#reshape(1, self.envs["single_observation_space"])
