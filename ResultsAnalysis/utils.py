@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 import sys
 sys.path.append("..")
@@ -38,4 +39,56 @@ def drawLearn(name, count, ax):
     ax.plot(df_sum["transf"], label=name.split('/')[-1])
     return ax
 
+def lat_val(l_names, l_counts):
+    l_fnames = [f"{name}_{count-1}" for name, count in zip(l_names, l_counts)]
+    df_sum = summ_table(l_fnames, l_fnames)
+    return df_sum["transf"].values
+
+def taguchi_l18(values):
+    l_table = [[1,1,1,1,1,1,1],
+               [1,1,2,2,2,2,2],
+               [1,1,3,3,3,3,3],
+               [1,2,1,1,2,3,3],
+               [1,2,2,2,3,1,1],
+               [1,2,3,3,1,2,2],
+               [1,3,1,2,3,2,3],
+               [1,3,2,3,1,3,1],
+               [1,3,3,1,2,1,2],
+               [2,1,1,3,2,2,1],
+               [2,1,2,1,3,3,2],
+               [2,1,3,2,1,1,3],
+               [2,2,1,2,1,3,2],
+               [2,2,2,3,2,1,3],
+               [2,2,3,1,3,2,1],
+               [2,3,1,3,3,1,2],
+               [2,3,2,1,1,2,3],
+               [2,3,3,2,2,3,1],]
+
+    results = np.zeros((7,3))
+    for i in range(18):
+        for j in range(7):
+            results[j][l_table[i][j]-1] += values[i]
+
+    return results.T / 6
+    
+    
+ 
+# logstd	gamma	gae_lambda	clip_coef	vf_coef	max_grad_norm	ent_coef
+# -1.8  	0.99	0.95	        0.1	        0.3	0.3	        0
+# -2.2  	0.95	0.9	        0.2	        0.5	0.5	        0.01
+#       	0.9	0.85	        0.3	        0.7	0.7	        0.1
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
