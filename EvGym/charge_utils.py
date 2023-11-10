@@ -48,6 +48,7 @@ def parse_args():
     parser.add_argument("--reset-std", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
     parser.add_argument("--grad-std", type= lambda x: bool(strtobool(x)), default=True, nargs='?', const=True)
     parser.add_argument("--optimizer", type=str, default="Adam")
+    parser.add_argument("--df-imit", type=str, default="")
 
     # Algorithm specific
     parser.add_argument("--learning-rate", type=float, default=3e-4,
