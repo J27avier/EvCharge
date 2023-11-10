@@ -1,4 +1,4 @@
- h,agent,save_name,reward_coef,proj_coef,lax_coef,optimizer,learning_rate,logstd,n_state,hidden,relu,no_safety,norm_state,without_perc,norm_reward,reset_std,file_price,seq,years,num_steps,anneal_lr,update_epochs,num_minibatches,save_agent
+do,agent,save_name,reward_coef,proj_coef,lax_coef,optimizer,learning_rate,logstd,n_state,hidden,relu,no_safety,norm_state,without_perc,norm_reward,reset_std,file_price,seq,years,num_steps,anneal_lr,update_epochs,num_minibatches,save_agent
 T,PPO-agg,month_agg_a,1,0,0,Adam,0.0003,-2,38,64,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,df_price_2019_pad.csv,e,50,24,TRUE,10,1,T
 T,PPO-agg,month_agg_b,1,1,0,Adam,0.0003,-2,38,64,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,df_price_2019_pad.csv,e,50,24,TRUE,10,1,T
 T,PPO-agg,month_agg_c,1,0,1,Adam,0.0003,-2,38,64,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,df_price_2019_pad.csv,e,50,24,TRUE,10,1,T
