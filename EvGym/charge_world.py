@@ -61,7 +61,7 @@ class ChargeWorldEnv():
         self.lax_coef = lax_coef
         self.norm_reward = norm_reward
         if df_imit is not None and df_imit != "":
-            self.df_imit = pd.read_csv(f"../{config.results_path}{df_imit}")
+            self.df_imit = pd.read_csv(f"{config.results_path}{df_imit}")
 
     def _init_park(self):
         df_park = pd.DataFrame(columns=config.car_columns_full)
