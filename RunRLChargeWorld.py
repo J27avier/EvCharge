@@ -108,8 +108,11 @@ def runSim(args = None):
             agent = torch.load(f"{config.agents_path}{args.agent}.pt")
             print(f"Loaded {args.agent}")
             if args.reset_std:
-                #agent.actor_logstd = nn.Parameter(args.logstd*torch.ones(1,1)) 
-                agent.actor_logstd.reset_parameter() 
+                if args.grad_std:
+                    agent.actor_logstd = nn.Parameter(args.logstd*torch.ones(1,1)) 
+                else:
+                    agent.actor_logstd = nn.Parameter(args.logstd*torch.ones(1,1), requires_grad = False) 
+                #agent.actor_logstd.reset_parameter() 
         except Exception as e:
             print(e)
             print(f"Agent name not recognized")
