@@ -47,7 +47,7 @@ class Safe_Actor_Mean_Agg(nn.Module):
         #with torch.no_grad():
         #    proj_loss = torch.norm(x - x_safe)
         #return x_safe, proj_loss
-        return x, torch.tensor([0])
+        return x, torch.tensor(0)
 
 class agentPPO_agg(nn.Module):
     def __init__(self, envs, df_price, device, pred_price_n=8, max_cars: int = config.max_cars, myprint = False):
