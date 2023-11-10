@@ -44,9 +44,10 @@ class Safe_Actor_Mean_Agg(nn.Module):
         x = self.activation2(x)
         x = self.linear3.forward(x)
         #x_safe = self.safetyL.forward(x, obs)
-        with torch.no_grad():
-            proj_loss = torch.norm(x - x_safe)
-        return x_safe, proj_loss
+        #with torch.no_grad():
+        #    proj_loss = torch.norm(x - x_safe)
+        #return x_safe, proj_loss
+        return x, 0
 
 class agentPPO_agg(nn.Module):
     def __init__(self, envs, df_price, device, pred_price_n=8, max_cars: int = config.max_cars, myprint = False):
