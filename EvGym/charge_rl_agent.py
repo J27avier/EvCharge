@@ -41,12 +41,7 @@ class Safe_Actor_Mean_Agg(nn.Module):
             self.activation2 = nn.Tanh()
         else:
             self.activation2 = nn.ReLU()
-        self.linear3 = layer_init(nn.Linear(hidden, hidden) )
-        if args.relu:
-            self.activation3 = nn.Tanh()
-        else:
-            self.activation3 = nn.ReLU()
-        self.linear4 = layer_init(nn.Linear(hidden, 1), std=0.01)
+        self.linear3 = layer_init(nn.Linear(hidden, 1), std=0.01)
         self.safetyL = SafetyLayerAgg(1, device)
 
     def forward(self, x):
@@ -56,8 +51,6 @@ class Safe_Actor_Mean_Agg(nn.Module):
         x = self.linear2.forward(x)
         x = self.activation2(x)
         x = self.linear3.forward(x)
-        x = self.activation3(x)
-        x = self.linear4.forward(x)
         if self.no_safety:
             return x, torch.tensor(0)
         else:
@@ -72,8 +65,6 @@ class agentPPO_agg(nn.Module):
         self.args = args
         self.critic = nn.Sequential(
                 layer_init(nn.Linear(envs["single_observation_space"], 64)),
-                nn.Tanh(),
-                layer_init(nn.Linear(64, 64)),
                 nn.Tanh(),
                 layer_init(nn.Linear(64, 64)),
                 nn.Tanh(),
@@ -195,8 +186,9 @@ class agentPPO_agg(nn.Module):
         
 
         pred_price = self._get_prediction(t, self.pred_price_n)
-        hour = np.array([t % 24])
-        np_x = np.concatenate((state_cars, pred_price, hour)).astype(float)
+        hour = np.array([t%24 ]) # 
+        day =  np.array([(t//24 % 7]) # 
+        np_x = np.concatenate((state_cars, pred_price, hour, day)).astype(float)
         #ic(np_x, np_x.shape, type(np_x))
         x = torch.tensor(np_x).to(self.device).float()#reshape(1, self.envs["single_observation_space"])
         #print(f"{x=}, {x.shape=}")
