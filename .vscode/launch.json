@@ -12,7 +12,8 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             //"args": ["--agent", "PPO-agg"],
-            "args": ["--agent", "mont_20_n_agg_moresteps_53"],
+            //"args": ["--agent", "mont_20_n_agg_moresteps_53"],
+            "args": ["--agent", "mont_agg_nomini_dstd4_18"], 
         }
     ]
 }

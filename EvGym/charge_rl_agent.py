@@ -106,7 +106,7 @@ class agentPPO_agg(nn.Module):
         y_low = np.maximum(hat_y_low * config.eta_c, hat_y_low / config.eta_d)
         y_low[~occ_spots] = 0
 
-        sum_y_low = y_low.sum() + 0.00001
+        sum_y_low = y_low.sum() 
 
         # Lax
         lax = df_state["t_rem"] - (config.FINAL_SOC - df_state["soc_t"])*config.B / (config.alpha_c*config.eta_c)
@@ -130,7 +130,7 @@ class agentPPO_agg(nn.Module):
         self.upper = np.minimum(upper_soc,  config.alpha_c / config.B)
         self.upper[~occ_spots] = 0
 
-        self.sum_lower = self.lower.sum()
+        self.sum_lower = self.lower.sum() + 0.0001
         self.sum_upper = self.upper.sum()
 
         state_cars = np.concatenate(([self.sum_lower],
@@ -178,7 +178,7 @@ class agentPPO_agg(nn.Module):
         self.proj_loss = proj_loss.cpu().numpy().squeeze()
         action_logstd = self.actor_logstd.expand_as(action_mean)
         action_std = torch.exp(action_logstd) #/ 10
-        probs = Normal(action_mean, action_std)
+        probs = Normal(action_mean, action_std + 0.05)
         if action is None:
             #probs = Normal(action_mean, (self.sum_upper-self.sum_lower)+0.0001)
             #print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
