@@ -1,4 +1,4 @@
-timestamp: 2023-11-10-22:53:52
+timestamp: 2023-11-11-00:06:18
 
 --Info
 title: EvWorld-month_aggt_o_13
@@ -32,6 +32,7 @@ norm_reward: False
 reset_std: False
 grad_std: True
 optimizer: Adam
+df_imit: df_optim.csv
 learning_rate: 0.0003
 total_timesteps: 1000000
 num_steps: 24
