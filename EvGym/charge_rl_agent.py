@@ -4,6 +4,7 @@ import pandas as pd
 from . import config
 from typing import TYPE_CHECKING, Any
 from cvxpylayers.torch import CvxpyLayer # type: ignore
+from math import isclose
 
 from icecream import ic # type:ignore
 
