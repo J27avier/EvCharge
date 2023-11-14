@@ -253,7 +253,7 @@ class agentPPO_agg(nn.Module):
             priority_list = np.argsort(self.lax) # Least laxity first
             Y_temp = Y_tot - self.lower.sum()
 
-            for i in prioirity_list:
+            for i in priority_list:
                 y_i = np.min([Y_temp, range_y[i]])
                 action[i] += y_i
                 Y_temp -= y_i
