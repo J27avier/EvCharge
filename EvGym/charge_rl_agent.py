@@ -192,8 +192,10 @@ class agentPPO_agg(nn.Module):
         
 
         pred_price = self._get_prediction(t, self.pred_price_n)
+        pred_price = (pred_price - pred_price.mean()) / (pred_price.std() + 1e-3)
         hour = np.array([t%24 ]) # 
-        day =  np.array([(t//24) % 7]) # 
+        #day =  np.array([(t//24) % 7]) # 
+        day = np.array([np.diff(pred_price).mean()])
         np_x = np.concatenate((state_cars, pred_price, hour, day)).astype(float)
         #ic(np_x, np_x.shape, type(np_x))
         x = torch.tensor(np_x).to(self.device).float()#reshape(1, self.envs["single_observation_space"])
@@ -252,9 +254,9 @@ class agentPPO_agg(nn.Module):
         occ_spots = self.t_rem > 0
 
         if range_y.sum() > 0: # Just check if there is flexibility to do disagg
-            #priority_list = np.argsort(-self.lax) # Least laxity first
-            time_val = np.array([-t_d if t_d > 0 else t_r for t_d, t_r in zip(self.t_dis, self.t_rem)])
-            priority_list = np.argsort(-time_val)
+            priority_list = np.argsort(-self.lax) # Least laxity first
+            #time_val = np.array([-t_d if t_d > 0 else t_r for t_d, t_r in zip(self.t_dis, self.t_rem)])
+            #priority_list = np.argsort(-time_val)
             Y_temp = Y_tot - self.lower.sum()
 
             for i in priority_list:
@@ -460,7 +462,11 @@ class agentPPO_sagg(nn.Module):
         # Lax
         lax = df_state["t_rem"] - (config.FINAL_SOC - df_state["soc_t"])*config.B / (config.alpha_c*config.eta_c)
         lax[~occ_spots] = 0
+
         sum_lax = lax.sum()
+        self.lax = lax
+        self.t_rem = df_state["t_rem"]
+        self.t_dis = df_state["t_dis"]
 
         # p25, p50, p75, max, of soc_t, t_rem, soc_dis, t_dis
         p_soc_t = df_state[occ_spots]["soc_t"].quantile([0, 0.25, 0.5, 0.75, 1])
@@ -479,28 +485,51 @@ class agentPPO_sagg(nn.Module):
         self.upper = np.minimum(upper_soc,  config.alpha_c / config.B)
         self.upper[~occ_spots] = 0
 
-        self.sum_lower = self.lower.sum()
+        self.sum_lower = self.lower.sum() + 0.001
         self.sum_upper = self.upper.sum()
-
-        state_cars = np.concatenate(([self.sum_lower],
-                                     [self.sum_upper],
-                                     [num_cars],
-                                     [num_cars_dis],
-                                     [sum_soc],
-                                     [sum_soc_dis],
-                                     [sum_y_low],
-                                     [sum_lax],
-                                     p_soc_t,
-                                     p_t_rem,
-                                     p_soc_dis,
-                                     p_t_dis)) 
-        # Note, all the "sums"  can be normalized
-        state_cars = np.nan_to_num(state_cars)
         
 
+        #state_cars = np.concatenate(([self.sum_lower],
+        #                             [self.sum_upper],
+        #                             [num_cars],
+        #                             [num_cars_dis],
+        #                             [sum_soc],
+        #                             [sum_soc_dis],
+        #                             [sum_y_low],
+        #                             [sum_lax],
+        #                             p_soc_t,
+        #                             p_t_rem,
+        #                             p_soc_dis,
+        #                             p_t_dis)) 
+
+        if num_cars > 0:
+            sum_lower = self.sum_lower / num_cars
+            sum_upper = self.sum_upper / num_cars
+        else:
+            sum_lower = self.sum_lower
+            sum_upper = self.sum_upper
+
+        state_cars = np.concatenate(([sum_lower],
+                                     [sum_upper],
+                                     #[num_cars],
+                                     #[num_cars_dis],
+                                     #[sum_soc],
+                                     #[sum_soc_dis],
+                                     #[sum_y_low],
+                                     #[sum_lax],
+                                     #p_soc_t,
+                                     #p_t_rem,
+                                     #p_soc_dis,
+                                     #p_t_dis)
+                                     ))
+        # Note, all the "sums"  can be normalized
+        state_cars = np.nan_to_num(state_cars)
+
         pred_price = self._get_prediction(t, self.pred_price_n)
+        pred_price = (pred_price - pred_price.mean()) / (pred_price.std() + 1e-3)
         hour = np.array([t % 24])
-        np_x = np.concatenate((state_cars, pred_price, hour)).astype(float)
+        day = np.array([np.diff(pred_price).mean()])
+        np_x = np.concatenate((state_cars, pred_price, hour, day)).astype(float)
         #ic(np_x, np_x.shape, type(np_x))
         x = torch.tensor(np_x).to(self.device).float()#reshape(1, self.envs["single_observation_space"])
         #print(f"{x=}, {x.shape=}")
@@ -533,10 +562,10 @@ class agentPPO_sagg(nn.Module):
         if action is None:
             #print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
             
-            action_n = probs.sample()
+            action = probs.sample()
             # Double safety
-            action_t = action_n * (self.sum_upper) + (1- action_n)*(self.sum_lower)
-            action = self._clamp_bounds(action_t) # before, also needed x
+            #action_t = action_n * (self.sum_upper) + (1- action_n)*(self.sum_lower)
+            #action = self._clamp_bounds(action_t) # before, also needed x
 
         value = self.critic(x)
         return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), value 
@@ -556,20 +585,29 @@ class agentPPO_sagg(nn.Module):
 
     def action_to_env(self, action_agg):
         # Dissagregation
-        Y_tot = action_agg.cpu().numpy().squeeze()
+        alpha = action_agg.cpu().numpy().squeeze()
+        alpha = np.clip(alpha, 0, 1)
+        Y_tot = alpha*(self.sum_upper) + (1-alpha)*(self.sum_lower)
+        occ_spots = self.t_rem > 0
+        cont_spots = self.t_dis > 0
+        range_y = self.upper - self.lower
         action = self.lower.copy()
 
-        range_y  = self.upper - self.lower
         if range_y.sum() > 0:
-            n_range_y = range_y  / range_y.sum()
-            action  += (Y_tot - self.lower.sum()) * n_range_y
+            priority_list = np.argsort(self.lax) # Least laxity first
+            #time_val = np.array([-t_d if t_d > 0 else t_r for t_d, t_r in zip(self.t_dis, self.t_rem)])
+            #priority_list = np.argsort(-time_val)
+            Y_temp = Y_tot - self.lower.sum()
+            for i in priority_list:
+                if i in occ_spots:
+                    y_i = np.min([Y_temp, range_y[i]])
+                    action[i] += y_i
+                    Y_temp -= y_i
+                if isclose(Y_temp, 0):
+                    break
 
-        #print("-- double clip --")
-        #print(f"{self.lower=}, {self.lower.shape=}, {type(self.lower)=}")
-        #print(f"{self.upper=}, {self.upper.shape=}, {type(self.upper)=}")
-        #input()
-        #print(f"{action_agg=}")
-        #print(f"{action=}, {action.shape=}, {type(action)=}")
+        action[~occ_spots] = 0
+        #action[~cont_spots] = np.maximum(action[~cont_spots], 0)
         return action
 
 class agentPPO_sep(nn.Module):

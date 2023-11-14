@@ -191,7 +191,7 @@ def runSim(args = None):
                 df_state, reward, done, info = world.step(agent.action_to_env(action))
                 # Reward tuning
                 #ic(reward, type(reward))
-                reward = reward_coef * reward + proj_coef * agent.proj_loss
+                reward = reward_coef * reward + proj_coef * agent.proj_loss 
                 #print(f"{reward_coef=}, {type(reward_coef)=}")
                 #print(f"{reward=}, {type(reward)=}")
                 #print(f"{proj_coef=}, {type(proj_coef)=}")
@@ -236,11 +236,11 @@ def runSim(args = None):
             b_logprobs = logprobs.reshape(-1)
             b_actions = actions.reshape((-1, envs["single_action_space"]))
             b_advantages = advantages.reshape(-1) # Normailze
-            b_advantages = (b_advantages - b_advantages.mean()) / (b_advantages.std() + 1e-8)
+            #b_advantages = (b_advantages - b_advantages.mean()) / (b_advantages.std() + 1e-8)
             b_returns = returns.reshape(-1) #  Normailze"
-            b_returns = (b_returns - b_returns.mean()) / (b_returns.std()+ 1e-8)
+            #b_returns = (b_returns - b_returns.mean()) / (b_returns.std()+ 1e-8)
             b_values = values.reshape(-1) #Normailze 
-            b_values = (b_values - b_values.mean()) / (b_values.std()+1e-8)
+            #b_values = (b_values - b_values.mean()) / (b_values.std()+1e-8)
             # deactivate norm in options
 
             # Optimizing the policy and value network
