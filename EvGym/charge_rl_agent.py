@@ -269,6 +269,8 @@ class agentPPO_agg(nn.Module):
         #    n_range_y = range_y  / range_y.sum()
         #    action  += (Y_tot - self.lower.sum()) * n_range_y
 
+        action[~occ_spots] = 0
+
         return action
 
 class Safe_Actor_Mean(nn.Module):
