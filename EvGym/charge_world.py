@@ -124,6 +124,7 @@ class ChargeWorldEnv():
 
     def _reward(self):
         if self.imit:
+            print("Imitation!")
             optim_rew = self.df_imit[self.df_imit["ts"] == self.t]["imbalance_bill"].iloc[0]
             reward = - (self.imb_transf - optim_rew)**2
         else:
