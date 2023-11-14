@@ -125,6 +125,11 @@ class agentPPO_agg(nn.Module):
         lax = df_state["t_rem"] - (config.FINAL_SOC - df_state["soc_t"])*config.B / (config.alpha_c*config.eta_c)
         lax[~occ_spots] = 0
         sum_lax = lax.sum()
+        self.lax = lax
+        self.t_rem = df_state["t_rem"]
+        self.t_dis = df_state["t_dis"]
+        self.soc_dis = df_state["soc_dis"]
+        self.soc_t = df_state["soc_t"]
 
         # p25, p50, p75, max, of soc_t, t_rem, soc_dis, t_dis
         #p_soc_t = df_state[occ_spots]["soc_t"].quantile([0, 0.25, 0.5, 0.75, 1])
@@ -242,18 +247,25 @@ class agentPPO_agg(nn.Module):
         # Dissagregation
         Y_tot = action_agg.cpu().numpy().squeeze()
         action = self.lower.copy()
+        range_y = self.upper - self.lower
 
-        range_y  = self.upper - self.lower
-        if range_y.sum() > 0:
-            n_range_y = range_y  / range_y.sum()
-            action  += (Y_tot - self.lower.sum()) * n_range_y
+        if range_y.sum() > 0: # Just check if there is flexibility to do disagg
+            priority_list = np.argsort(lax) # Least laxity first
+            Y_temp = Y_tot - self.lower.sum()
 
-        #print("-- double clip --")
-        #print(f"{self.lower=}, {self.lower.shape=}, {type(self.lower)=}")
-        #print(f"{self.upper=}, {self.upper.shape=}, {type(self.upper)=}")
-        #input()
-        #print(f"{action_agg=}")
-        #print(f"{action=}, {action.shape=}, {type(action)=}")
+            for i in prioirity_list:
+                y_i = np.min([Y_temp, range_y[i]])
+                action[i] += y_i
+                Y_temp -= y_i
+                if isclose(Y_temp, 0):
+                    break
+
+        # Proportional allocation
+        #range_y  = self.upper - self.lower
+        #if range_y.sum() > 0:
+        #    n_range_y = range_y  / range_y.sum()
+        #    action  += (Y_tot - self.lower.sum()) * n_range_y
+
         return action
 
 class Safe_Actor_Mean(nn.Module):

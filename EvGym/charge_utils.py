@@ -143,6 +143,11 @@ def bounds_from_obs(obs):
 
     return np_lower, np_upper
 
+def zipf(N, s):
+    x = np.arange(N)
+    H = (1 / (x+1)**s).sum()
+    return 1/H * 1/(x+1)**s
+
 # Cvxpylayers has some warnings, but ok
 class HiddenPrints:
     def __enter__(self):
