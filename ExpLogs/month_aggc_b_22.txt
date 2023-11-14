@@ -1,4 +1,4 @@
-timestamp: 2023-11-14-19:24:00
+timestamp: 2023-11-14-20:05:45
 
 --Info
 title: EvWorld-month_aggc_b_21
@@ -37,7 +37,7 @@ learning_rate: 0.0003
 total_timesteps: 1000000
 num_steps: 24
 anneal_lr: False
-gamma: 1.0
+gamma: 0.99
 gae_lambda: 0.9
 num_minibatches: 1
 update_epochs: 10

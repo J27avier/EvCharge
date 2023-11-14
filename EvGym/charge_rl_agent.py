@@ -252,7 +252,9 @@ class agentPPO_agg(nn.Module):
         occ_spots = self.t_rem > 0
 
         if range_y.sum() > 0: # Just check if there is flexibility to do disagg
-            priority_list = np.argsort(self.lax) # Least laxity first
+            #priority_list = np.argsort(-self.lax) # Least laxity first
+            time_val = np.array([-t_d if t_d > 0 else t_r for t_d, t_r in zip(self.t_dis, self.t_rem)])
+            priority_list = np.argsort(-time_val)
             Y_temp = Y_tot - self.lower.sum()
 
             for i in priority_list:
