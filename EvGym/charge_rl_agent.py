@@ -249,15 +249,17 @@ class agentPPO_agg(nn.Module):
         Y_tot = action_agg.cpu().numpy().squeeze()
         action = self.lower.copy()
         range_y = self.upper - self.lower
+        occ_spots = self.t_rem > 0
 
         if range_y.sum() > 0: # Just check if there is flexibility to do disagg
             priority_list = np.argsort(self.lax) # Least laxity first
             Y_temp = Y_tot - self.lower.sum()
 
             for i in priority_list:
-                y_i = np.min([Y_temp, range_y[i]])
-                action[i] += y_i
-                Y_temp -= y_i
+                if i in occ_spots:
+                    y_i = np.min([Y_temp, range_y[i]])
+                    action[i] += y_i
+                    Y_temp -= y_i
                 if isclose(Y_temp, 0):
                     break
 
