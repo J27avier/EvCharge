@@ -250,7 +250,7 @@ class agentPPO_agg(nn.Module):
         range_y = self.upper - self.lower
 
         if range_y.sum() > 0: # Just check if there is flexibility to do disagg
-            priority_list = np.argsort(lax) # Least laxity first
+            priority_list = np.argsort(self.lax) # Least laxity first
             Y_temp = Y_tot - self.lower.sum()
 
             for i in prioirity_list:
