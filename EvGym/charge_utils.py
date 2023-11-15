@@ -7,6 +7,96 @@ from distutils.util import strtobool
 
 from . import config
 
+def parse_sac_args():
+    parser = argparse.ArgumentParser()
+    # Javier args
+    parser.add_argument("-R", "--print-dash", help = "Print dashboard", action="store_true")
+    parser.add_argument("-S", "--no-save", help="Does not save results csv", action="store_true")
+    parser.add_argument("-C", "--save-contracts", help="Saves the contracts accepted to each car", action="store_true")
+    parser.add_argument("-A", "--agent", help="Type of agent", type=str, required=True)
+    parser.add_argument("-D", "--desc", help="Description of the expereiment, starting with \"_\"", type=str, default="")
+    parser.add_argument("-E", "--seed", help="Seed to use for the rng", type=int, default=42)
+    parser.add_argument("-G", "--save-agent", help="Saves the agent", action="store_true")
+    parser.add_argument("--save-name", help="Name to save experiment", type=str, default="")
+    parser.add_argument("-Y", "--years", help="Number of years to run the simulation for", type=int)
+
+    # Files
+    parser.add_argument("-I", "--file-price", help = "Name of imbalance price dataframe", 
+                        type=str, default= "df_price_2019.csv")
+    parser.add_argument("-O", "--file-contracts", help = "CSV of contracts offered", 
+                        type=str, default= "ExpLogs/2023-09-13-15:25:05_Contracts_ev_world_Optim.csv")
+    parser.add_argument("-N", "--file-sessions", help = "CSV of charging sessions",
+                        type=str, default= "df_elaad_preproc.csv")
+
+    # Train tuning, some here might not be needed
+    parser.add_argument("--reward-coef", type=float, default=1)
+    parser.add_argument("--proj-coef", type=float, default=0)
+    parser.add_argument("--lax-coef", type=float, default=0)
+    parser.add_argument("--logstd", type=float, default=-2)
+    parser.add_argument("--n-state", type=int, default = 38)
+    parser.add_argument("--n-action", type=int, default = 1)
+    parser.add_argument("--hidden", type=int, default=64)
+    #parser.add_argument("--relu", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
+    #parser.add_argument("--no-safety", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
+    #parser.add_argument("--norm-state", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
+    #parser.add_argument("--without-perc", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
+    parser.add_argument("--norm-reward", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
+    #parser.add_argument("--reset-std", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
+    #parser.add_argument("--grad-std", type= lambda x: bool(strtobool(x)), default=True, nargs='?', const=True)
+    #parser.add_argument("--optimizer", type=str, default="Adam")
+    parser.add_argument("--df-imit", type=str, default="")
+
+    # Clean RL arguments
+    parser.add_argument("--exp-name", type=str, default=os.path.basename(__file__).rstrip(".py"),
+        help="the name of this experiment")
+    #parser.add_argument("--seed", type=int, default=1,
+    #    help="seed of the experiment")
+    parser.add_argument("--torch-deterministic", type=lambda x: bool(strtobool(x)), default=True, nargs="?", const=True,
+        help="if toggled, `torch.backends.cudnn.deterministic=False`")
+    parser.add_argument("--cuda", type=lambda x: bool(strtobool(x)), default=True, nargs="?", const=True,
+        help="if toggled, cuda will be enabled by default")
+    parser.add_argument("--track", type=lambda x: bool(strtobool(x)), default=False, nargs="?", const=True,
+        help="if toggled, this experiment will be tracked with Weights and Biases")
+    parser.add_argument("--wandb-project-name", type=str, default="cleanRL",
+        help="the wandb's project name")
+    parser.add_argument("--wandb-entity", type=str, default=None,
+        help="the entity (team) of wandb's project")
+    parser.add_argument("--capture-video", type=lambda x: bool(strtobool(x)), default=False, nargs="?", const=True,
+        help="whether to capture videos of the agent performances (check out `videos` folder)")
+
+    # Algorithm specific arguments
+    parser.add_argument("--env-id", type=str, default="Hopper-v4",
+        help="the id of the environment")
+    parser.add_argument("--total-timesteps", type=int, default=1000000,
+        help="total timesteps of the experiments")
+    parser.add_argument("--buffer-size", type=int, default=int(1e6),
+        help="the replay memory buffer size")
+    parser.add_argument("--gamma", type=float, default=0.99,
+        help="the discount factor gamma")
+    parser.add_argument("--tau", type=float, default=0.005,
+        help="target smoothing coefficient (default: 0.005)")
+    parser.add_argument("--batch-size", type=int, default=256,
+        help="the batch size of sample from the reply memory")
+    parser.add_argument("--learning-starts", type=int, default=5e3,
+        help="timestep to start learning")
+    parser.add_argument("--policy-lr", type=float, default=3e-4,
+        help="the learning rate of the policy network optimizer")
+    parser.add_argument("--q-lr", type=float, default=1e-3,
+        help="the learning rate of the Q network network optimizer")
+    parser.add_argument("--policy-frequency", type=int, default=2,
+        help="the frequency of training policy (delayed)")
+    parser.add_argument("--target-network-frequency", type=int, default=1, # Denis Yarats' implementation delays this by 2.
+        help="the frequency of updates for the target nerworks")
+    parser.add_argument("--noise-clip", type=float, default=0.5,
+        help="noise clip parameter of the Target Policy Smoothing Regularization")
+    parser.add_argument("--alpha", type=float, default=0.2,
+            help="Entropy regularization coefficient.")
+    parser.add_argument("--autotune", type=lambda x:bool(strtobool(x)), default=True, nargs="?", const=True,
+        help="automatic tuning of the entropy coefficient")
+    args = parser.parse_args()
+    # fmt: on
+    return args
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-R", "--print-dash", help = "Print dashboard", action="store_true")

@@ -83,12 +83,15 @@ c2 = 0.1
 kappa1 = 0.1
 kappa2 = 0.5
 
-# Aggregate state cols
-
-
 # For synthetic data
 sdg_pot = 1.8
 sdg_norm = 0.28
+
+# SAC
+LOG_STD_MAX = 2
+LOG_STD_MIN = -5
+action_space_high = 1
+action_space_low = 0
 
 # Colors
 class bcolors:
