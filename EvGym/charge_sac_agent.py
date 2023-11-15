@@ -71,7 +71,14 @@ class agentSAC_sagg(nn.Module):
     def get_action(self, x):
         mean, log_std = self(x)
         std = log_std.exp()
-        normal = torch.distributions.Normal(mean, std)
+        try:
+            normal = torch.distributions.Normal(mean, std)
+        except Exception:
+            ic(mean, log_std)
+            ic(x)
+            for name, param in model.named_parameters():
+                ic(name, param)
+
         x_t = normal.rsample()  # for reparameterization trick (mean + std * N(0,1))
         y_t = torch.tanh(x_t)
         action = y_t * self.action_scale + self.action_bias
@@ -164,8 +171,8 @@ class agentSAC_sagg(nn.Module):
 
         pred_price = self._get_prediction(t, self.pred_price_n)
         pred_price = (pred_price - pred_price.mean()) / (pred_price.std() + 1e-3)
-        hour = np.array([t % 24])
-        day = np.array([t % (24*7)])
+        hour = np.array([t % 24]) / 23
+        day = np.array([t//24 % 7]) / 6
         pred_price_m = np.array([np.diff(pred_price).mean()])
         np_x = np.concatenate((state_cars, pred_price, pred_price_m, hour, day)).astype(float)
         #x = torch.tensor(np_x).to(self.device).float()#reshape(1, self.envs["single_observation_space"])
