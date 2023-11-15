@@ -1,4 +1,4 @@
-timestamp: 2023-11-14-23:18:59
+timestamp: 2023-11-15-01:11:20
 
 --Info
 title: EvWorld-month_aggc_b_87
@@ -21,8 +21,8 @@ cuda: True
 reward_coef: 1.0
 proj_coef: 0.0
 lax_coef: 0.0
-logstd: -1.8
-n_state: 19
+logstd: 0.0
+n_state: 18
 hidden: 64
 relu: False
 no_safety: False

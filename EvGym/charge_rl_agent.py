@@ -502,7 +502,7 @@ class agentPPO_sagg(nn.Module):
         #                             p_soc_dis,
         #                             p_t_dis)) 
 
-        if num_cars > 0:
+        if num_cars > 0 and False:
             sum_lower = self.sum_lower / num_cars
             sum_upper = self.sum_upper / num_cars
         else:
@@ -511,12 +511,12 @@ class agentPPO_sagg(nn.Module):
 
         state_cars = np.concatenate(([sum_lower],
                                      [sum_upper],
-                                     #[num_cars],
-                                     #[num_cars_dis],
-                                     #[sum_soc],
-                                     #[sum_soc_dis],
-                                     #[sum_y_low],
-                                     #[sum_lax],
+                                     [num_cars],
+                                     [num_cars_dis],
+                                     [sum_soc],
+                                     [sum_soc_dis],
+                                     [sum_y_low],
+                                     [sum_lax],
                                      #p_soc_t,
                                      #p_t_rem,
                                      #p_soc_dis,
