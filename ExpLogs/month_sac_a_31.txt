@@ -1,4 +1,4 @@
-timestamp: 2023-11-15-20:12:59
+timestamp: 2023-11-15-20:48:57
 
 --Info
 title: EvWorld-month_sac_a_30
@@ -9,7 +9,7 @@ no_save: False
 save_contracts: False
 agent: month_sac_a_30
 desc: 
-seed: 42
+seed: 200
 save_agent: True
 save_name: month_sac_a_31
 years: 100
