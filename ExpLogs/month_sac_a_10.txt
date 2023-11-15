@@ -1,4 +1,4 @@
-timestamp: 2023-11-15-20:41:03
+timestamp: 2023-11-15-22:42:33
 
 --Info
 title: EvWorld-month_sac_a_9
@@ -32,7 +32,6 @@ track: False
 wandb_project_name: cleanRL
 wandb_entity: None
 capture_video: False
-env_id: Hopper-v4
 total_timesteps: 1000000
 buffer_size: 1000000
 gamma: 0.99
