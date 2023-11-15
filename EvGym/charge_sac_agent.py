@@ -10,6 +10,7 @@ np.set_printoptions(linewidth=np.nan) # type: ignore
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions.normal import Normal
 from torch.utils.tensorboard import SummaryWriter
@@ -77,7 +78,8 @@ class agentSAC_sagg(nn.Module):
         log_prob = normal.log_prob(x_t)
         # Enforcing Action Bound
         log_prob -= torch.log(self.action_scale * (1 - y_t.pow(2)) + 1e-6)
-        log_prob = log_prob.sum(1, keepdim=True)
+
+        #log_prob = log_prob.sum(1, keepdim=True) # JS: Why do we sum if we only have 1?
         mean = torch.tanh(mean) * self.action_scale + self.action_bias
         return action, log_prob, mean
 
