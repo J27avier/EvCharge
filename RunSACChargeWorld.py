@@ -254,8 +254,8 @@ def runSim(args = None):
     if args.save_agent:
         if args.save_name != "":
             torch.save(agent, f"{config.agents_path}{args.save_name}.pt")
-            torch.save(qf1, f"{config.agents_path}qf1_{args.agent}.pt")
-            torch.save(qf2, f"{config.agents_path}qf2_{args.agent}.pt")
+            torch.save(qf1, f"{config.agents_path}qf1_{args.save_name}.pt")
+            torch.save(qf2, f"{config.agents_path}qf2_{args.save_name}.pt")
         else:
             torch.save(agent, f"{config.agents_path}{world.tracker.timestamp}_{args.agent.split('.')[0]}{args.desc}.pt")
             torch.save(qf1, f"{config.agents_path}{world.tracker.timestamp}qf1_{args.agent.split('.')[0]}{args.desc}.pt")
