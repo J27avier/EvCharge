@@ -1,4 +1,4 @@
-timestamp: 2023-11-14-23:17:35
+timestamp: 2023-11-14-23:56:56
 
 --Info
 title: EvWorld-month_aggc_e_32
@@ -21,14 +21,14 @@ cuda: True
 reward_coef: 1.0
 proj_coef: 0.0
 lax_coef: 0.0
-logstd: -1.8
+logstd: 0.0
 n_state: 12
 hidden: 64
 relu: False
 no_safety: False
 norm_state: False
 without_perc: True
-norm_reward: True
+norm_reward: False
 reset_std: False
 grad_std: True
 optimizer: Adam

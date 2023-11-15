@@ -526,7 +526,7 @@ class agentPPO_sagg(nn.Module):
         state_cars = np.nan_to_num(state_cars)
 
         pred_price = self._get_prediction(t, self.pred_price_n)
-        pred_price = (pred_price - pred_price.mean()) / (pred_price.std() + 1e-3)
+        #pred_price = (pred_price - pred_price.mean()) / (pred_price.std() + 1e-3)
         hour = np.array([t % 24])
         day = np.array([np.diff(pred_price).mean()])
         np_x = np.concatenate((state_cars, pred_price, hour, day)).astype(float)
