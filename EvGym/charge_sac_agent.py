@@ -93,6 +93,7 @@ class agentSAC_sagg(nn.Module):
         return action, log_prob, mean
 
     def df_to_state(self, df_state, t):
+        args = self.args
         self.t = t
         # Aggregate
         # Get occ spots (Nt)
