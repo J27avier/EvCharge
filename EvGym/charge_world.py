@@ -88,6 +88,7 @@ class ChargeWorldEnv():
         self.t = self.tinit
         self.df_park = self._init_park()
         self.df_park_lag = self.df_park.copy()
+        self.tracker = ExpTracker(self.tinit, self.t_max)
         return self.df_park.copy()
 
     def step(self, action) -> Tuple[pd.DataFrame, config.Number, bool, dict]:

@@ -132,123 +132,127 @@ def runSim(args = None):
     )
     start_time = time.time()
 
-    world = ChargeWorldEnv(df_sessions, df_price, contract_info, rng, skip_contracts = skip_contracts, norm_reward = args.norm_reward, lax_coef = args.lax_coef, df_imit = args.df_imit)
-    df_state = world.reset()
-    obs = agent.df_to_state(df_state, ts_min) # should be ts_min -1 , but only matters for this timestep
 
     # Add t_min, t_max
     if args.print_dash:
         print_welcome(df_sessions, df_price, contract_info)
         skips = 0
 
-    # Environment loop
-    t = int(ts_min - 1)
-    start_wallTime = time.time()
 
-    pbar = tqdm(desc=args.save_name, total=int(ts_max-ts_min), smoothing=0)
     ts_max = int(ts_min + 24 * 31)
+    pbar = tqdm(desc=args.save_name, total=int(ts_max-ts_min)*args.years, smoothing=0)
 
-    for global_step in range(args.total_timesteps):
-        t += 1
-        if t > ts_max: break
-        pbar.update(1)
+    world = ChargeWorldEnv(df_sessions, df_price, contract_info, rng, skip_contracts = skip_contracts, norm_reward = args.norm_reward, lax_coef = args.lax_coef, df_imit = args.df_imit)
 
-        # ALGO LOGIC: put action logic here
-        ## !!! JS: CAREFUL!!!
-        if global_step < args.learning_starts:
-            actions = rng.uniform(low=config.action_space_low, high=config.action_space_high, size= args.n_action)
-        else:
-            actions, _, _ = agent.get_action(torch.Tensor(obs).to(device))
-            actions = actions.detach().cpu().numpy()
+    for year in range(args.years):
+        df_state = world.reset()
+        obs = agent.df_to_state(df_state, ts_min) # should be ts_min -1 , but only matters for this timestep
 
-        # Get agent.tostate(actions)
-        df_state, rewards, terminations, infos = world.step(agent.action_to_env(actions))
-        next_obs = agent.df_to_state(df_state, t)
+        # Environment loop
+        t = int(ts_min - 1)
 
-        assert t == infos['t'], "Main time and env time out of sync"
+        for global_step in range(args.total_timesteps):
+            t += 1
+            if t > ts_max: break
+            pbar.update(1)
 
-        # Chec that actor --> agent
-        if args.print_dash:
-            if skips > 0: # Logic to jump forward
-                skips -= 1
+            # ALGO LOGIC: put action logic here
+            ## !!! JS: CAREFUL!!!
+            if global_step < args.learning_starts:
+                actions = rng.uniform(low=config.action_space_low, high=config.action_space_high, size= args.n_action)
             else:
-                usr_in = world.print(-1, clear = True)
-            if usr_in.isnumeric():
-                skips = int(usr_in)
-                usr_in = ""
-        else:
-            pass
-        ## !!! JS: CAREFUL!!!
+                actions, _, _ = agent.get_action(torch.Tensor(obs).to(device))
+                actions = actions.detach().cpu().numpy()
 
-        real_next_obs = next_obs.copy()
+            # Get agent.tostate(actions)
+            df_state, rewards, terminations, infos = world.step(agent.action_to_env(actions))
+            next_obs = agent.df_to_state(df_state, t)
 
-        # JS: No truncations
-        #for idx, trunc in enumerate(truncations):
-        #    if trunc:
-        #        real_next_obs[idx] = infos["final_observation"][idx]
-        rb.add(obs, real_next_obs, actions, rewards, terminations, infos)
+            assert t == infos['t'], "Main time and env time out of sync"
 
-        # TRY NOT TO MODIFY: CRUCIAL step easy to overlook
-        obs = next_obs
+            # Chec that actor --> agent
+            if args.print_dash:
+                if skips > 0: # Logic to jump forward
+                    skips -= 1
+                else:
+                    usr_in = world.print(-1, clear = True)
+                if usr_in.isnumeric():
+                    skips = int(usr_in)
+                    usr_in = ""
+            else:
+                pass
+            ## !!! JS: CAREFUL!!!
 
-        # ALGO LOGIC: training.
-        if global_step > args.learning_starts:
-            data = rb.sample(args.batch_size)
-            with torch.no_grad():
-                next_state_actions, next_state_log_pi, _ = agent.get_action(data.next_observations)
-                qf1_next_target = qf1_target(data.next_observations, next_state_actions)
-                qf2_next_target = qf2_target(data.next_observations, next_state_actions)
-                min_qf_next_target = torch.min(qf1_next_target, qf2_next_target) - alpha * next_state_log_pi
-                next_q_value = data.rewards.flatten() + (1 - data.dones.flatten()) * args.gamma * (min_qf_next_target).view(-1)
+            real_next_obs = next_obs.copy()
 
-            qf1_a_values = qf1(data.observations, data.actions).view(-1)
-            qf2_a_values = qf2(data.observations, data.actions).view(-1)
-            qf1_loss = F.mse_loss(qf1_a_values, next_q_value)
-            qf2_loss = F.mse_loss(qf2_a_values, next_q_value)
-            qf_loss = qf1_loss + qf2_loss
+            # JS: No truncations
+            #for idx, trunc in enumerate(truncations):
+            #    if trunc:
+            #        real_next_obs[idx] = infos["final_observation"][idx]
+            rb.add(obs, real_next_obs, actions, rewards, terminations, infos)
 
-            # optimize the model
-            q_optimizer.zero_grad()
-            qf_loss.backward()
-            q_optimizer.step()
+            # TRY NOT TO MODIFY: CRUCIAL step easy to overlook
+            obs = next_obs
 
-            if global_step % args.policy_frequency == 0:  # TD 3 Delayed update support
-                for _ in range(
-                    args.policy_frequency
-                ):  # compensate for the delay by doing 'actor_update_interval' instead of 1
-                    pi, log_pi, _ = agent.get_action(data.observations)
-                    qf1_pi = qf1(data.observations, pi)
-                    qf2_pi = qf2(data.observations, pi)
-                    min_qf_pi = torch.min(qf1_pi, qf2_pi)
-                    actor_loss = ((alpha * log_pi) - min_qf_pi).mean()
+            # ALGO LOGIC: training.
+            if global_step > args.learning_starts:
+                data = rb.sample(args.batch_size)
+                with torch.no_grad():
+                    next_state_actions, next_state_log_pi, _ = agent.get_action(data.next_observations)
+                    qf1_next_target = qf1_target(data.next_observations, next_state_actions)
+                    qf2_next_target = qf2_target(data.next_observations, next_state_actions)
+                    min_qf_next_target = torch.min(qf1_next_target, qf2_next_target) - alpha * next_state_log_pi
+                    next_q_value = data.rewards.flatten() + (1 - data.dones.flatten()) * args.gamma * (min_qf_next_target).view(-1)
 
-                    actor_optimizer.zero_grad()
-                    actor_loss.backward()
-                    actor_optimizer.step()
+                qf1_a_values = qf1(data.observations, data.actions).view(-1)
+                qf2_a_values = qf2(data.observations, data.actions).view(-1)
+                qf1_loss = F.mse_loss(qf1_a_values, next_q_value)
+                qf2_loss = F.mse_loss(qf2_a_values, next_q_value)
+                qf_loss = qf1_loss + qf2_loss
 
-                    if args.autotune:
-                        with torch.no_grad():
-                            _, log_pi, _ = agent.get_action(data.observations)
-                        alpha_loss = (-log_alpha.exp() * (log_pi + target_entropy)).mean()
+                # optimize the model
+                q_optimizer.zero_grad()
+                qf_loss.backward()
+                q_optimizer.step()
 
-                        a_optimizer.zero_grad()
-                        alpha_loss.backward()
-                        a_optimizer.step()
-                        alpha = log_alpha.exp().item()
+                if global_step % args.policy_frequency == 0:  # TD 3 Delayed update support
+                    for _ in range(
+                        args.policy_frequency
+                    ):  # compensate for the delay by doing 'actor_update_interval' instead of 1
+                        pi, log_pi, _ = agent.get_action(data.observations)
+                        qf1_pi = qf1(data.observations, pi)
+                        qf2_pi = qf2(data.observations, pi)
+                        min_qf_pi = torch.min(qf1_pi, qf2_pi)
+                        actor_loss = ((alpha * log_pi) - min_qf_pi).mean()
 
-            # update the target networks
-            if global_step % args.target_network_frequency == 0:
-                for param, target_param in zip(qf1.parameters(), qf1_target.parameters()):
-                    target_param.data.copy_(args.tau * param.data + (1 - args.tau) * target_param.data)
-                for param, target_param in zip(qf2.parameters(), qf2_target.parameters()):
-                    target_param.data.copy_(args.tau * param.data + (1 - args.tau) * target_param.data)
+                        actor_optimizer.zero_grad()
+                        actor_loss.backward()
+                        actor_optimizer.step()
 
-    if not args.no_save:
-        world.tracker.save_log(args, path=config.results_path)
-        world.tracker.save_desc(args, {"title": title}, path=config.results_path)
+                        if args.autotune:
+                            with torch.no_grad():
+                                _, log_pi, _ = agent.get_action(data.observations)
+                            alpha_loss = (-log_alpha.exp() * (log_pi + target_entropy)).mean()
 
-    if args.save_contracts:
-        world.tracker.save_contracts(args, path=config.results_path)
+                            a_optimizer.zero_grad()
+                            alpha_loss.backward()
+                            a_optimizer.step()
+                            alpha = log_alpha.exp().item()
+
+                # update the target networks
+                if global_step % args.target_network_frequency == 0:
+                    for param, target_param in zip(qf1.parameters(), qf1_target.parameters()):
+                        target_param.data.copy_(args.tau * param.data + (1 - args.tau) * target_param.data)
+                    for param, target_param in zip(qf2.parameters(), qf2_target.parameters()):
+                        target_param.data.copy_(args.tau * param.data + (1 - args.tau) * target_param.data)
+
+        if not args.no_save:
+            args.desc = f"_{year}"
+            world.tracker.save_log(args, path=config.results_path)
+            world.tracker.save_desc(args, {"title": title}, path=config.results_path)
+
+        if args.save_contracts:
+            world.tracker.save_contracts(args, path=config.results_path)
 
     # Save agent
     if args.save_agent:
@@ -267,14 +271,15 @@ if __name__ == "__main__":
     args = parse_sac_args()
 
     if args.years is None:
-        runSim(args)
-    else:
-        og_save_name = args.save_name
-        for i in range(args.years):
-            if og_save_name != "":
-                args.save_name = og_save_name + f"_{i}"
-                if i > 0:
-                    args.agent = og_save_name + f"_{i-1}"
-                runSim(args)
-            else:
-                raise Exception("You must specify save name to run multiple years")
+        args.years = 1
+    runSim(args)
+    #else:
+    #    og_save_name = args.save_name
+    #    for i in range(args.years):
+    #        if og_save_name != "":
+    #            args.save_name = og_save_name + f"_{i}"
+    #            if i > 0:
+    #                args.agent = og_save_name + f"_{i-1}"
+    #            runSim(args)
+    #        else:
+    #            raise Exception("You must specify save name to run multiple years")

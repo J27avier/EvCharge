@@ -35,7 +35,7 @@ class ExpTracker():
 
         # TODO: fillna
         if args.save_name != "":
-            df_log.to_csv(f"{path}{args.save_name}.csv", index = False)
+            df_log.to_csv(f"{path}{args.save_name}{args.desc}.csv", index = False)
         else:
             df_log.to_csv(f"{path}{self.timestamp}{self.name}_{args.agent}{args.desc}.csv", index = False)
         

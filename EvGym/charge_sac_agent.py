@@ -1,4 +1,5 @@
 import numpy as np
+import traceback
 import cvxpy as cp # type: ignore
 import pandas as pd
 from . import config
@@ -74,6 +75,7 @@ class agentSAC_sagg(nn.Module):
         try:
             normal = torch.distributions.Normal(mean, std)
         except Exception:
+            print(traceback.format_exc())
             ic(mean, log_std)
             ic(x)
             for name, param in model.named_parameters():
@@ -148,6 +150,16 @@ class agentSAC_sagg(nn.Module):
         if num_cars > 0:
             sum_lower = self.sum_lower / num_cars
             sum_upper = self.sum_upper / num_cars
+            num_cars     /= num_cars
+            num_cars_dis /= num_cars
+            sum_soc      /= num_cars
+            sum_soc_dis  /= num_cars
+            sum_y_low    /= num_cars
+            sum_lax      /= num_cars
+            p_soc_t      /= num_cars
+            p_t_rem      /= num_cars
+            p_soc_dis    /= num_cars
+            p_t_dis      /= num_cars
         else:
             sum_lower = self.sum_lower
             sum_upper = self.sum_upper
