@@ -36,14 +36,14 @@ def parse_sac_args():
     parser.add_argument("--n-state", type=int, default = 38)
     parser.add_argument("--n-action", type=int, default = 1)
     parser.add_argument("--hidden", type=int, default=64)
+    parser.add_argument("--norm-reward", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
+    parser.add_argument("--state-rep", type=str, default="")
     #parser.add_argument("--relu", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
     #parser.add_argument("--no-safety", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
     #parser.add_argument("--norm-state", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
     #parser.add_argument("--without-perc", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
-    parser.add_argument("--norm-reward", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
     #parser.add_argument("--reset-std", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
     #parser.add_argument("--grad-std", type= lambda x: bool(strtobool(x)), default=True, nargs='?', const=True)
-    #parser.add_argument("--optimizer", type=str, default="Adam")
     parser.add_argument("--df-imit", type=str, default="")
 
     # Clean RL arguments

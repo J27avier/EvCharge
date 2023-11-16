@@ -77,7 +77,7 @@ class agentSAC_sagg(nn.Module):
         except Exception:
             print(traceback.format_exc())
             ic(mean, log_std)
-            ic(x)
+            ic(x[0])
             for name, param in model.named_parameters():
                 ic(name, param)
 
@@ -93,6 +93,7 @@ class agentSAC_sagg(nn.Module):
         return action, log_prob, mean
 
     def df_to_state(self, df_state, t):
+        self.t = t
         # Aggregate
         # Get occ spots (Nt)
         occ_spots = df_state["t_rem"] > 0 # Occupied spots
@@ -147,7 +148,7 @@ class agentSAC_sagg(nn.Module):
         self.sum_lower = self.lower.sum() + 0.001
         self.sum_upper = self.upper.sum()
         
-        if num_cars > 0:
+        if num_cars > 0 and "n" in args.state_rep:
             sum_lower = self.sum_lower / num_cars
             sum_upper = self.sum_upper / num_cars
             num_cars     /= num_cars
@@ -165,30 +166,39 @@ class agentSAC_sagg(nn.Module):
             sum_upper = self.sum_upper
 
         state_cars = np.concatenate(([sum_lower],
-                                     [sum_upper],
-                                     #[num_cars],
-                                     #[num_cars_dis],
-                                     #[sum_soc],
-                                     #[sum_soc_dis],
-                                     #[sum_y_low],
-                                     #[sum_lax],
-                                     #p_soc_t,
-                                     #p_t_rem,
-                                     #p_soc_dis,
-                                     #p_t_dis)
-                                     ))
+                                     [sum_upper],))
+        if "o" in args.state_rep:
+            state_cars = np.concatenate((state_cars,
+                                        [num_cars],
+                                        [num_cars_dis],
+                                        [sum_soc],
+                                        [sum_soc_dis],
+                                        [sum_y_low],
+                                        [sum_lax],))
+
+        if "p" in args.state_rep:
+            state_cars = np.concatenate((state_cars,
+                                         p_soc_t,
+                                         p_t_rem,
+                                         p_soc_dis,
+                                         p_t_dis
+                                         ))
 
         # Note, all the "sums"  can be normalized
         state_cars = np.nan_to_num(state_cars)
 
         pred_price = self._get_prediction(t, self.pred_price_n)
-        pred_price = (pred_price - pred_price.mean()) / (pred_price.std() + 1e-3)
+        
+        if "r" in args.state_rep:
+            pred_price = (pred_price - pred_price.mean()) / (pred_price.std() + 1e-3)
         hour = np.array([t % 24]) / 23
         day = np.array([t//24 % 7]) / 6
-        pred_price_m = np.array([np.diff(pred_price).mean()])
-        np_x = np.concatenate((state_cars, pred_price, pred_price_m, hour, day)).astype(float)
-        #x = torch.tensor(np_x).to(self.device).float()#reshape(1, self.envs["single_observation_space"])
-        self.t = t
+
+        np_x = np.concatenate((state_cars, pred_price, hour, day)).astype(float)
+        if "m" in args.state_rep:
+            pred_price_m = np.array([np.diff(pred_price).mean()])
+            np_x = np.concatenate((np_x, pred_price_m))
+
         return np_x
 
     def _get_prediction(self, t, n):
