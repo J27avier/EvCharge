@@ -7,8 +7,12 @@ from EvGym import config # type: ignore
 
 def load_res(name, path="../ExpLogs"):
     df_res = pd.read_csv(f"{path}/{name}.csv")
-    with open(f"{path}/{name}.txt", "r") as f:
-        lines = f.readlines()
+
+    try:
+        with open(f"{path}/{name}.txt", "r") as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        lines = []
     return df_res, lines
 
 def summ_table(l_names, l_files, verbose = False):
@@ -33,10 +37,12 @@ def summ_table(l_names, l_files, verbose = False):
     df_sum["total"] = df_sum["client"] - df_sum["transf"] - df_sum["payoff"]
     return df_sum
 
-def drawLearn(name, count, ax):
+def drawLearn(name, count, ax, label =""):
     l_sum = [f"{name}_{i}" for i in range(count)] 
     df_sum = summ_table(l_sum, l_sum) 
-    ax.plot(df_sum["transf"], label=name.split('/')[-1])
+    if label == "":
+        label = name.split('/')[-1]
+    ax.plot(df_sum["transf"], label=label)
     return ax
 
 def lat_val(l_names, l_counts):
