@@ -1,4 +1,4 @@
-timestamp: 2023-11-16-01:25:24
+timestamp: 2023-11-16-01:30:46
 
 --Info
 title: EvWorld-SAC-sagg
@@ -8,7 +8,7 @@ print_dash: False
 no_save: False
 save_contracts: False
 agent: SAC-sagg
-desc: _7
+desc: _15
 seed: 42
 save_agent: False
 save_name: month_sac_f
