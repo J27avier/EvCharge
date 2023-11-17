@@ -124,6 +124,7 @@ class agentSAC_sagg(nn.Module):
         sum_diff_soc = num_cars * config.FINAL_SOC - sum_soc
 
         # Sum soc_dis
+        sum_t_dis = df_state[cont_spots]["t_dis"].sum()
         sum_soc_dis = df_state[cont_spots]["soc_dis"].sum()
 
         # Sum Y_min
@@ -140,11 +141,13 @@ class agentSAC_sagg(nn.Module):
         sum_lax = lax.sum()
         self.lax = lax
         self.t_rem = df_state["t_rem"]
+        sum_t_rem = df_state[occ_spots]["t_rem"].sum()
         self.t_dis = df_state["t_dis"]
 
         # Bounds
         dis_lim = np.zeros(config.max_cars)
         dis_lim[cont_spots] += -df_state[cont_spots]["soc_dis"]*config.eta_d
+        sum_dis_lim = dis_lim.sum()
 
         self.lower = np.maximum(y_low, np.maximum(-config.alpha_d/config.B, dis_lim))
         self.lower[~occ_spots] = 0
@@ -159,48 +162,61 @@ class agentSAC_sagg(nn.Module):
         if num_cars > 0 and "n" in args.state_rep:
             sum_lower = self.sum_lower / num_cars
             sum_upper = self.sum_upper / num_cars
-            num_cars     /= num_cars
-            num_cars_dis /= num_cars
+            #num_cars     /= num_cars
+            #num_cars_dis /= num_cars
             sum_soc      /= num_cars
-            sum_soc_dis  /= num_cars
+            sum_diff_soc /= num_cars
+            sum_t_rem    /= num_cars
             sum_y_low    /= num_cars
             sum_lax      /= num_cars
-            p_soc_t      /= num_cars
-            p_t_rem      /= num_cars
-            p_soc_dis    /= num_cars
-            p_t_dis      /= num_cars
+            frac_cars     = num_cars_dis / num_cars
+
+            if num_cars_dis > 0:
+                sum_dis_lim  /= num_cars
+                sum_t_dis /= num_cars_dis
+            else:
+                sum_soc_dis  = 0 
+                sum_t_dis = 0
         else:
             sum_lower = self.sum_lower
             sum_upper = self.sum_upper
+            frac_cars = 0
+            
 
         state_cars = np.concatenate(([sum_lower],
                                      [sum_upper],))
+
         if "o" in args.state_rep:
             state_cars = np.concatenate((state_cars,
-                                        [num_cars],
-                                        [num_cars_dis],
+                                        #[num_cars],
+                                        #[num_cars_dis],
                                         [sum_soc],
-                                        [sum_soc_dis],
+                                        [sum_diff_soc],
+                                        [sum_t_rem],
                                         [sum_y_low],
-                                        [sum_lax],))
+                                        [sum_lax],
+                                        [frac_cars],
+                                        [sum_dis_lim],
+                                        [sum_t_dis],
+                                        ))
 
-        if "a" in args.state_rep:
-            avg_soc = df_state[occ_spots]["soc_t"].mean()
-            avg_soc_rem = (config.FINAL_SOC - df_state[occ_spots]["soc_t"]).mean()
-            avg_soc_dis = df_state[occ_spots]["soc_dis"].mean()
-            state_cars = np.concatenate((state_cars, [avg_soc], [avg_soc_rem], [avg_soc_dis]))
+        #if "a" in args.state_rep:
+        #    avg_soc = df_state[occ_spots]["soc_t"].mean()
+        #    avg_soc_rem = (config.FINAL_SOC - df_state[occ_spots]["soc_t"]).mean()
+        #    avg_soc_dis = df_state[occ_spots]["soc_dis"].mean()
+        #    state_cars = np.concatenate((state_cars, [avg_soc], [avg_soc_rem], [avg_soc_dis]))
 
         if "t" in args.state_rep:
             avg_t_rem = df_state[occ_spots]["t_rem"].mean()
             avg_t_dis = df_state[occ_spots]["t_dis"].mean()
-            state_cars = np.concatenate((state, [avg_t_rem], [avg_t_dis]))
+            state_cars = np.concatenate((state_cars, [avg_t_rem], [avg_t_dis]))
 
         if "p" in args.state_rep:
             # p25, p50, p75, max, of soc_t, t_rem, soc_dis, t_dis
             p_soc_t = df_state[occ_spots]["soc_t"].quantile([0, 0.25, 0.5, 0.75, 1])
             p_t_rem = df_state[occ_spots]["t_rem"].quantile([0, 0.25, 0.5, 0.75, 1])
-            p_soc_dis = df_state[occ_spots]["soc_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
-            p_t_dis = df_state[occ_spots]["t_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
+            p_soc_dis = df_state[cont_spots]["soc_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
+            p_t_dis = df_state[cont_spots]["t_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
             state_cars = np.concatenate((state_cars,
                                          p_soc_t,
                                          p_t_rem,
@@ -209,7 +225,6 @@ class agentSAC_sagg(nn.Module):
                                          ))
 
         # Note, all the "sums"  can be normalized
-        state_cars = np.nan_to_num(state_cars)
 
         pred_price = self._get_prediction(t, self.pred_price_n)
         
@@ -217,8 +232,8 @@ class agentSAC_sagg(nn.Module):
             pred_price = (pred_price - pred_price.mean()) / (pred_price.std() + 1e-3)
 
         if "h" in args.state_rep:
-            val_hour = t % 24
-            val_day = t//24 % 7
+            val_hour = int(t % 24)
+            val_day  = int((t//24) % 7)
             hour = np.zeros(24)
             hour[val_hour] = 1
             day = np.zeros(7)
@@ -227,6 +242,7 @@ class agentSAC_sagg(nn.Module):
             hour = np.array([t % 24]) #/ 23
             day = np.array([t//24 % 7]) #/ 6
 
+        state_cars = np.nan_to_num(state_cars)
         np_x = np.concatenate((state_cars, pred_price, hour, day)).astype(float)
 
         if "m" in args.state_rep:
@@ -237,13 +253,19 @@ class agentSAC_sagg(nn.Module):
             pred_price_c = np.array([np.diff(np.diff(pred_price)).mean()])
             np_x = np.concatenate((np_x, pred_price_c))
 
+        if "d" in args.state_rep:
+            pred_price_d = np.diff(pred_price)
+            np_x = np.concatenate((np_x, pred_price_d))
+
         if "1" in args.state_rep:
-            l = np.polyfit(np.arange(pred_price), pred_price, 1)
-            np_x = np.concatenate(np_x, l)
+            l = np.polyfit(np.arange(len(pred_price)), pred_price, 1)
+            ic(l)
+            ic(type(l))
+            np_x = np.concatenate((np_x, l))
 
         if "2" in args.state_rep:
-            q = np.polyfit(np.arange(pred_price), pred_price, 2)
-            np_x = np.concatenate(np_x, q)
+            q = np.polyfit(np.arange(len(pred_price)), pred_price, 2)
+            np_x = np.concatenate((np_x, q))
 
         return np_x
 
