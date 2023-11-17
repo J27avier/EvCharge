@@ -213,17 +213,16 @@ class agentSAC_sagg(nn.Module):
 
         if "p" in args.state_rep:
             # p25, p50, p75, max, of soc_t, t_rem, soc_dis, t_dis
-            p_soc_t = df_state[occ_spots]["soc_t"].quantile([0, 0.25, 0.5, 0.75, 1])
-            p_t_rem = df_state[occ_spots]["t_rem"].quantile([0, 0.25, 0.5, 0.75, 1])
-            p_soc_dis = df_state[cont_spots]["soc_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
-            p_t_dis = df_state[cont_spots]["t_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
+            p_soc_t = df_state[occ_spots]["soc_t"].quantile([0, 0.25, 0.5, 0.75, 1]).values
+            p_t_rem = df_state[occ_spots]["t_rem"].quantile([0, 0.25, 0.5, 0.75, 1]).values
+            p_soc_dis = df_state[cont_spots]["soc_dis"].quantile([0, 0.25, 0.5, 0.75, 1]).values
+            p_t_dis = df_state[cont_spots]["t_dis"].quantile([0, 0.25, 0.5, 0.75, 1]).values
             state_cars = np.concatenate((state_cars,
-                                         p_soc_t,
-                                         p_t_rem,
-                                         p_soc_dis,
-                                         p_t_dis
+                                         np.nan_to_num(p_soc_t),
+                                         np.nan_to_num(p_t_rem),
+                                         np.nan_to_num(p_soc_dis),
+                                         np.nan_to_num(p_t_dis)
                                          ))
-
         # Note, all the "sums"  can be normalized
 
         pred_price = self._get_prediction(t, self.pred_price_n)
@@ -265,7 +264,6 @@ class agentSAC_sagg(nn.Module):
             q = np.polyfit(np.arange(len(pred_price)), pred_price, 2)
             np_x = np.concatenate((np_x, q))
 
-        ic(np_x)
         return np_x
 
     def _get_prediction(self, t, n):
