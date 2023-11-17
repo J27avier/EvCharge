@@ -183,16 +183,14 @@ class agentSAC_sagg(nn.Module):
         else:
             frac_cars = 0
             
-
-
-        state_cars = np.array([])
+        state_cars = np.array([sum_upper, sum_lower])
 
         if "o" in args.state_rep:
             state_cars = np.concatenate((state_cars,
                                         #[num_cars],
                                         #[num_cars_dis],
-                                        [sum_upper],
-                                        [sum_lower]
+                                        #[sum_upper],
+                                        #[sum_lower]
                                         [sum_soc],
                                         [sum_diff_soc],
                                         [sum_t_rem],
