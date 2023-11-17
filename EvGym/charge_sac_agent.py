@@ -204,16 +204,16 @@ class agentSAC_sagg(nn.Module):
                                         ))
 
         if "a" in args.state_rep:
-            avg_soc     = np.nan_to_num(df_state[occ_spots]["soc_t"].mean().values)
-            avg_soc_rem = np.nan_to_num((config.FINAL_SOC - df_state[occ_spots]["soc_t"]).mean().values)
-            avg_soc_dis = np.nan_to_num(df_state[cont_spots]["soc_dis"].mean().values)
+            avg_soc     = np.nan_to_num(df_state[occ_spots]["soc_t"].mean())
+            avg_soc_rem = np.nan_to_num((config.FINAL_SOC - df_state[occ_spots]["soc_t"]).mean())
+            avg_soc_dis = np.nan_to_num(df_state[cont_spots]["soc_dis"].mean())
             avg_upper = self.upper.mean()
             avg_lower = self.lower.mean()
             state_cars = np.concatenate((state_cars, [avg_soc], [avg_soc_rem], [avg_soc_dis], [avg_lower], [avg_upper]))
 
         if "t" in args.state_rep:
-            avg_t_rem = df_state[occ_spots]["t_rem"].mean()
-            avg_t_dis = df_state[occ_spots]["t_dis"].mean()
+            avg_t_rem = np.nan_to_num(df_state[occ_spots]["t_rem"].mean())
+            avg_t_dis = np.nan_to_num(df_state[cont_spots]["t_dis"].mean())
             state_cars = np.concatenate((state_cars, [avg_t_rem], [avg_t_dis]))
 
         if "p" in args.state_rep:
