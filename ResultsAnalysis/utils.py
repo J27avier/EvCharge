@@ -76,8 +76,26 @@ def taguchi_l18(values):
             results[j][l_table[i][j]-1] += values[i]
 
     return results.T / 6
-    
-    
+
+def taguchi_l7(values):
+    taguchi7 = [
+    [0, 0, 0, 0, 0, 0, 0,],
+    [0, 0, 0, 1, 1, 1, 1,],
+    [0, 1, 1, 0, 0, 1, 1,],
+    [0, 1, 1, 1, 1, 0, 0,],
+    [1, 0, 1, 0, 1, 0, 1,],
+    [1, 0, 1, 1, 0, 1, 0,],
+    [1, 1, 0, 0, 1, 1, 0,],
+    [1, 1, 0, 1, 0, 0, 1,],
+    ]
+
+    results = np.zeros(7,2)
+    for i in range(8):
+        for j in range(7):
+            results[j][taguchi7[i]] += values[i]
+
+    return values
+
  
 # logstd	gamma	gae_lambda	clip_coef	vf_coef	max_grad_norm	ent_coef
 # -1.8  	0.99	0.95	        0.1	        0.3	0.3	        0

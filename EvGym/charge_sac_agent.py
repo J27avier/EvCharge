@@ -158,6 +158,9 @@ class agentSAC_sagg(nn.Module):
 
         self.sum_lower = self.lower.sum() + 0.001
         self.sum_upper = self.upper.sum()
+
+        sum_lower = self.sum_lower
+        sum_upper = self.sum_upper
         
         if num_cars > 0 and "n" in args.state_rep:
             sum_lower = self.sum_lower / num_cars
@@ -178,18 +181,18 @@ class agentSAC_sagg(nn.Module):
                 sum_soc_dis  = 0 
                 sum_t_dis = 0
         else:
-            sum_lower = self.sum_lower
-            sum_upper = self.sum_upper
             frac_cars = 0
             
 
-        state_cars = np.concatenate(([sum_lower],
-                                     [sum_upper],))
+
+        state_cars = np.array([])
 
         if "o" in args.state_rep:
             state_cars = np.concatenate((state_cars,
                                         #[num_cars],
                                         #[num_cars_dis],
+                                        [sum_upper],
+                                        [sum_lower]
                                         [sum_soc],
                                         [sum_diff_soc],
                                         [sum_t_rem],
@@ -200,11 +203,13 @@ class agentSAC_sagg(nn.Module):
                                         [sum_t_dis],
                                         ))
 
-        #if "a" in args.state_rep:
-        #    avg_soc = df_state[occ_spots]["soc_t"].mean()
-        #    avg_soc_rem = (config.FINAL_SOC - df_state[occ_spots]["soc_t"]).mean()
-        #    avg_soc_dis = df_state[occ_spots]["soc_dis"].mean()
-        #    state_cars = np.concatenate((state_cars, [avg_soc], [avg_soc_rem], [avg_soc_dis]))
+        if "a" in args.state_rep:
+            avg_soc     = np.nan_to_num(df_state[occ_spots]["soc_t"].mean().values)
+            avg_soc_rem = np.nan_to_num((config.FINAL_SOC - df_state[occ_spots]["soc_t"]).mean().values)
+            avg_soc_dis = np.nan_to_num(df_state[cont_spots]["soc_dis"].mean().values)
+            avg_upper = self.upper.mean()
+            avg_lower = self.lower.mean()
+            state_cars = np.concatenate((state_cars, [avg_soc], [avg_soc_rem], [avg_soc_dis], [avg_lower], [avg_upper]))
 
         if "t" in args.state_rep:
             avg_t_rem = df_state[occ_spots]["t_rem"].mean()

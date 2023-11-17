@@ -28,8 +28,8 @@ taguchi7 = [
 [1, 1, 0, 1, 0, 0, 1,],
 ]
 
-var = ["o", "p", "h", "m", "1", "2", "d"]
-const = "n"
+var = ["a", "p", "h", "m", "1", "2", "d"]
+const = ""
 if len(var) <= 7:
     taguchi = taguchi7
     n = 8
