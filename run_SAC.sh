@@ -13,16 +13,16 @@
 #python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_m --years 50 --norm-reward --state-rep notm  --n-state 23 &
 #python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_n --years 50 --norm-reward --state-rep nt    --n-state 14 &
 #python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_o --years 50 --norm-reward --state-rep z       --n-state 10 &
-#python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_p --years 50 --norm-reward --state-rep m12d    --n-state 23 &
-#python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_q --years 50 --norm-reward --state-rep th2d    --n-state 51 &
-#python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_r --years 50 --norm-reward --state-rep ah1d    --n-state 53 &
-#python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_s --years 50 --norm-reward --state-rep ahm2    --n-state 48 &
-#python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_t --years 50 --norm-reward --state-rep at12    --n-state 22 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_p --years 50 --norm-reward --state-rep notmd  --n-state 30 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_q --years 50 --norm-reward --state-rep notm   --n-state 23 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_r --years 50 --norm-reward --state-rep notd   --n-state 29 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_s --years 50 --norm-reward --state-rep not1d  --n-state 31 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_t --years 50 --norm-reward --state-rep not2d  --n-state 32 &
 #python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_u --years 50 --norm-reward --state-rep atmd    --n-state 25 &
-python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_v --years 50 --norm-reward --state-rep notm   --n-state 23 &
-python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_w --years 50 --norm-reward --state-rep not1   --n-state 24 &
-python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_x --years 50 --norm-reward --state-rep not2   --n-state 25 &
-python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_y --years 50 --norm-reward --state-rep notam  --n-state 28 &
-python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_z --years 50 --norm-reward --state-rep notad  --n-state 34 &
-python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_m --years 50 --norm-reward --state-rep not    --n-state 22 &
+#python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_v --years 50 --norm-reward --state-rep notm   --n-state 23 &
+#python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_w --years 50 --norm-reward --state-rep not1   --n-state 24 &
+#python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_x --years 50 --norm-reward --state-rep not2   --n-state 25 &
+#python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_y --years 50 --norm-reward --state-rep notam  --n-state 28 &
+#python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_z --years 50 --norm-reward --state-rep notad  --n-state 34 &
+#python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_m --years 50 --norm-reward --state-rep not    --n-state 22 &
 
