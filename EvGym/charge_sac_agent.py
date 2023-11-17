@@ -259,14 +259,13 @@ class agentSAC_sagg(nn.Module):
 
         if "1" in args.state_rep:
             l = np.polyfit(np.arange(len(pred_price)), pred_price, 1)
-            ic(l)
-            ic(type(l))
             np_x = np.concatenate((np_x, l))
 
         if "2" in args.state_rep:
             q = np.polyfit(np.arange(len(pred_price)), pred_price, 2)
             np_x = np.concatenate((np_x, q))
 
+        ic(np_x)
         return np_x
 
     def _get_prediction(self, t, n):
