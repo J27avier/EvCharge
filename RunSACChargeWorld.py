@@ -31,7 +31,7 @@ from EvGym import config
 # Contracts
 from ContractDesign.time_contracts import general_contracts
 
-torch.set_num_threads(8)
+torch.set_num_threads(4)
 
 def runSim(args = None):
     if args is None:
