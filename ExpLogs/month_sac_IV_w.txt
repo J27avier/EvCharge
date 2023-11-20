@@ -1,4 +1,4 @@
-timestamp: 2023-11-20-22:18:39
+timestamp: 2023-11-20-23:42:50
 
 --Info
 title: EvWorld-SAC-sagg
@@ -24,7 +24,7 @@ n_state: 61
 n_action: 1
 hidden: 64
 norm_reward: False
-state_rep: nhp
+state_rep: noth2d
 df_imit: 
 exp_name: charge_utils
 torch_deterministic: True

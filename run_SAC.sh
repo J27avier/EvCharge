@@ -15,15 +15,15 @@
 #nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_o --years 50 --norm-reward --state-rep nmh     --autotune False --n-state 42 &
 #nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_p --years 50 --norm-reward --state-rep nmt     --autotune False --n-state 15 &
 #nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_q --years 50 --norm-reward --state-rep np      --autotune False --n-state 32 &
-#nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_r --years 50 --norm-reward --state-rep notmd   --autotune False --n-state 30 &
-#nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_s --years 50 --norm-reward --state-rep not1d   --autotune False --n-state 31 &
-#nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_t --years 50 --norm-reward --state-rep n1      --autotune False --n-state 14 &
-python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_u --years 50 --norm-reward --state-rep nothmd    --autotune False --n-state 15 &&
-python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_v --years 50 --norm-reward --state-rep noth1d    --autotune False --n-state 41 &&
-python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_w --years 50 --norm-reward --state-rep noth2d    --autotune False --n-state 61 &&
-python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_x --years 50 --norm-reward --state-rep nothm2d   --autotune False --n-state 68 &&
-python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_y --years 50 --norm-reward --state-rep nothm1d   --autotune False --n-state 49 &&
-python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_z --years 50 --norm-reward --state-rep nathmd    --autotune False --n-state 20 
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_r --years 50 --norm-reward --state-rep noth2     --autotune False --n-state 54 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_s --years 50 --norm-reward --state-rep noth1     --autotune False --n-state 53 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_t --years 50 --norm-reward --state-rep nothm     --autotune False --n-state 52 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_u --years 50 --norm-reward --state-rep nothmd    --autotune False --n-state 59 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_v --years 50 --norm-reward --state-rep noth1d    --autotune False --n-state 60 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_w --years 50 --norm-reward --state-rep noth2d    --autotune False --n-state 61 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_x --years 50 --norm-reward --state-rep nothm2d   --autotune False --n-state 62 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_y --years 50 --norm-reward --state-rep nothm1d   --autotune False --n-state 61 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IV_z --years 50 --norm-reward --state-rep nathmd    --autotune False --n-state 55 &
 
 #python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_A --years 200 --norm-reward --state-rep not1d  --n-state 31 &
 #python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_III_B --years 200 --norm-reward --state-rep notmd  --alpha 0.01 --n-state 30 &
