@@ -28,6 +28,7 @@ def parse_args():
     parser.add_argument("-A", "--agent", help="Type of agent", type=str, required=True)
     parser.add_argument("-D", "--desc", help="Description of the expereiment, starting with \"_\"", type=str, default="")
     parser.add_argument("-E", "--seed", help="Seed to use for the rng", type=int, default=42)
+    parser.add_argument("--save-name", help="Name to save experiment", type=str, default="")
 
     # Files
     parser.add_argument("-I", "--file-price", help = "Name of imbalance price dataframe", 
@@ -99,9 +100,9 @@ def main():
     if args.agent == "ASAP":
         agent = agentASAP()
     elif args.agent == "NoV2G":
-        agent = agentNoV2G(df_price, myprint = True)
+        agent = agentNoV2G(df_price, myprint = False)
     elif args.agent == "Optim":
-        agent = agentOptim(df_price, myprint = True)
+        agent = agentOptim(df_price, myprint = False)
     elif args.agent == "Oracle":
         df_contracts = pd.read_csv(f"{args.file_contracts}")
         agent = agentOracle(df_price, df_sessions, df_contracts, lookahead = 24, myprint = False)
