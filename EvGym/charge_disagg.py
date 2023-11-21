@@ -16,10 +16,9 @@ def priority(Y_tot, lower, upper, occ_spots, priority_vals):
 
 def proportional(Y_tot, lower, upper, occ_spots):
     Range_y = upper-lower
-    y = np.zeros(len(lower))
+    y = lower.copy()
     if Range_y.sum() > 0:
         range_y = (Range_y) / (Range_y).sum()
-        y = lower.copy()
         Y_temp = Y_tot - lower.sum()
         y += range_y * Y_temp
     return y
