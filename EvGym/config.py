@@ -76,14 +76,12 @@ results_path = "ExpLogs/"
 agents_path = "Agents/"
 
 # Contract parameters // This could be read later from YAML, but good enough for now
-#thetas_i = [1/1.25, 1/1, 1/0.75]
-#thetas_j = [1/1.25, 1/1, 1/0.75]
-thetas_i = [1/1.5, 1/1.25, 1/1, 1/0.75, 1/0.5]
-thetas_j = [1/1.5, 1/1.25, 1/1, 1/0.75, 1/0.5]
+thetas_i = [1/1.25, 1/1, 1/0.75]
+thetas_j = [1/1.25, 1/1, 1/0.75]
 c1 = 0.01
 c2 = 0.1
 kappa1 = 0.1
-kappa2 = 0.5
+kappa2 = 0.4
 
 # For synthetic data
 sdg_pot = 1.8
