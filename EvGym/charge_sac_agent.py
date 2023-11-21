@@ -3,6 +3,7 @@ import traceback
 import cvxpy as cp # type: ignore
 import pandas as pd
 from . import config
+from .charge_disagg import priority, proportional
 from cvxpylayers.torch import CvxpyLayer # type: ignore
 from math import isclose
 from icecream import ic # type: ignore
@@ -289,24 +290,34 @@ class agentSAC_sagg(nn.Module):
         Y_tot = alpha*(self.sum_upper) + (1-alpha)*(self.sum_lower)
         occ_spots = self.t_rem > 0
         cont_spots = self.t_dis > 0
-        range_y = self.upper - self.lower
-        action = self.lower.copy()
+        #range_y = self.upper - self.lower
 
-        if range_y.sum() > 0:
-            priority_list = np.argsort(self.lax) # Least laxity first
-            #time_val = np.array([-t_d if t_d > 0 else t_r for t_d, t_r in zip(self.t_dis, self.t_rem)])
-            #priority_list = np.argsort(-time_val)
-            Y_temp = Y_tot - self.lower.sum()
-            for i in priority_list:
-                if i in occ_spots:
-                    y_i = np.min([Y_temp, range_y[i]])
-                    action[i] += y_i
-                    Y_temp -= y_i
-                if isclose(Y_temp, 0):
-                    break
+        if self.args.disagg == "P":
+            action = proportional(Y_tot, self.lower, self.upper, occ_spots)
+        elif self.args.disagg == "LL":
+            action = priority(Y_tot, self.lower, self.upper, occ_spots, self.lax)
+        elif self.args.disagg == "ML":
+            action = priority(Y_tot, self.lower, self.upper, occ_spots, -self.lax)
+        elif self.args.disagg == "LH":
+            priority_vals = np.array([-1/t_d if t_d > 0 else t_r for t_d, t_r in zip(self.t_dis, self.t_rem)]) 
+            action = priority(Y_tot, self.lower, self.upper, occ_spots, priority_vals)
+        elif self.args.disagg == "MH":
+            priority_vals = np.array([-1/t_d if t_d > 0 else t_r for t_d, t_r in zip(self.t_dis, self.t_rem)]) 
+            action = priority(Y_tot, self.lower, self.upper, occ_spots, -priority_vals)
+        else:
+            raise Exception("Disaggregation not recognized")
+
+            #priority_list = np.argsort(self.lax) # Least laxity first
+            #Y_temp = Y_tot - self.lower.sum()
+            #for i in priority_list:
+            #    if i in occ_spots:
+            #        y_i = np.min([Y_temp, range_y[i]])
+            #        action[i] += y_i
+            #        Y_temp -= y_i
+            #    if isclose(Y_temp, 0):
+            #        break
 
         action[~occ_spots] = 0
-        #action[~cont_spots] = np.maximum(action[~cont_spots], 0)
         return action
 
 
