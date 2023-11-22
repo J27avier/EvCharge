@@ -183,8 +183,8 @@ class ChargeWorldEnv():
         for i, arr_car in enumerate(df_arrivals.itertuples()):
             sess = Session(idSess = arr_car.session,
                            B = config.B,
-                           t_arr = (arr_car.ts_arr + 0.97)/2,
-                           soc_arr = arr_car.soc_arr,
+                           t_arr = arr_car.ts_arr,
+                           soc_arr = (arr_car.soc_arr+0.97)/2,
                            t_dep = arr_car.ts_dep,
                           )
             
