@@ -53,6 +53,10 @@ class ChargeWorldEnv():
         self.G = contract_info["G"]
         self.W = contract_info["W"]
         self.L = contract_info["L"]
+        self.thetas_i = contract_info["thetas_i"]
+        self.thetas_j = contract_info["thetas_j"]
+        self.c1 = contract_info["c1"]
+        self.c2 = contract_info["c2"]
         self.count_I = len(self.W)
         self.count_J = len(self.L)
         self.skip_contracts = skip_contracts
@@ -199,13 +203,14 @@ class ChargeWorldEnv():
                     w = self.W[idx_theta_w] 
                     soc_dis = w / config.B
                     t_dis = self.L[idx_theta_l]
-                    theta_w, theta_l = config.thetas_i[idx_theta_w], config.thetas_j[idx_theta_l]
+                    #theta_w, theta_l = config.thetas_i[idx_theta_w], config.thetas_j[idx_theta_l]
+                    theta_w, theta_l = self.thetas_i[idx_theta_w], self.thetas_j[idx_theta_l]
                     
                     # Entry checks
                     check_time = sess.t_soj >= t_dis
                     check_energy1 = sess.soc_arr >= soc_dis
                     check_energy2 = xi_max >= w
-                    check_IR = u_ev_general(self.G[idx_theta_w, idx_theta_l], w, t_dis, theta_w, theta_l, c1 = config.c1, c2 = config.c2) >= 0
+                    check_IR = u_ev_general(self.G[idx_theta_w, idx_theta_l], w, t_dis, theta_w, theta_l, c1 = self.c1, c2 = self.c2) >= 0
                     
                     # Contract is accepted 
                     if check_time and check_energy1 and check_energy2 and check_IR: break

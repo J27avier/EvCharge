@@ -3,8 +3,6 @@ import pandas as pd
 import numpy as np
 from tabulate import tabulate
 import os
-#import pyfiglet # type: ignore
-#from colorama import init, Back, Fore
 import argparse
 from tqdm import tqdm
 
@@ -32,8 +30,9 @@ def main():
     df_price = pd.read_csv(f"{config.data_path}{args.file_price}", parse_dates=["date"])
 
     # Calculate contracts
-    G, W, L_cont = general_contracts(thetas_i = eval(args.thetas_i),
-                                     thetas_j = eval(args.thetas_j),
+    thetas_i, thetas_j = eval(args.thetas_i), eval(args.thetas_j)
+    G, W, L_cont = general_contracts(thetas_i = thetas_i,
+                                     thetas_j = thetas_j,
                                      c1 = args.c1,
                                      c2 = args.c2,
                                      kappa1 = args.kappa1,
@@ -45,7 +44,7 @@ def main():
                                      monotonicity=False) # Tractable formulation
 
     L = np.round(L_cont,0) # L_cont →  L continuous
-    contract_info = {"G": G, "W": W, "L": L}
+    contract_info = {"G": G, "W": W, "L": L, "thetas_i": thetas_i, "thetas_j": thetas_j, "c1": args.c1, "c2": args.c2}
 
     # Some agents are not allowed to discharge energy
     skip_contracts = True if args.agent in ["ASAP", "NoV2G"] else False
