@@ -5,6 +5,7 @@ import os
 import argparse
 from distutils.util import strtobool
 from colorama import init, Back, Fore
+import pyfiglet # type: ignore
 
 from . import config
 
