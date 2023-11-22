@@ -191,8 +191,8 @@ class ChargeWorldEnv():
             # Contracts
             if not self.skip_contracts:
                 #idx_theta_w = self.rng.choice(list(range(self.count_I)))
-                idx_theta_w = len(self.count_I) -1 
-                idx_theta_l = len(self.count_J) -1
+                idx_theta_w = self.count_I -1 
+                idx_theta_l = self.count_J -1
                 #idx_theta_l = self.rng.choice(list(range(self.count_J)))
                 assigned_type[idx_theta_w, idx_theta_l] += 1
                 lax = sess.t_soj - ((config.FINAL_SOC - sess.soc_arr) * config.B) / (config.alpha_c * config.eta_c)
