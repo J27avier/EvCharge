@@ -324,6 +324,8 @@ class agentSAC_sagg(nn.Module):
         elif self.args.disagg == "SHLD":
             priority_vals = np.array([100*t_d if t_d > 0 else t_r for t_d, t_r in zip(self.t_dis, self.t_rem)]) 
             action = prioritySoft(Y_tot, self.lower, self.upper, occ_spots, priority_vals)
+        elif self.args.disagg == "SLL":
+            action = prioritySoft(Y_tot, self.lower, self.upper, occ_spots, self.lax)
         else:
             raise Exception("Disaggregation not recognized")
 
