@@ -61,7 +61,7 @@ def runSim(args = None):
                                      IR = "fst", IC = "ort_l", monotonicity=False) # Tractable formulation
 
     L = np.round(L_cont,0) # L_cont →  L continuous
-    contract_info = {"G": G, "W": W, "L": L}
+    contract_info = {"G": G, "W": W, "L": L, "thetas_i": config.thetas_i, "thetas_j": config.thetas_j, "c1": config.c1, "c2": config.c2}
 
     # Some agents are not allowed to discharge energy
     skip_contracts = True if args.agent in ["ASAP", "NoV2G"] else False
