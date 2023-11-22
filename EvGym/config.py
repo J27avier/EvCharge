@@ -81,7 +81,7 @@ thetas_j = [1/1.25, 1/1, 1/0.75]
 c1 = 0.01
 c2 = 0.1
 kappa1 = 0.1
-kappa2 = 0.4
+kappa2 = 0.5
 
 # For synthetic data
 sdg_pot = 1.8

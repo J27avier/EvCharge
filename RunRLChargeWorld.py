@@ -12,7 +12,7 @@ from icecream import ic # type: ignore
 from EvGym.charge_world import ChargeWorldEnv
 #from EvGym.charge_agent import agentASAP, agentOptim, agentNoV2G, agentOracle
 from EvGym.charge_rl_agent import agentPPO_sep, agentPPO_lay, agentPPO_agg, agentPPO_sagg
-from EvGym.charge_utils import parse_args, print_welcome
+from EvGym.charge_utils import parse_rl_args, print_welcome
 from EvGym import config
 
 # Contracts
@@ -32,7 +32,7 @@ torch.set_num_threads(8)
 
 def runSim(args = None):
     if args is None:
-        args = parse_args()
+        args = parse_rl_args()
 
     title = f"EvWorld-{args.agent}{args.desc}"
 
@@ -334,7 +334,7 @@ def runSim(args = None):
 
 
 if __name__ == "__main__":
-    args = parse_args()
+    args = parse_rl_args()
 
     if args.years is None:
         runSim(args)

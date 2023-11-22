@@ -98,7 +98,7 @@ def parse_sac_args():
     # fmt: on
     return args
 
-def parse_args():
+def parse_rl_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-R", "--print-dash", help = "Print dashboard", action="store_true")
     parser.add_argument("-S", "--no-save", help="Does not save results csv", action="store_true")
@@ -178,6 +178,35 @@ def parse_args():
     args.batch_size = int(1 * args.num_steps)
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
     return args
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-R", "--print-dash", help = "Print dashboard", action="store_true")
+    parser.add_argument("-S", "--no-save", help="Does not save results csv", action="store_true")
+    parser.add_argument("-C", "--save-contracts", help="Saves the contracts accepted to each car", action="store_true")
+    parser.add_argument("-A", "--agent", help="Type of agent", type=str, required=True)
+    parser.add_argument("-D", "--desc", help="Description of the expereiment, starting with \"_\"", type=str, default="")
+    parser.add_argument("-E", "--seed", help="Seed to use for the rng", type=int, default=42)
+    parser.add_argument("--save-name", help="Name to save experiment", type=str, default="")
+
+    # Files
+    parser.add_argument("-I", "--file-price", help = "Name of imbalance price dataframe", 
+                        type=str, default= "df_price_2019.csv")
+    parser.add_argument("-O", "--file-contracts", help = "CSV of contracts offered", 
+                        type=str, default= "ExpLogs/2023-09-13-15:25:05_Contracts_ev_world_Optim.csv")
+    parser.add_argument("-N", "--file-sessions", help = "CSV of charging sessions",
+                        type=str, default= "df_elaad_preproc.csv")
+
+    # Contract arguments
+    parser.add_argument("--thetas_i", type=str, default="[1/1.25, 1/1, 1/0.75]")
+    parser.add_argument("--thetas_j", type=str, default="[1/1.25, 1/1, 1/0.75]")
+    parser.add_argument("--c1", type=float, default=0.01)
+    parser.add_argument("--c2", type=float, default=0.1)
+    parser.add_argument("--kappa1", type=float, default=0.1)
+    parser.add_argument("--kappa2", type=float, default=0.5)
+    parser.add_argument("--integer", type= lambda x: bool(strtobool(x)), default=False)
+
+    return parser.parse_args()
 
 def print_welcome(df_sessions, df_price, contract_info):
     G, W, L = contract_info["G"], contract_info["W"], contract_info["L"]

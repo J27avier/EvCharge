@@ -22,12 +22,12 @@ def general_contracts(thetas_i = [1/1.25, 1/1, 1/0.75],
     #W = cp.Variable((I), nonneg=True)
     G = cp.Variable((I, J))
     W = cp.Variable((I))
-    L = cp.Variable((J))
+    #L = cp.Variable((J))
     
-    #if integer:
-    #    L = cp.Variable((J), integer=True)
-    #else:
-    #    L = cp.Variable((J), nonneg=True)
+    if integer:
+        L = cp.Variable((J), integer=True)
+    else:
+        L = cp.Variable((J), nonneg=True)
 
     PI = np.ones((I,J)) / (I*J)
     constraints = []
