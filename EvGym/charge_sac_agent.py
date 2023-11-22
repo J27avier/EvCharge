@@ -299,12 +299,28 @@ class agentSAC_sagg(nn.Module):
             action = priority(Y_tot, self.lower, self.upper, occ_spots, self.lax)
         elif self.args.disagg == "ML":
             action = priority(Y_tot, self.lower, self.upper, occ_spots, -self.lax)
-        elif self.args.disagg == "LH":
-            priority_vals = np.array([-1/t_d if t_d > 0 else t_r for t_d, t_r in zip(self.t_dis, self.t_rem)]) 
+        elif self.args.disagg == "LD":
+            action = priority(Y_tot, self.lower, self.upper, occ_spots, self.t_rem)
+        elif self.args.disagg == "MD":
+            action = priority(Y_tot, self.lower, self.upper, occ_spots, -self.t_rem)
+        elif self.args.disagg == "HLL":
+            priority_vals = np.array([100*t_d if t_d > 0 else lx for t_d, lx in zip(self.t_dis, self.lax)]) 
             action = priority(Y_tot, self.lower, self.upper, occ_spots, priority_vals)
-        elif self.args.disagg == "MH":
-            priority_vals = np.array([-1/t_d if t_d > 0 else t_r for t_d, t_r in zip(self.t_dis, self.t_rem)]) 
+        elif self.args.disagg == "HML":
+            priority_vals = np.array([100*t_d if t_d > 0 else t_r for t_d, lx in zip(self.t_dis, self.lax)]) 
             action = priority(Y_tot, self.lower, self.upper, occ_spots, -priority_vals)
+        elif self.args.disagg == "HLD":
+            priority_vals = np.array([100*t_d if t_d > 0 else t_r for t_d, t_r in zip(self.t_dis, self.t_rem)]) 
+            action = priority(Y_tot, self.lower, self.upper, occ_spots, priority_vals)
+        elif self.args.disagg == "HMD":
+            priority_vals = np.array([100*t_d if t_d > 0 else t_r for t_d, t_r in zip(self.t_dis, self.t_rem)]) 
+            action = priority(Y_tot, self.lower, self.upper, occ_spots, -priority_vals)
+        elif self.args.disagg == "SHLL":
+            priority_vals = np.array([100*t_d if t_d > 0 else lx for t_d, lx in zip(self.t_dis, self.lax)]) 
+            action = prioritySoft(Y_tot, self.lower, self.upper, occ_spots, priority_vals)
+        elif self.args.disagg == "SHLD":
+            priority_vals = np.array([100*t_d if t_d > 0 else t_r for t_d, t_r in zip(self.t_dis, self.t_rem)]) 
+            action = prioritySoft(Y_tot, self.lower, self.upper, occ_spots, priority_vals)
         else:
             raise Exception("Disaggregation not recognized")
 
