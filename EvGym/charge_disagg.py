@@ -4,6 +4,7 @@ from icecream import ic # type: ignore
 
 def zipf(N, s):
     x = np.arange(N)
+    # Warning divide by zero
     H = (1 / (x+1)**s).sum()
     return 1/H * 1/(x+1)**s
 
@@ -24,7 +25,7 @@ def prioritySoft(Y_tot, lower, upper, occ_spots, priority_vals, s = 2):
     y = lower.copy()
     Y_temp = Y_tot - lower.sum()
     Range_y = upper - lower
-    while (Y_temp - 0.0000001 > 0) and (Range_y.sum() > 0):
+    while (Y_temp - 0.0000001 > 0) and (Range_y.sum() > 0) and (occ_spots.sum() > 0):
         idx = y < upper
         priority_list = np.argsort(priority_vals[idx])
         prop = zipf(len(priority_list), s)[priority_list]
