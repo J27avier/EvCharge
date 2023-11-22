@@ -72,7 +72,7 @@ def main():
         skips = 0
 
     # Environment loop
-    for t in tqdm(range(int(ts_min)-1, int(ts_max)), desc = f"{title}: ", smoothing=0.1):
+    for t in tqdm(range(int(ts_min)-1, int(ts_max)), desc = f"{title}: ", smoothing=0.01):
         action = agent.get_action(df_state, t)
         df_state, reward, done, info = world.step(action)
         assert t+1 == info['t'], "Main time and env time out of sync"

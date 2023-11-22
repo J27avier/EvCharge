@@ -3,7 +3,7 @@ import traceback
 import cvxpy as cp # type: ignore
 import pandas as pd
 from . import config
-from .charge_disagg import priority, proportional
+from .charge_disagg import priority, proportional, prioritySoft 
 from cvxpylayers.torch import CvxpyLayer # type: ignore
 from math import isclose
 from icecream import ic # type: ignore
