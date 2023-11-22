@@ -183,7 +183,7 @@ class ChargeWorldEnv():
         for i, arr_car in enumerate(df_arrivals.itertuples()):
             sess = Session(idSess = arr_car.session,
                            B = config.B,
-                           t_arr = arr_car.ts_arr,
+                           t_arr = (arr_car.ts_arr + 0.97)/2,
                            soc_arr = arr_car.soc_arr,
                            t_dep = arr_car.ts_dep,
                           )
@@ -211,7 +211,7 @@ class ChargeWorldEnv():
                     # Entry checks
                     check_time = sess.t_soj >= t_dis
                     check_energy1 = sess.soc_arr >= soc_dis
-                    check_energy1 = True
+                    #check_energy1 = True
                     check_energy2 = xi_max >= w
                     check_IR = u_ev_general(self.G[idx_theta_w, idx_theta_l], w, t_dis, theta_w, theta_l, c1 = self.c1, c2 = self.c2) >= 0
                     
