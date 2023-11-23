@@ -52,7 +52,8 @@
 #nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_V_g --years 200 --norm-reward --state-rep nothmd --autotune False --save-agent --gamma 0.95 --n-state 59 &
 #nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_V_h --years 200 --norm-reward --state-rep nothmd --autotune False --save-agent --gamma 0.9  --n-state 59 &
 
-python3 RunSACChargeWorld.py --agent month_sac_VII_b --save-name month_sac_VII_b_t --years 1 --norm-reward --state-rep nothmd --autotune False --save-agent              --n-state 59 &
-python3 RunSACChargeWorld.py --agent month_sac_VII_c --save-name month_sac_VII_c_t --years 1 --norm-reward --state-rep nothmd --autotune False --save-agent              --n-state 59 &
-python3 RunSACChargeWorld.py --agent month_sac_VII_d --save-name month_sac_VII_d_t --years 1 --norm-reward --state-rep nothmd --autotune False --save-agent              --n-state 59 &
-python3 RunSACChargeWorld.py --agent month_sac_VII_f --save-name month_sac_VII_f_t --years 1 --norm-reward --state-rep nothmd --autotune False --save-agent              --n-state 59 &
+python3 RunSACChargeWorld.py --agent month_sac_VII_a --save-name month_sac_VII_a_t --years 1 --norm-reward --state-rep nothmd --autotune False --save-agent --disagg  P --n-state 59 &
+python3 RunSACChargeWorld.py --agent month_sac_VII_b --save-name month_sac_VII_b_t --years 1 --norm-reward --state-rep nothmd --autotune False --save-agent --disagg  LL --n-state 59 &
+python3 RunSACChargeWorld.py --agent month_sac_VII_c --save-name month_sac_VII_c_t --years 1 --norm-reward --state-rep nothmd --autotune False --save-agent --disagg  ML --n-state 59 &
+python3 RunSACChargeWorld.py --agent month_sac_VII_d --save-name month_sac_VII_d_t --years 1 --norm-reward --state-rep nothmd --autotune False --save-agent --disagg  LD --n-state 59 &
+python3 RunSACChargeWorld.py --agent month_sac_VII_f --save-name month_sac_VII_f_t --years 1 --norm-reward --state-rep nothmd --autotune False --save-agent --disagg  HLL --n-state 59 &

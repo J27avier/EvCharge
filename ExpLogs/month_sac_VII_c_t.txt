@@ -1,4 +1,4 @@
-timestamp: 2023-11-23-22:40:45
+timestamp: 2023-11-23-23:05:07
 
 --Info
 title: EvWorld-month_sac_VII_c
@@ -25,7 +25,7 @@ n_action: 1
 hidden: 64
 norm_reward: False
 state_rep: nothmd
-disagg: P
+disagg: ML
 df_imit: 
 exp_name: charge_utils
 torch_deterministic: True
