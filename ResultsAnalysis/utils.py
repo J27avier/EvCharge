@@ -27,7 +27,8 @@ def summ_table(l_names, l_files, verbose = False):
             for line in lines: print(line, end="")
         transf = df_exp["imbalance_bill"].sum()
         client = df_exp["client_bill"].sum()
-        if name not in ["ASAP", "NoV2G"]:
+        #if name not in ["ASAP", "NoV2G"]:
+        if not (("ASAP" in name) or ("No-V2G" in name) or ("NoV2G" in name)):
             payoff = df_exp["payoff"].sum()
         else:
             payoff = 0
