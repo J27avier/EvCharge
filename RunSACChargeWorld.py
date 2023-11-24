@@ -151,6 +151,18 @@ def runSim(args = None):
         # Environment loop
         t = int(ts_min - 1)
 
+        # If year 
+        if year % 10 == 0:
+            rb = ReplayBuffer(
+                args.buffer_size,
+                #envs.single_observation_space,
+                space_state,
+                #envs.single_action_space,
+                space_action,
+                device,
+                handle_timeout_termination=False,
+            )
+
         for global_step in range(args.total_timesteps):
             t += 1
             if t > ts_max: break
