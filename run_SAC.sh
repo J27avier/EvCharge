@@ -58,4 +58,4 @@
 #python3 RunSACChargeWorld.py --agent month_sac_VII_d --save-name month_sac_VII_d_t --years 1 --norm-reward --state-rep nothmd --autotune False --save-agent --disagg  LD --n-state 59 &
 #python3 RunSACChargeWorld.py --agent month_sac_VII_f --save-name month_sac_VII_f_t --years 1 --norm-reward --state-rep nothmd --autotune False --save-agent --disagg  HLL --n-state 59 &
 
-python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_VIII_a --years 100 --norm-reward --state-rep nothmd --autotune False --disagg  P  --n-state 59 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_VIII_z --years 1 --norm-reward --state-rep nothmd --autotune False --disagg  P  --n-state 59 --file-price df_price_2019_pad.csv &

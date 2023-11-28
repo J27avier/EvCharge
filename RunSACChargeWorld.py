@@ -139,7 +139,7 @@ def runSim(args = None):
         skips = 0
 
 
-    ts_max = int(ts_min + 24 * 31)
+    #ts_max = int(ts_min + 24 * 31)
     pbar = tqdm(desc=args.save_name, total=int(ts_max-ts_min)*args.years, smoothing=0.1)
 
     world = ChargeWorldEnv(df_sessions, df_price, contract_info, rng, skip_contracts = skip_contracts, norm_reward = args.norm_reward, lax_coef = args.lax_coef, df_imit = args.df_imit)
