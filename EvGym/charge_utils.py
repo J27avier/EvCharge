@@ -48,6 +48,7 @@ def parse_sac_args():
     #parser.add_argument("--reset-std", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
     #parser.add_argument("--grad-std", type= lambda x: bool(strtobool(x)), default=True, nargs='?', const=True)
     parser.add_argument("--df-imit", type=str, default="")
+    parser.add_argument("--test", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
 
     # Clean RL arguments
     parser.add_argument("--exp-name", type=str, default=os.path.basename(__file__).rstrip(".py"),

@@ -46,6 +46,14 @@ def drawLearn(name, count, ax, label =""):
     ax.plot(df_sum["transf"], label=label)
     return ax
 
+def sttrLearn(name, count, ax, label ="", x=0):
+    l_sum = [f"{name}_{i}" for i in range(count)] 
+    df_sum = summ_table(l_sum, l_sum) 
+    if label == "":
+        label = name.split('/')[-1]
+    ax.scatter(np.arange(len(df_sum["transf"]))+x, df_sum["transf"], label=label)
+    return ax
+
 def lat_val(l_names, l_counts):
     l_fnames = [f"{name}_{count-1}" for name, count in zip(l_names, l_counts)]
     df_sum = summ_table(l_fnames, l_fnames)
