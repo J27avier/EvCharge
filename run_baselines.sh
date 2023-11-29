@@ -1,7 +1,14 @@
-python3 RunChargeWorld.py --agent Optim --save-name c2_Optim  --file-price df_prices_2019_c.csv --kappa1 0.4 --kappa2 0.6 --c1 0.01 --c2 0.05 &
-python3 RunChargeWorld.py --agent ASAP  --save-name c_ASAP   --file-price df_prices_2019_c.csv &
-python3 RunChargeWorld.py --agent NoV2G --save-name c_NoV2G  --file-price df_prices_2019_c.csv &
-python3 RunChargeWorld.py --agent Optim --save-name c_Optim  --file-price df_prices_2019_c.csv &
+#python3 RunChargeWorld.py --agent Optim --save-name c2_Optim  --file-price df_prices_2019_c.csv --kappa1 0.4 --kappa2 0.6 --c1 0.01 --c2 0.05 &
+#python3 RunChargeWorld.py --agent ASAP  --save-name c_ASAP   --file-price df_prices_2019_c.csv &
+#python3 RunChargeWorld.py --agent NoV2G --save-name c_NoV2G  --file-price df_prices_2019_c.csv &
+#python3 RunChargeWorld.py --agent Optim --save-name c_Optim  --file-price df_prices_2019_c.csv &
+
+python3 RunChargeWorld.py --agent ASAP  --save-name val_ASAP   --file-sessions df_synth_sessions_2019.csv --file-price df_prices_2019_c.csv &
+python3 RunChargeWorld.py --agent NoV2G --save-name val_NoV2G  --file-sessions df_synth_sessions_2019.csv --file-price df_prices_2019_c.csv &
+python3 RunChargeWorld.py --agent Optim --save-name val_Optim  --file-sessions df_synth_sessions_2019.csv --file-price df_prices_2019_c.csv &
+python3 RunChargeWorld.py --agent ASAP  --save-name train_ASAP   --file-sessions df_synth_sessions_2014_2018.csv --file-price df_prices_c.csv &
+python3 RunChargeWorld.py --agent NoV2G --save-name train_NoV2G  --file-sessions df_synth_sessions_2014_2018.csv --file-price df_prices_c.csv &
+python3 RunChargeWorld.py --agent Optim --save-name train_Optim  --file-sessions df_synth_sessions_2014_2018.csv --file-price df_prices_c.csv &
 
 #nohup python3 RunChargeWorld.py --agent ASAP  --save-name a_ASAP   --file-price df_prices_2019_a.csv &
 #nohup python3 RunChargeWorld.py --agent NoV2G --save-name a_NoV2G  --file-price df_prices_2019_a.csv &
