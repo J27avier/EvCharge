@@ -276,6 +276,7 @@ class agentSAC_sagg(nn.Module):
         l_idx_t0 = self.df_price.index[self.df_price["ts"]== t].to_list()
         #assert len(l_idx_t0) == 1, "Timestep for prediction not unique or non existent"
         if len(l_idx_t0) > 1: print(f"Duplicate price found at {t}, {l_idx_t0}")
+        if len(l_idx_t0) == 0: print(f"No price found at {t}, {l_idx_t0}")
         idx_t0 = l_idx_t0[0]
         idx_tend = min(idx_t0+n, self.df_price.index.max()+1)
         #idx_tend = idx_t0+n
