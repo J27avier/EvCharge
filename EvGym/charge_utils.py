@@ -210,6 +210,7 @@ def parse_args():
     parser.add_argument("--c1", type=float, default=config.c1)
     parser.add_argument("--c2", type=float, default=config.c2)
     parser.add_argument("--kappa1", type=float, default=config.kappa1)
+    parser.add_argument("--kappa2", type=float, default=config.kappa2)
     parser.add_argument("--integer", type= lambda x: bool(strtobool(x)), default=config.integer)
 
     return parser.parse_args()
