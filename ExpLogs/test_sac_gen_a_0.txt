@@ -1,23 +1,23 @@
-timestamp: 2023-11-28-20:10:57
+timestamp: 2023-11-28-21:29:00
 
 --Info
-title: EvWorld-month_sac_VII_a
+title: EvWorld-train_sac_gen_a_0
 
 --Args
 print_dash: False
 no_save: False
 save_contracts: False
-agent: month_sac_VII_a
+agent: train_sac_gen_a_0
 desc: 
 seed: 42
 save_agent: False
-save_name: month_sac_VII_z
+save_name: test_sac_gen_a_0
 years: 1
 summary: True
-general: False
+general: True
 file_price: df_prices_c.csv
 file_contracts: ExpLogs/2023-09-13-15:25:05_Contracts_ev_world_Optim.csv
-file_sessions: preproc-SDG-splits/df_sdg1_preproc_0.csv
+file_sessions: df_elaad_preproc.csv
 reward_coef: 1
 proj_coef: 0
 lax_coef: 0
@@ -29,7 +29,7 @@ norm_reward: False
 state_rep: nothmd
 disagg: P
 df_imit: 
-test: False
+test: True
 exp_name: charge_utils
 torch_deterministic: True
 cuda: True

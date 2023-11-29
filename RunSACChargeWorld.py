@@ -43,7 +43,7 @@ def runSim(args = None):
     rng = np.random.default_rng(args.seed)
 
     # Load datasets
-    df_sessions = pd.read_csv(f"{config.data_path}{args.file_sessions}") #, parse_dates = ["starttime_parking", "endtime_parking"])
+    df_sessions = pd.read_csv(f"{config.data_path}{args.file_sessions}", parse_dates = ["starttime_parking", "endtime_parking"])
     ts_min = df_sessions["ts_arr"].min()
     ts_max = df_sessions["ts_dep"].max()
 
@@ -276,19 +276,45 @@ def runSim(args = None):
 if __name__ == "__main__":
     args = parse_sac_args()
 
-    if args.years is None:
+    if args.general:
+        args.file_price = "df_prices_c.csv"
+        if args.years is None:
+            raise Exception("Years cant be none")
+        years = args.years
+        save_name = args.save_name
         args.years = 1
-    runSim(args)
 
-    # args.file_price
-    # args.file_sessions
-    f_train  = ""
-    f_val = "" 
-    f_test = "df_elaad_preproc.csv"
+        for year in range(years):
+            print(f"Iter:{year+1}/{years}")
 
-    f_p_train  = ""
-    f_p_val = "" 
-    f_p_test = "df_price_2019.csv"
+            # Train with synth data
+            args.test = False
+            args.file_sessions = "df_synth_sessions_2014_2018.csv"
+            args.save_name = f"train_{save_name}_{year}"
+            args.save_agent = True
+            if year > 0:
+                args.agent = f"train_{save_name}_{year-1}"
+            runSim(args)
+
+            # Validate with synth data
+            args.agent = f"train_{save_name}_{year}"
+            #args.test = True # Can learn during episode, but not save it's knowledge
+            args.file_sessions = "df_synth_sessions_2019.csv"
+            args.save_name = f"val_{save_name}_{year}"
+            args.save_agent = False
+            runSim(args)
+
+            # Test with real data
+            args.file_sessions = "df_elaad_preproc.csv"
+            args.save_name = f"test_{save_name}_{year}"
+            runSim(args)
+    else:
+        if args.years is None:
+            args.years = 1
+        runSim(args)
+    print(f"Done {args.save_name}")
+
+
 
 
 
