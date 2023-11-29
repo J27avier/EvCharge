@@ -101,11 +101,11 @@ class agentOptim():
 
             objective = cp.Minimize(cp.sum(cp.multiply(np.asmatrix(pred_price), Y))) #  -lambda_lax*cp.sum(LAX)) # Laxity regularization
             prob = cp.Problem(objective, constraints)
-            #prob.solve(solver=cp.MOSEK, verbose=False)
-            prob.solve(solver=cp.ECOS, verbose=False)
-            if prob.status != 'optimal':
-                raise Exception("Optimal schedule not found")
-                print("!!! Optimal solution not found")
+            prob.solve(solver=cp.MOSEK, verbose=False)
+            #prob.solve(solver=cp.ECOS, verbose=False)
+            #if prob.status != 'optimal':
+            #    raise Exception("Optimal schedule not found")
+            #    print("!!! Optimal solution not found")
             best_cost = prob.value
             Y_val = Y.value
 
