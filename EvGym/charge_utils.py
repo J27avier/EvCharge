@@ -205,13 +205,12 @@ def parse_args():
                         type=str, default= "df_elaad_preproc.csv")
 
     # Contract arguments
-    parser.add_argument("--thetas_i", type=str, default="[1/1.25, 1/1, 1/0.75]")
-    parser.add_argument("--thetas_j", type=str, default="[1/1.25, 1/1, 1/0.75]")
-    parser.add_argument("--c1", type=float, default=0.01)
-    parser.add_argument("--c2", type=float, default=0.1)
-    parser.add_argument("--kappa1", type=float, default=0.1)
-    parser.add_argument("--kappa2", type=float, default=0.5)
-    parser.add_argument("--integer", type= lambda x: bool(strtobool(x)), default=False)
+    parser.add_argument("--thetas_i", type=str, default=f"{config.thetas_i}")
+    parser.add_argument("--thetas_j", type=str, default=f"{config.thetas_j}")
+    parser.add_argument("--c1", type=float, default=config.c1)
+    parser.add_argument("--c2", type=float, default=config.c2)
+    parser.add_argument("--kappa1", type=float, default=config.kappa1)
+    parser.add_argument("--integer", type= lambda x: bool(strtobool(x)), default=config.integer)
 
     return parser.parse_args()
 

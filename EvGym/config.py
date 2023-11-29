@@ -90,6 +90,7 @@ c1 = 0.01
 c2 = 0.05
 kappa1 = 0.4
 kappa2 = 0.6
+integer = True
 
 # For synthetic data
 sdg_pot = 1.8
