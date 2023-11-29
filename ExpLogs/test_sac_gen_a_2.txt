@@ -1,4 +1,4 @@
-timestamp: 2023-11-28-21:31:18
+timestamp: 2023-11-29-06:16:37
 
 --Info
 title: EvWorld-train_sac_gen_a_2
@@ -29,7 +29,7 @@ norm_reward: False
 state_rep: nothmd
 disagg: P
 df_imit: 
-test: True
+test: False
 exp_name: charge_utils
 torch_deterministic: True
 cuda: True
