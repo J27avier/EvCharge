@@ -47,6 +47,7 @@ class ExpTracker():
             total = client - transf - payoff
 
             df_sum = pd.DataFrame([[args.save_name, transf, client, payoff, total]], columns = self.summary_cols)
+            print(df_sum.head())
             
             if args.save_name != "":
                 df_sum.to_csv(f"{path}summ_{args.save_name}{args.desc}.csv", index = False)
