@@ -19,6 +19,8 @@ class ExpTracker():
         self.contract_log_cols = ["idSess", "soc_dis", "t_dis", "g", "idx_theta_w", "idx_theta_l"]
         self.contract_log = [] # type: ignore
 
+        self.summary_cols = ["name", "transf", "client", "payoff", "total"]
+
         self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
         self.tinit = tinit
         self.t_max  = t_max
@@ -34,10 +36,27 @@ class ExpTracker():
             df_log = pd.merge(df_log, df_bill, on = ["ts"], how = "outer")
 
         # TODO: fillna
-        if args.save_name != "":
-            df_log.to_csv(f"{path}{args.save_name}{args.desc}.csv", index = False)
+        if args.summary:
+            transf = df_log["imbalance_bill"].sum()
+            client = df_log["client_bill"].sum()
+            if args.agent not in ["ASAP", "NoV2G"]:
+                payoff = df_log["payoff"].sum()
+            else:
+                payoff = 0
+
+            total = client - transf - payoff
+
+            df_sum = pd.DataFrame([[args.save_name, transf, client, payoff, total]], columns = self.summary_cols)
+            
+            if args.save_name != "":
+                df_sum.to_csv(f"{path}summ_{args.save_name}{args.desc}.csv", index = False)
+            else:
+                df_sum.to_csv(f"{path}summ_{self.timestamp}{self.name}_{args.agent}{args.desc}.csv", index = False)
         else:
-            df_log.to_csv(f"{path}{self.timestamp}{self.name}_{args.agent}{args.desc}.csv", index = False)
+            if args.save_name != "":
+                df_log.to_csv(f"{path}{args.save_name}{args.desc}.csv", index = False)
+            else:
+                df_log.to_csv(f"{path}{self.timestamp}{self.name}_{args.agent}{args.desc}.csv", index = False)
         
     def save_contracts(self, args, path="Results/results_log/"):
         df_contract_log = pd.DataFrame(self.contract_log, columns = self.contract_log_cols)

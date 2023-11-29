@@ -96,16 +96,17 @@ class agentSAC_sagg(nn.Module):
     def df_to_state(self, df_state, t):
         """
         args.state_rep:
-        - n
-        - o
-        - a
-        - t
-        - p
-        - r
-        - h
-        - m
-        - 1
-        - 2
+        - n: Normalize state by number of connected cars and cars with contract
+        - o: Add handcrafted features
+        - a: Add average soc's 
+        - t: Add average times
+        - p: Add percentiles
+        - r: Normalize prices
+        - h: One-hot encode time
+        - d: Add numerical derivative of prices
+        - m: Add average of derivative
+        - 1: Perform polyfit degree 1
+        - 2: Perform polyfit degree 2
         """
         args = self.args
         self.t = t
@@ -166,8 +167,6 @@ class agentSAC_sagg(nn.Module):
         if num_cars > 0 and "n" in args.state_rep:
             sum_lower = self.sum_lower / num_cars
             sum_upper = self.sum_upper / num_cars
-            #num_cars     /= num_cars
-            #num_cars_dis /= num_cars
             sum_soc      /= num_cars
             sum_diff_soc /= num_cars
             sum_t_rem    /= num_cars
@@ -275,11 +274,19 @@ class agentSAC_sagg(nn.Module):
 
     def _get_prediction(self, t, n):
         l_idx_t0 = self.df_price.index[self.df_price["ts"]== t].to_list()
-        assert len(l_idx_t0) == 1, "Timestep for prediction not unique or non existent"
+        #assert len(l_idx_t0) == 1, "Timestep for prediction not unique or non existent"
+        if len(l_idx_t0) > 1: print(f"Duplicate price found at {t}, {l_idx_t0}")
         idx_t0 = l_idx_t0[0]
-        #idx_tend = min(idx_t0+n, self.df_price.index.max()+1)
-        idx_tend = idx_t0+n
+        idx_tend = min(idx_t0+n, self.df_price.index.max()+1)
+        #idx_tend = idx_t0+n
         pred_price = self.df_price.iloc[idx_t0:idx_tend]["price_im"].values
+
+        # Autopad
+        if idx_tend - idx_t0 < n:
+            print(f"{self.args.save_name} ...autopadding")
+            diff = n - (idx_tend - idx_t0) 
+            pad = np.zeros(diff)
+            pred_price = np.concatenate((pred_price, pad))
         return pred_price
 
     def action_to_env(self, action_agg):

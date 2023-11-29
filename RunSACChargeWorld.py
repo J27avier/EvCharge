@@ -43,7 +43,7 @@ def runSim(args = None):
     rng = np.random.default_rng(args.seed)
 
     # Load datasets
-    df_sessions = pd.read_csv(f"{config.data_path}{args.file_sessions}", parse_dates = ["starttime_parking", "endtime_parking"])
+    df_sessions = pd.read_csv(f"{config.data_path}{args.file_sessions}") #, parse_dates = ["starttime_parking", "endtime_parking"])
     ts_min = df_sessions["ts_arr"].min()
     ts_max = df_sessions["ts_dep"].max()
 
@@ -253,7 +253,7 @@ def runSim(args = None):
                         target_param.data.copy_(args.tau * param.data + (1 - args.tau) * target_param.data)
 
         if not args.no_save:
-            args.desc = f"_{year}"
+            if args.years > 1: args.desc = f"_{year}"
             world.tracker.save_log(args, path=config.results_path)
             world.tracker.save_desc(args, {"title": title}, path=config.results_path)
 
@@ -279,13 +279,16 @@ if __name__ == "__main__":
     if args.years is None:
         args.years = 1
     runSim(args)
-    #else:
-    #    og_save_name = args.save_name
-    #    for i in range(args.years):
-    #        if og_save_name != "":
-    #            args.save_name = og_save_name + f"_{i}"
-    #            if i > 0:
-    #                args.agent = og_save_name + f"_{i-1}"
-    #            runSim(args)
-    #        else:
-    #            raise Exception("You must specify save name to run multiple years")
+
+    # args.file_price
+    # args.file_sessions
+    f_train  = ""
+    f_val = "" 
+    f_test = "df_elaad_preproc.csv"
+
+    f_p_train  = ""
+    f_p_val = "" 
+    f_p_test = "df_price_2019.csv"
+
+
+

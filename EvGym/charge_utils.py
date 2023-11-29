@@ -21,6 +21,7 @@ def parse_sac_args():
     parser.add_argument("-G", "--save-agent", help="Saves the agent", action="store_true")
     parser.add_argument("--save-name", help="Name to save experiment", type=str, default="")
     parser.add_argument("-Y", "--years", help="Number of years to run the simulation for", type=int)
+    parser.add_argument("--summary", type= lambda x: bool(strtobool(x)), default=True, nargs='?', const=True)
 
     # Files
     parser.add_argument("-I", "--file-price", help = "Name of imbalance price dataframe", 
@@ -112,6 +113,7 @@ def parse_rl_args():
     parser.add_argument("-G", "--save-agent", help="Saves the agent", action="store_true")
     parser.add_argument("--save-name", help="Name to save experiment", type=str, default="")
     parser.add_argument("-Y", "--years", help="Number of years to run the simulation for", type=int)
+    parser.add_argument("--summary", type= lambda x: bool(strtobool(x)), default=True, nargs='?', const=True)
 
     # Files
     parser.add_argument("-I", "--file-price", help = "Name of imbalance price dataframe", 
@@ -191,6 +193,7 @@ def parse_args():
     parser.add_argument("-D", "--desc", help="Description of the expereiment, starting with \"_\"", type=str, default="")
     parser.add_argument("-E", "--seed", help="Seed to use for the rng", type=int, default=42)
     parser.add_argument("--save-name", help="Name to save experiment", type=str, default="")
+    parser.add_argument("--summary", type= lambda x: bool(strtobool(x)), default=True, nargs='?', const=True)
 
     # Files
     parser.add_argument("-I", "--file-price", help = "Name of imbalance price dataframe", 
