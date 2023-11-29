@@ -12,6 +12,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from stable_baselines3.common.buffers import ReplayBuffer
 from torch.utils.tensorboard import SummaryWriter
+import copy
 
 import pandas as pd
 import numpy as np
@@ -33,7 +34,7 @@ from ContractDesign.time_contracts import general_contracts
 
 torch.set_num_threads(4)
 
-def runSim(args = None):
+def runSim(args = None, modules = None):
     if args is None:
         args = parse_sac_args()
 
@@ -75,27 +76,49 @@ def runSim(args = None):
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
     ic(device)
 
+    # Parameters for simulation
     pred_price_n = 8 # Could be moved to argument
-    
     max_action = config.action_space_high
+    #space_state  = gym.spaces.Box(low=np.array([-100_000]), high=np.array([100_000]), shape=np.array([args.n_state]), dtype=np.float32)
+    space_state  = gym.spaces.Box(low=-100_000, high=100_000, shape=np.array([args.n_state]))
+    space_action = gym.spaces.Box(low=0, high=1, shape=np.array([args.n_action]))
 
     # Agents
-    if args.agent == "SAC-sagg":
-        agent = agentSAC_sagg(df_price, args, device, pred_price_n=pred_price_n).to(device)
-        qf1 = SoftQNetwork(args).to(device)
-        qf2 = SoftQNetwork(args).to(device)
+    if modules is None:
+        if args.agent == "SAC-sagg":
+            agent = agentSAC_sagg(df_price, args, device, pred_price_n=pred_price_n).to(device)
+            qf1 = SoftQNetwork(args).to(device)
+            qf2 = SoftQNetwork(args).to(device)
+        else:
+            try:
+                print(f"Attempting to load: {args.agent}")
+                agent = torch.load(f"{config.agents_path}{args.agent}.pt")
+                agent.df_price = df_price
+                qf1 = torch.load(f"{config.agents_path}qf1_{args.agent}.pt")
+                qf2 = torch.load(f"{config.agents_path}qf2_{args.agent}.pt")
+                print(f"Loaded {args.agent}")
+            except Exception as e:
+                print(e)
+                print(f"Agent name not recognized")
+                exit(1)
+
+        rb = ReplayBuffer(
+            args.buffer_size,
+            #envs.single_observation_space,
+            space_state,
+            #envs.single_action_space,
+            space_action,
+            device,
+            handle_timeout_termination=False,
+        )
     else:
-        try:
-            print(f"Attempting to load: {args.agent}")
-            agent = torch.load(f"{config.agents_path}{args.agent}.pt")
-            agent.df_price = df_price
-            qf1 = torch.load(f"{config.agents_path}qf1_{args.agent}.pt")
-            qf2 = torch.load(f"{config.agents_path}qf2_{args.agent}.pt")
-            print(f"Loaded {args.agent}")
-        except Exception as e:
-            print(e)
-            print(f"Agent name not recognized")
-            exit(1)
+        print("Recieved modules")
+        # Copy when receiving, very important!
+        agent = copy.deepcopy(modules["agent"])
+        qf1   = copy.deepcopy(modules["qf1"])
+        qf2   = copy.deepcopy(modules["qf2"])
+        rb    = copy.deepcopy(modules["rb"])
+
 
     reward_coef = args.reward_coef
     proj_coef = args.proj_coef
@@ -119,18 +142,6 @@ def runSim(args = None):
     else:
         alpha = args.alpha
 
-    #space_state  = gym.spaces.Box(low=np.array([-100_000]), high=np.array([100_000]), shape=np.array([args.n_state]), dtype=np.float32)
-    space_state  = gym.spaces.Box(low=-100_000, high=100_000, shape=np.array([args.n_state]))
-    space_action = gym.spaces.Box(low=0, high=1, shape=np.array([args.n_action]))
-    rb = ReplayBuffer(
-        args.buffer_size,
-        #envs.single_observation_space,
-        space_state,
-        #envs.single_action_space,
-        space_action,
-        device,
-        handle_timeout_termination=False,
-    )
     start_time = time.time()
 
 
@@ -272,6 +283,7 @@ def runSim(args = None):
             torch.save(qf2, f"{config.agents_path}{world.tracker.timestamp}qf2_{args.agent.split('.')[0]}{args.desc}.pt")
 
     pbar.close()
+    return {"agent": agent, "qf1": qf1, "qf2": qf2, "rb": rb} 
 
 if __name__ == "__main__":
     args = parse_sac_args()
@@ -283,6 +295,7 @@ if __name__ == "__main__":
         years = args.years
         save_name = args.save_name
         args.years = 1
+        dict_modules = None
 
         for year in range(years):
             print(f"Iter:{year+1}/{years}")
@@ -291,10 +304,10 @@ if __name__ == "__main__":
             args.test = False
             args.file_sessions = "df_elaad_preproc.csv"
             args.save_name = f"train_{save_name}_{year}"
-            args.save_agent = True
+            #args.save_agent = True
             if year > 0:
                 args.agent = f"train_{save_name}_{year-1}"
-            runSim(args)
+            dict_modules = runSim(args, dict_modules)
 
             # Validate with synth data
             args.agent = f"train_{save_name}_{year}"
@@ -302,12 +315,12 @@ if __name__ == "__main__":
             args.file_sessions = "df_synth_sessions_2019.csv"
             args.save_name = f"val_{save_name}_{year}"
             args.save_agent = False
-            runSim(args)
+            _ = runSim(args, dict_modules)
 
             # Test with real data
             args.file_sessions = "df_synth_sessions_2014_2018.csv"
             args.save_name = f"test_{save_name}_{year}"
-            runSim(args)
+            _ = runSim(args, dict_modules)
     else:
         if args.years is None:
             args.years = 1
