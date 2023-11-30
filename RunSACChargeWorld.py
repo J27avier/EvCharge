@@ -302,7 +302,7 @@ if __name__ == "__main__":
 
             # Train with synth data
             args.test = False
-            args.file_sessions = "df_elaad_preproc.csv"
+            args.file_sessions = "df_synth_sessions_2014_2018.csv"
             args.save_name = f"train_{save_name}_{year}"
             #args.save_agent = True
             if year > 0:
@@ -318,7 +318,7 @@ if __name__ == "__main__":
             _ = runSim(args, dict_modules)
 
             # Test with real data
-            args.file_sessions = "df_synth_sessions_2014_2018.csv"
+            args.file_sessions = "df_elaad_preproc.csv"
             args.save_name = f"test_{save_name}_{year}"
             _ = runSim(args, dict_modules)
     else:
