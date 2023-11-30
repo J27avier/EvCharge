@@ -23,6 +23,7 @@ def parse_sac_args():
     parser.add_argument("-Y", "--years", help="Number of years to run the simulation for", type=int)
     parser.add_argument("--summary", type= lambda x: bool(strtobool(x)), default=True, nargs='?', const=True)
     parser.add_argument("--general", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
+    parser.add_argument("--month", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
 
     # Files
     parser.add_argument("-I", "--file-price", help = "Name of imbalance price dataframe", 
