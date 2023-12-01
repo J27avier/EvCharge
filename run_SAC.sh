@@ -59,5 +59,12 @@
 #python3 RunSACChargeWorld.py --agent month_sac_VII_f --save-name month_sac_VII_f_t --years 1 --norm-reward --state-rep nothmd --autotune False --save-agent --disagg  HLL --n-state 59 &
 
 #python3 RunSACChargeWorld.py --agent month_sac_VII_a  --save-name month_sac_VII_z --years 1 --norm-reward --state-rep nothmd --autotune False --disagg  P  --n-state 59 --file-price df_price_2019_pad.csv &
-nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_c --years 100 --norm-reward --state-rep nothmd --autotune False --disagg LL --n-state 59 --file-price df_prices_c.csv --general True --month True &
-nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name sac_c --years 100 --norm-reward --state-rep nothmd --autotune False --disagg LL --n-state 59 --file-price df_prices_c.csv --general True --month False &
+
+#nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_c --years 100 --norm-reward --state-rep nothmd --autotune False --disagg LL --n-state 59 --file-price df_prices_c.csv --general True --month True &
+#nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name sac_c --years 100 --norm-reward --state-rep nothmd --autotune False --disagg LL --n-state 59 --file-price df_prices_c.csv --general True --month False &
+
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IX_a --years 100 --file-price df_prices_c.csv --buffer-size 100     --norm-reward --month True --state-rep nothmd --autotune False  --disagg P --n-state 59 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IX_b --years 100 --file-price df_prices_c.csv --buffer-size 1000    --norm-reward --month True --state-rep nothmd --autotune False  --disagg P --n-state 59 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IX_c --years 100 --file-price df_prices_c.csv --buffer-size 10000   --norm-reward --month True --state-rep nothmd --autotune False  --disagg P --n-state 59 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IX_d --years 100 --file-price df_prices_c.csv --buffer-size 100000  --norm-reward --month True --state-rep nothmd --autotune False  --disagg P --n-state 59 &
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IX_e --years 100 --file-price df_prices_c.csv --buffer-size 1000000 --norm-reward --month True --state-rep nothmd --autotune False  --disagg P --n-state 59 &

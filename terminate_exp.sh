@@ -1,3 +1,3 @@
-ps -aux | grep Run | awk '{print kill, $2}' | bash
+ps -aux | grep RunCh | awk '{print "kill", $2}' | bash
 
 
