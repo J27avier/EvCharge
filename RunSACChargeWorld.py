@@ -327,7 +327,3 @@ if __name__ == "__main__":
         runSim(args)
     print(f"Done {args.save_name}")
 
-
-
-
-
