@@ -18,7 +18,7 @@ from ContractDesign.time_contracts import general_contracts, u_ev_general
 
 class ChargeWorldEnv():
     def __init__(self, df_sessions: pd.DataFrame, df_price: pd.DataFrame, contract_info, rng,
-                 max_cars: int = config.max_cars, skip_contracts = False, render_mode: Optional[str]  = None, lax_coef = 0, norm_reward = False, df_imit = None):
+                 max_cars: int = config.max_cars, skip_contracts = False, render_mode: Optional[str]  = None, lax_coef = 0, norm_reward = False):
         # Not implemented, for pygame
         self.render_mode = render_mode
         self.window = None
@@ -64,11 +64,6 @@ class ChargeWorldEnv():
         # Environment args
         self.lax_coef = lax_coef
         self.norm_reward = norm_reward
-        if df_imit is not None and df_imit != "":
-            self.df_imit = pd.read_csv(f"{config.results_path}{df_imit}")
-            self.imit = True
-        else:
-            self.imit = False
 
     def _init_park(self):
         df_park = pd.DataFrame(columns=config.car_columns_full)
@@ -128,17 +123,12 @@ class ChargeWorldEnv():
         return self.df_park.copy(), reward, done, info
 
     def _reward(self):
-        if self.imit:
-            print("Imitation!")
-            optim_rew = self.df_imit[self.df_imit["ts"] == self.t]["imbalance_bill"].iloc[0]
-            reward = - (self.imb_transf - optim_rew)**2
-        else:
-            occ_spots = self.df_park["idSess"] != -1 # Occupied spots
-            n_cars = occ_spots.sum()
-            reward = -self.imb_transf
-            if self.norm_reward and n_cars > 0:
-                reward /= n_cars
-            reward += self.lax_coef*self.df_park["lax"].sum()
+        occ_spots = self.df_park["idSess"] != -1 # Occupied spots
+        n_cars = occ_spots.sum()
+        reward = -self.imb_transf
+        if self.norm_reward and n_cars > 0:
+            reward /= n_cars
+        reward += self.lax_coef*self.df_park["lax"].sum()
 
         return reward 
 

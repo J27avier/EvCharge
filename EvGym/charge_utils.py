@@ -15,10 +15,10 @@ def parse_sac_args():
     parser.add_argument("-R", "--print-dash", help = "Print dashboard", action="store_true")
     parser.add_argument("-S", "--no-save", help="Does not save results csv", action="store_true")
     parser.add_argument("-C", "--save-contracts", help="Saves the contracts accepted to each car", action="store_true")
-    parser.add_argument("-A", "--agent", help="Type of agent", type=str, required=True)
+    parser.add_argument("-A", "--agent", help="Type of agent", type=str, default="SAC-sagg", required=True)
     parser.add_argument("-D", "--desc", help="Description of the expereiment, starting with \"_\"", type=str, default="")
     parser.add_argument("-E", "--seed", help="Seed to use for the rng", type=int, default=42)
-    parser.add_argument("-G", "--save-agent", help="Saves the agent", action="store_true")
+    parser.add_argument("--save-agent", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
     parser.add_argument("--save-name", help="Name to save experiment", type=str, default="")
     parser.add_argument("-Y", "--years", help="Number of years to run the simulation for", type=int)
     parser.add_argument("--summary", type= lambda x: bool(strtobool(x)), default=True, nargs='?', const=True)
@@ -26,8 +26,10 @@ def parse_sac_args():
     parser.add_argument("--month", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
 
     # Files
+    #parser.add_argument("-I", "--file-price", help = "Name of imbalance price dataframe", 
+                        #type=str, default= "df_price_2019.csv")
     parser.add_argument("-I", "--file-price", help = "Name of imbalance price dataframe", 
-                        type=str, default= "df_price_2019.csv")
+                        type=str, default= "df_prices_c.csv")
     parser.add_argument("-O", "--file-contracts", help = "CSV of contracts offered", 
                         type=str, default= "ExpLogs/2023-09-13-15:25:05_Contracts_ev_world_Optim.csv")
     parser.add_argument("-N", "--file-sessions", help = "CSV of charging sessions",
@@ -38,19 +40,12 @@ def parse_sac_args():
     parser.add_argument("--proj-coef", type=float, default=0)
     parser.add_argument("--lax-coef", type=float, default=0)
     parser.add_argument("--logstd", type=float, default=-2)
-    parser.add_argument("--n-state", type=int, default = 38)
+    parser.add_argument("--n-state", type=int, default = 59)
     parser.add_argument("--n-action", type=int, default = 1)
     parser.add_argument("--hidden", type=int, default=64)
-    parser.add_argument("--norm-reward", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
-    parser.add_argument("--state-rep", type=str, default="")
-    parser.add_argument("--disagg", type=str, default="P")
-    #parser.add_argument("--relu", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
-    #parser.add_argument("--no-safety", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
-    #parser.add_argument("--norm-state", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
-    #parser.add_argument("--without-perc", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
-    #parser.add_argument("--reset-std", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
-    #parser.add_argument("--grad-std", type= lambda x: bool(strtobool(x)), default=True, nargs='?', const=True)
-    parser.add_argument("--df-imit", type=str, default="")
+    parser.add_argument("--norm-reward", type= lambda x: bool(strtobool(x)), default=True, nargs='?', const=True)
+    parser.add_argument("--state-rep", type=str, default="nothmd")
+    parser.add_argument("--disagg", type=str, default="LL")
     parser.add_argument("--test", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
 
     # Clean RL arguments
@@ -112,7 +107,7 @@ def parse_rl_args():
     parser.add_argument("-A", "--agent", help="Type of agent", type=str, required=True)
     parser.add_argument("-D", "--desc", help="Description of the expereiment, starting with \"_\"", type=str, default="")
     parser.add_argument("-E", "--seed", help="Seed to use for the rng", type=int, default=42)
-    parser.add_argument("-G", "--save-agent", help="Saves the agent", action="store_true")
+    parser.add_argument("--save-agent", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
     parser.add_argument("--save-name", help="Name to save experiment", type=str, default="")
     parser.add_argument("-Y", "--years", help="Number of years to run the simulation for", type=int)
     parser.add_argument("--summary", type= lambda x: bool(strtobool(x)), default=True, nargs='?', const=True)
