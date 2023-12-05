@@ -63,7 +63,7 @@
 #nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_c --years 1000 --norm-reward --state-rep nothmd --autotune False --disagg LL --n-state 59 --file-price df_prices_c.csv --general True --month True &
 #nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name sac_b_c --years 100 --norm-reward --state-rep nothmd --autotune False --disagg LL --n-state 59 --file-price df_prices_c.csv --general True --month False --buffer-size 100000000 &
 #nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name sac_c_c --years 100 --norm-reward --state-rep nothmd --autotune True  --disagg LL --n-state 59 --file-price df_prices_c.csv --general True --month False  &
-nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name sac_d_c --years 100 --norm-reward --state-rep nothmd --autotune True  --disagg LL --n-state 59 --file-price df_prices_c.csv --general True --month False --batch-size 1024 &
+#nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name sac_d_c --years 100 --norm-reward --state-rep nothmd --autotune True  --disagg LL --n-state 59 --file-price df_prices_c.csv --general True --month False --batch-size 1024 &
 
 #python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IX_a --years 100 --file-price df_prices_c.csv --buffer-size 100     --norm-reward --month True --state-rep nothmd --autotune False  --disagg P --n-state 59 &
 #python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IX_b --years 100 --file-price df_prices_c.csv --buffer-size 1000    --norm-reward --month True --state-rep nothmd --autotune False  --disagg P --n-state 59 &

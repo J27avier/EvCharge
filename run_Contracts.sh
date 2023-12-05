@@ -79,7 +79,7 @@
 #nohup python3 RunChargeWorld.py --agent Optim --thetas_i [0.8,1,1.333]          --thetas_j [0.8,1,1.333]          --c1 0.01 --c2 0.05  --kappa1 0.2  --kappa2 0.35 --integer True --save-name Optim_71 &
 #nohup python3 RunChargeWorld.py --agent Optim --thetas_i [0.666,1,2]            --thetas_j [0.666,1,2]            --c1 0.01 --c2 0.05  --kappa1 0.2  --kappa2 0.35 --integer True --save-name Optim_72 &
 
-nohup python3 RunChargeWorld.py --agent Optim --thetas_i [0.8,1,1.333]          --thetas_j [0.8,1,1.333]          --c1 0.01 --c2 0.05  --kappa1 0.1  --kappa2 0.25  --integer True --save-name Optim_z --summary False --file-price df_prices_c.csv &
+python3 RunChargeWorld.py --agent Optim --thetas_i [0.8,1,1.333]          --thetas_j [0.8,1,1.333]          --c1 0.01 --c2 0.05  --kappa1 0.1  --kappa2 0.25  --integer True --save-name Optim_z --summary False --file-price df_prices_c.csv
 
 
 #nohup python3 RunChargeWorld.py --agent Optim --thetas_i [0.666,0.8,1,1.333,2] --thetas_j [0.666,0.8,1,1.333,2] --c1 0.01 --c2 0.05  --kappa1 0.5  --kappa2 0.4  --integer True --save-name Optim_a &
