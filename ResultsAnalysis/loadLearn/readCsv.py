@@ -74,6 +74,15 @@ l_month_sep_init_norm       = [f"d_month/batch_7/month_sep_init_norm_{i}" for i 
 l_month_agg_xyz             = [f"d_month/batch_7/month_agg_xyz_{i}" for i in range(10)]
 l_month_ind_xyz             = [f"d_month/batch_7/month_ind_xyz_{i}" for i in range(10)]
 
+# Batch_8
+l_mont_agg_moresteps        = [f"month/batch_8/mont_agg_moresteps_{i}" for i in range(20)]
+l_mont_agg_nomini           = [f"month/batch_8/mont_agg_nomini_{i}" for i in range(20)]
+l_mont_agg_nomini_moresteps = [f"month/batch_8/mont_agg_nomini_moresteps_{i}" for i in range(20)]
+l_mont_ind_moresteps        = [f"month/batch_8/mont_ind_moresteps_{i}" for i in range(20)]
+l_mont_ind_nomini           = [f"month/batch_8/mont_ind_nomini_{i}" for i in range(20)]
+l_mont_ind_nomini_moresteps = [f"month/batch_8/mont_ind_nomini_moresteps_{i}" for i in range(20)]
+
+
 # Batch 1
 df_month_agg_crit              = summ_table( l_month_agg_crit , l_month_agg_crit )
 df_month_agg_moresteps         = summ_table( l_month_agg_moresteps , l_month_agg_moresteps )
@@ -146,6 +155,7 @@ df_month_sep_init_norm       = summ_table( l_month_sep_init_norm, l_month_sep_in
 df_month_agg_xyz            = summ_table( l_month_agg_xyz, l_month_agg_xyz)
 df_month_ind_xyz            = summ_table( l_month_ind_xyz, l_month_ind_xyz)
 
+
 # Batch 10
 #ax1 = drawLearn("d_month/batch_10/month_agg_a", 50, ax1)
 #ax1 = drawLearn("d_month/batch_10/month_agg_b", 50, ax1)
@@ -197,3 +207,12 @@ df_month_ind_xyz            = summ_table( l_month_ind_xyz, l_month_ind_xyz)
 #ax1 = drawLearn("d_month/batch_14/month_sac_g", 100, ax1)
 #ax1 = drawLearn("d_month/batch_14/month_sac_h", 100, ax1)
 #ax1 = drawLearn("d_month/batch_14/month_sac_i", 100, ax1)
+
+# Batch 8
+df_mont_agg_moresteps       = summ_table(l_mont_agg_moresteps, l_mont_agg_moresteps)
+df_mont_agg_nomini          = summ_table( l_mont_agg_nomini, l_mont_agg_nomini)
+df_mont_agg_nomini_moresteps= summ_table(l_mont_agg_nomini_moresteps, l_mont_agg_nomini_moresteps)
+df_mont_ind_moresteps       = summ_table(l_mont_ind_moresteps, l_mont_ind_moresteps)
+df_mont_ind_nomini          = summ_table( l_mont_ind_nomini, l_mont_ind_nomini)
+df_mont_ind_nomini_moresteps= summ_table( l_mont_ind_nomini_moresteps, l_mont_ind_nomini_moresteps)
+
