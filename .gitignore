@@ -175,5 +175,7 @@ profiling/
 EvGym/.mypy_cache
 runs/
 ExpLogs/old/
-ExpLogs/month/
 Agents/old
+ExpLogs/d_month/
+nohup.out
+old_run/

@@ -18,7 +18,7 @@ from ContractDesign.time_contracts import general_contracts, u_ev_general
 
 class ChargeWorldEnv():
     def __init__(self, df_sessions: pd.DataFrame, df_price: pd.DataFrame, contract_info, rng,
-                 max_cars: int = config.max_cars, skip_contracts = False, render_mode: Optional[str]  = None):
+                 max_cars: int = config.max_cars, skip_contracts = False, render_mode: Optional[str]  = None, lax_coef = 0, norm_reward = False, df_imit = None):
         # Not implemented, for pygame
         self.render_mode = render_mode
         self.window = None
@@ -53,9 +53,22 @@ class ChargeWorldEnv():
         self.G = contract_info["G"]
         self.W = contract_info["W"]
         self.L = contract_info["L"]
+        self.thetas_i = contract_info["thetas_i"]
+        self.thetas_j = contract_info["thetas_j"]
+        self.c1 = contract_info["c1"]
+        self.c2 = contract_info["c2"]
         self.count_I = len(self.W)
         self.count_J = len(self.L)
         self.skip_contracts = skip_contracts
+
+        # Environment args
+        self.lax_coef = lax_coef
+        self.norm_reward = norm_reward
+        if df_imit is not None and df_imit != "":
+            self.df_imit = pd.read_csv(f"{config.results_path}{df_imit}")
+            self.imit = True
+        else:
+            self.imit = False
 
     def _init_park(self):
         df_park = pd.DataFrame(columns=config.car_columns_full)
@@ -79,6 +92,7 @@ class ChargeWorldEnv():
         self.t = self.tinit
         self.df_park = self._init_park()
         self.df_park_lag = self.df_park.copy()
+        self.tracker = ExpTracker(self.tinit, self.t_max)
         return self.df_park.copy()
 
     def step(self, action) -> Tuple[pd.DataFrame, config.Number, bool, dict]:
@@ -114,11 +128,20 @@ class ChargeWorldEnv():
         return self.df_park.copy(), reward, done, info
 
     def _reward(self):
-        #occ_spots = self.df_park["idSess"] != -1 # Occupied spots
-        #n_cars = occ_spots.sum()
-        #norm = (config.FINAL_SOC - self.df_park[occ_spots]["soc_t"]).sum()
-        #return -self.imb_transf/n_cars if n_cars > 0 else 0 #and norm > 0 else 0
-        return -self.imb_transf
+        if self.imit:
+            print("Imitation!")
+            optim_rew = self.df_imit[self.df_imit["ts"] == self.t]["imbalance_bill"].iloc[0]
+            reward = - (self.imb_transf - optim_rew)**2
+        else:
+            occ_spots = self.df_park["idSess"] != -1 # Occupied spots
+            n_cars = occ_spots.sum()
+            reward = -self.imb_transf
+            if self.norm_reward and n_cars > 0:
+                reward /= n_cars
+            reward += self.lax_coef*self.df_park["lax"].sum()
+
+        return reward 
+
 
     def _cars_depart(self):
         blank_session = Session()
@@ -169,6 +192,8 @@ class ChargeWorldEnv():
             if not self.skip_contracts:
                 idx_theta_w = self.rng.choice(list(range(self.count_I)))
                 idx_theta_l = self.rng.choice(list(range(self.count_J)))
+                #idx_theta_w = self.count_I -1 
+                #idx_theta_l = self.count_J -1
                 assigned_type[idx_theta_w, idx_theta_l] += 1
                 lax = sess.t_soj - ((config.FINAL_SOC - sess.soc_arr) * config.B) / (config.alpha_c * config.eta_c)
                 xi_max = lax * config.psi * config.alpha_d
@@ -180,13 +205,15 @@ class ChargeWorldEnv():
                     w = self.W[idx_theta_w] 
                     soc_dis = w / config.B
                     t_dis = self.L[idx_theta_l]
-                    theta_w, theta_l = config.thetas_i[idx_theta_w], config.thetas_j[idx_theta_l]
+                    #theta_w, theta_l = config.thetas_i[idx_theta_w], config.thetas_j[idx_theta_l]
+                    theta_w, theta_l = self.thetas_i[idx_theta_w], self.thetas_j[idx_theta_l]
                     
                     # Entry checks
                     check_time = sess.t_soj >= t_dis
                     check_energy1 = sess.soc_arr >= soc_dis
+                    #check_energy1 = True
                     check_energy2 = xi_max >= w
-                    check_IR = u_ev_general(self.G[idx_theta_w, idx_theta_l], w, t_dis, theta_w, theta_l, c1 = config.c1, c2 = config.c2) >= 0
+                    check_IR = u_ev_general(self.G[idx_theta_w, idx_theta_l], w, t_dis, theta_w, theta_l, c1 = self.c1, c2 = self.c2) >= 0
                     
                     # Contract is accepted 
                     if check_time and check_energy1 and check_energy2 and check_IR: break
@@ -395,7 +422,7 @@ class ChargeWorldEnv():
         self.df_park.loc[occ_spots, "lax"] = self.df_park.loc[occ_spots]["t_rem"] \
                                              - ((config.FINAL_SOC - self.df_park.loc[occ_spots]["soc_t"])*config.B) \
                                              /(config.alpha_c * config.eta_c)
-        if any(self.df_park[occ_spots]["lax"] < -config.tol*10): # A little bit more tolerance because f numerical error in division
+        if any(self.df_park[occ_spots]["lax"] < - config.tol): # Some tolerance because f numerical error in division
             print(self.df_park[self.df_park["lax"] < 0])
             raise Exception("Negative laxity detected")
 

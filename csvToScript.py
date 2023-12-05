@@ -18,6 +18,13 @@ with open(f"{filename}.sh", "w") as f:
             print_str += f" --reward-coef {row.reward_coef} --proj-coef {row.proj_coef} --learning-rate {row.learning_rate}"
             print_str += f" --file-price {row.file_price} --years {row.years}"
             print_str += f" --num-steps {row.num_steps} --anneal-lr {row.anneal_lr}  --update-epochs {row.update_epochs} --num-minibatches {row.num_minibatches}"
+            print_str += f" --lax-coef {row.lax_coef} --logstd {row.logstd} --n-state {row.n_state} --hidden {row.hidden}"
+            print_str += f" --relu {row.relu} --no-safety {row.no_safety} --norm-state {row.norm_state}"
+            print_str += f" --without-perc {row.without_perc} --norm-reward {row.norm_reward} --reset-std {row.reset_std} --optimizer {row.optimizer}"
+            print_str += f" --grad-std {row.grad_std} --gamma {row.gamma} --gae-lambda {row.gae_lambda} --clip-coef {row.clip_coef} --vf-coef {row.vf_coef}"
+            print_str += f" --max-grad-norm {row.max_grad_norm} --ent-coef {row.ent_coef}"
+            if row.df_imit != "":
+                print_str += f" --df-imit {row.df_imit}"
 
             if row.seq == "s":
                 print_str += " && "
@@ -26,3 +33,5 @@ with open(f"{filename}.sh", "w") as f:
             f.write(print_str)
 
 os.system(f"cat {filename}.sh")
+
+# YOU'VE FOUND THE SECRET MESSAGE XD!

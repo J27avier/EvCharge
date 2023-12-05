@@ -4,6 +4,7 @@ import pandas as pd
 from . import config
 from typing import TYPE_CHECKING, Any
 from cvxpylayers.torch import CvxpyLayer # type: ignore
+from math import isclose
 
 from icecream import ic # type:ignore
 
@@ -21,21 +22,27 @@ from .safety_layer import SafetyLayer, SafetyLayerAgg
 from .charge_utils import bounds_from_obs
 
 def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
-    #torch.nn.init.orthogonal_(layer.weight, std)
-    torch.nn.init.normal_(layer.weight, 1, std)
+    torch.nn.init.orthogonal_(layer.weight, std)
+    #torch.nn.init.normal_(layer.weight, 1, std)
     torch.nn.init.constant_(layer.bias, bias_const)
     return layer
 
 class Safe_Actor_Mean_Agg(nn.Module):
-    def __init__(self, envs, device):
+    def __init__(self, envs, args,  device):
         super(Safe_Actor_Mean_Agg, self).__init__()
-        self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], 64))
-        self.activation1 = nn.Tanh()
-        #self.activation1 = nn.LeakyReLU()
-        self.linear2 = layer_init(nn.Linear(64, 64))
-        self.activation2 = nn.Tanh()
-        #self.activation2 = nn.LeakyReLU()
-        self.linear3 = layer_init(nn.Linear(64, 1), std=0.01)
+        self.no_safety = args.no_safety
+        hidden = args.hidden
+        self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], hidden))
+        if args.relu:
+            self.activation1 = nn.ReLU()
+        else:
+            self.activation1 = nn.Tanh()
+        self.linear2 = layer_init(nn.Linear(hidden, hidden))
+        if args.relu:
+            self.activation2 = nn.Tanh()
+        else:
+            self.activation2 = nn.ReLU()
+        self.linear3 = layer_init(nn.Linear(hidden, 1), std=0.01)
         self.safetyL = SafetyLayerAgg(1, device)
 
     def forward(self, x):
@@ -45,14 +52,18 @@ class Safe_Actor_Mean_Agg(nn.Module):
         x = self.linear2.forward(x)
         x = self.activation2(x)
         x = self.linear3.forward(x)
-        x_safe = self.safetyL.forward(x, obs)
-        with torch.no_grad():
-            proj_loss = torch.norm(x - x_safe)
-        return x_safe, proj_loss
+        if self.no_safety:
+            return x, torch.tensor(0)
+        else:
+            x_safe = self.safetyL.forward(x, obs)
+            with torch.no_grad():
+                proj_loss = torch.norm(x - x_safe)
+            return x_safe, proj_loss 
 
 class agentPPO_agg(nn.Module):
-    def __init__(self, envs, df_price, device, pred_price_n=8, max_cars: int = config.max_cars, myprint = False):
+    def __init__(self, envs, df_price, device, args, pred_price_n=8, max_cars: int = config.max_cars, myprint = False):
         super().__init__()
+        self.args = args
         self.critic = nn.Sequential(
                 layer_init(nn.Linear(envs["single_observation_space"], 64)),
                 nn.Tanh(),
@@ -60,8 +71,9 @@ class agentPPO_agg(nn.Module):
                 nn.Tanh(),
                 layer_init(nn.Linear(64,1), std=1.0),
                 )
-        self.actor_mean = Safe_Actor_Mean_Agg(envs, device)
-        self.actor_logstd = nn.Parameter(torch.zeros(1,1))
+        self.actor_mean = Safe_Actor_Mean_Agg(envs, args, device)
+        #self.actor_logstd = nn.Parameter(torch.zeros(1,1))
+        self.actor_logstd = nn.Parameter(args.logstd*torch.ones(1,1)) 
 
         # Ev parameters
         self.max_cars = max_cars
@@ -108,18 +120,27 @@ class agentPPO_agg(nn.Module):
         y_low = np.maximum(hat_y_low * config.eta_c, hat_y_low / config.eta_d)
         y_low[~occ_spots] = 0
 
-        sum_y_low = y_low.sum()
+        sum_y_low = y_low.sum() 
 
         # Lax
         lax = df_state["t_rem"] - (config.FINAL_SOC - df_state["soc_t"])*config.B / (config.alpha_c*config.eta_c)
         lax[~occ_spots] = 0
         sum_lax = lax.sum()
+        self.lax = lax
+        self.t_rem = df_state["t_rem"]
+        self.t_dis = df_state["t_dis"]
+        self.soc_dis = df_state["soc_dis"]
+        self.soc_t = df_state["soc_t"]
 
         # p25, p50, p75, max, of soc_t, t_rem, soc_dis, t_dis
-        p_soc_t = df_state[occ_spots]["soc_t"].quantile([0, 0.25, 0.5, 0.75, 1])
-        p_t_rem = df_state[occ_spots]["t_rem"].quantile([0, 0.25, 0.5, 0.75, 1])
-        p_soc_dis = df_state[occ_spots]["soc_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
-        p_t_dis = df_state[occ_spots]["t_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
+        #p_soc_t = df_state[occ_spots]["soc_t"].quantile([0, 0.25, 0.5, 0.75, 1])
+        #p_t_rem = df_state[occ_spots]["t_rem"].quantile([0, 0.25, 0.5, 0.75, 1])
+        #p_soc_dis = df_state[occ_spots]["soc_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
+        #p_t_dis = df_state[occ_spots]["t_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
+        p_soc_t = df_state[occ_spots]["soc_t"].quantile([0.5])
+        p_t_rem = df_state[occ_spots]["t_rem"].quantile([0.5])
+        p_soc_dis = df_state[occ_spots]["soc_dis"].quantile([0.5])
+        p_t_dis = df_state[occ_spots]["t_dis"].quantile([0.5])
 
         # Bounds
         dis_lim = np.zeros(config.max_cars)
@@ -132,28 +153,50 @@ class agentPPO_agg(nn.Module):
         self.upper = np.minimum(upper_soc,  config.alpha_c / config.B)
         self.upper[~occ_spots] = 0
 
-        self.sum_lower = self.lower.sum()
+        self.sum_lower = self.lower.sum() + 0.0001
         self.sum_upper = self.upper.sum()
 
-        state_cars = np.concatenate(([self.sum_lower],
-                                     [self.sum_upper],
-                                     [num_cars],
-                                     [num_cars_dis],
-                                     [sum_soc],
-                                     [sum_soc_dis],
-                                     [sum_y_low],
-                                     [sum_lax],
-                                     p_soc_t,
-                                     p_t_rem,
-                                     p_soc_dis,
-                                     p_t_dis)) 
+        if self.args.norm_state and num_cars > 0:
+            sum_soc      /= (num_cars*0.1)
+            sum_diff_soc /= (num_cars*0.1)
+            sum_y_low    /= (num_cars*0.1)
+            sum_lax      /= (num_cars*0.1)
+            sum_soc_dis  /= (num_cars*0.1)
+
+        if self.args.without_perc:
+            state_cars = np.concatenate(([self.sum_lower],
+                                         [self.sum_upper],
+                                         [num_cars],
+                                         [num_cars_dis],
+                                         [sum_soc],
+                                         [sum_diff_soc],
+                                         [sum_soc_dis],
+                                         [sum_y_low],
+                                         [sum_lax],)) 
+        else:
+            state_cars = np.concatenate(([self.sum_lower],
+                                         [self.sum_upper],
+                                         [num_cars],
+                                         [num_cars_dis],
+                                         [sum_soc],
+                                         [sum_diff_soc],
+                                         [sum_soc_dis],
+                                         [sum_y_low],
+                                         [sum_lax],
+                                         p_soc_t,
+                                         p_t_rem,
+                                         p_soc_dis,
+                                         p_t_dis)) 
         # Note, all the "sums"  can be normalized
         state_cars = np.nan_to_num(state_cars)
         
 
         pred_price = self._get_prediction(t, self.pred_price_n)
-        hour = np.array([t % 24])
-        np_x = np.concatenate((state_cars, pred_price, hour)).astype(float)
+        pred_price = (pred_price - pred_price.mean()) / (pred_price.std() + 1e-3)
+        hour = np.array([t%24 ]) # 
+        #day =  np.array([(t//24) % 7]) # 
+        day = np.array([np.diff(pred_price).mean()])
+        np_x = np.concatenate((state_cars, pred_price, hour, day)).astype(float)
         #ic(np_x, np_x.shape, type(np_x))
         x = torch.tensor(np_x).to(self.device).float()#reshape(1, self.envs["single_observation_space"])
         #print(f"{x=}, {x.shape=}")
@@ -170,38 +213,32 @@ class agentPPO_agg(nn.Module):
         return df_state_simpl, pred_price, hour
 
     def _get_action_and_value(self, x,  action=None):
-        #print(f"-- Agent step --")
-        #print(f"{x.shape=}")
-        action_mean, proj_loss = self.actor_mean(x)
+        if x.ndim == 1:
+            action_mean, proj_loss = self.actor_mean(x)
+            action_mean = action_mean.unsqueeze(1)
+        else:
+            action_mean, proj_loss = self.actor_mean(x)
+        #action_mean, proj_loss = self.actor_mean(x)
         self.proj_loss = proj_loss.cpu().numpy().squeeze()
-        action_logstd = self.actor_logstd.expand_as(action_mean) # / 10
-        action_std = torch.exp(action_logstd) 
+        action_logstd = self.actor_logstd.expand_as(action_mean)
+        action_std = torch.exp(action_logstd) #/ 10
         probs = Normal(action_mean, action_std)
         if action is None:
-            ##print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
+            #probs = Normal(action_mean, (self.sum_upper-self.sum_lower)+0.0001)
+            #print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
             action_t = probs.sample()
-            ## Double safety
+            # Double safety
             action = self._clamp_bounds(action_t) # before, also needed x
-            # Deterministic
-            #ic(action_mean, action_mean.shape)
-            #action = self._clamp_bounds(action_mean) # before, also needed x
-            #ic(action, action.shape)
-            #if torch.norm(action_mean - action) > 0.001:
-            #    print("Clipping")
-            #    exit(1)
 
         value = self.critic(x)
         return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), value 
 
     def _clamp_bounds(self, action_t):
         # Aggregate clamp
-        Tlower = torch.tensor(self.sum_lower)#.to(self.device)
-        Tupper = torch.tensor(self.sum_upper)#.to(self.device)
+        Tlower = torch.tensor(self.sum_lower).to(self.device)
+        Tupper = torch.tensor(self.sum_upper).to(self.device)
 
         action = torch.clamp(action_t, Tlower, Tupper)
-        ic(Tlower)
-        ic(action_t)
-        ic(Tupper)
         return action
 
     def get_action_and_value(self, x,  action=None):
@@ -213,18 +250,31 @@ class agentPPO_agg(nn.Module):
         # Dissagregation
         Y_tot = action_agg.cpu().numpy().squeeze()
         action = self.lower.copy()
+        range_y = self.upper - self.lower
+        occ_spots = self.t_rem > 0
 
-        range_y  = self.upper - self.lower
-        if range_y.sum() > 0:
-            n_range_y = range_y  / range_y.sum()
-            action  += (Y_tot - self.lower.sum()) * n_range_y
+        if range_y.sum() > 0: # Just check if there is flexibility to do disagg
+            priority_list = np.argsort(-self.lax) # Least laxity first
+            #time_val = np.array([-t_d if t_d > 0 else t_r for t_d, t_r in zip(self.t_dis, self.t_rem)])
+            #priority_list = np.argsort(-time_val)
+            Y_temp = Y_tot - self.lower.sum()
 
-        #print("-- double clip --")
-        #print(f"{self.lower=}, {self.lower.shape=}, {type(self.lower)=}")
-        #print(f"{self.upper=}, {self.upper.shape=}, {type(self.upper)=}")
-        #input()
-        #print(f"{action_agg=}")
-        #print(f"{action=}, {action.shape=}, {type(action)=}")
+            for i in priority_list:
+                if i in occ_spots:
+                    y_i = np.min([Y_temp, range_y[i]])
+                    action[i] += y_i
+                    Y_temp -= y_i
+                if isclose(Y_temp, 0):
+                    break
+
+        # Proportional allocation
+        #range_y  = self.upper - self.lower
+        #if range_y.sum() > 0:
+        #    n_range_y = range_y  / range_y.sum()
+        #    action  += (Y_tot - self.lower.sum()) * n_range_y
+
+        action[~occ_spots] = 0
+
         return action
 
 class Safe_Actor_Mean(nn.Module):
@@ -232,10 +282,8 @@ class Safe_Actor_Mean(nn.Module):
         super(Safe_Actor_Mean, self).__init__()
         self.linear1 = layer_init(nn.Linear(envs["single_observation_space"], 64))
         self.activation1 = nn.Tanh()
-        #self.activation1 = nn.ReLU()
         self.linear2 = layer_init(nn.Linear(64, 64))
         self.activation2 = nn.Tanh()
-        #self.activation2 = nn.ReLU()
         self.linear3 = layer_init(nn.Linear(64, envs["single_action_space"]), std=0.01)
         self.safetyL = SafetyLayer(envs["single_action_space"], device)
 
@@ -262,7 +310,7 @@ class agentPPO_lay(nn.Module):
                 nn.Tanh(),
                 layer_init(nn.Linear(64, 64)),
                 nn.Tanh(),
-                layer_init(nn.Linear(64,1), std=1.0),
+                layer_init(nn.Linear(64,1), std=1.0)
                 )
         self.actor_mean = Safe_Actor_Mean(envs, device)
         self.actor_logstd = nn.Parameter(torch.zeros(1, envs["single_action_space"]))
@@ -317,8 +365,6 @@ class agentPPO_lay(nn.Module):
             action_t = probs.sample()
             # Double safety
             action = self._clamp_bounds(x, action_t)
-            #ic(action_t)
-            #ic(action)
 
         value = self.critic(x)
         return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), value 
@@ -326,8 +372,8 @@ class agentPPO_lay(nn.Module):
     def _clamp_bounds(self, x, action_t):
         lower, upper = bounds_from_obs(x)
 
-        Tlower = torch.tensor(lower)#.to(self.device)
-        Tupper = torch.tensor(upper)#.to(self.device)
+        Tlower = torch.tensor(lower).to(self.device)
+        Tupper = torch.tensor(upper).to(self.device)
 
         action = torch.clamp(action_t, Tlower, Tupper)
         ##action[0, idx_empty] = 0
@@ -345,6 +391,224 @@ class agentPPO_lay(nn.Module):
         #input()
         return action.cpu().numpy().squeeze()
 
+
+class agentPPO_sagg(nn.Module):
+    def __init__(self, envs, df_price, device, pred_price_n=8, max_cars: int = config.max_cars, myprint = False):
+        super().__init__()
+        self.critic = nn.Sequential(
+                layer_init(nn.Linear(envs["single_observation_space"], 64)),
+                nn.Tanh(),
+                layer_init(nn.Linear(64, 64)),
+                nn.Tanh(),
+                layer_init(nn.Linear(64,1), std=1.0),
+                )
+        self.actor_mean = nn.Sequential(
+                layer_init(nn.Linear(envs["single_observation_space"], 64)),
+                nn.Tanh(),
+                layer_init(nn.Linear(64, 64)),
+                nn.Tanh(),
+                layer_init(nn.Linear(64, 1), std=0.01),
+                nn.Sigmoid(),
+            )
+        self.actor_logstd = nn.Parameter(torch.zeros(1,1))
+
+        # Ev parameters
+        self.max_cars = max_cars
+        self.df_price = df_price
+        self.device = device
+        self.envs = envs
+        self.pred_price_n = pred_price_n
+        self.myprint = myprint
+        self.proj_loss = 0
+
+    def get_value(self, x):
+        return self.critic(x)
+
+    def _get_prediction(self, t, n):
+        l_idx_t0 = self.df_price.index[self.df_price["ts"]== t].to_list()
+        assert len(l_idx_t0) == 1, "Timestep for prediction not unique or non existent"
+        idx_t0 = l_idx_t0[0]
+        #idx_tend = min(idx_t0+n, self.df_price.index.max()+1)
+        idx_tend = idx_t0+n
+        pred_price = self.df_price.iloc[idx_t0:idx_tend]["price_im"].values
+        return pred_price
+
+    def df_to_state(self, df_state, t):
+        # Aggregate
+        # Get occ spots (Nt)
+        occ_spots = df_state["t_rem"] > 0 # Occupied spots
+        num_cars = occ_spots.sum()
+
+        # Get (ND) 
+        cont_spots = df_state["t_dis"] > 0 # Spots with contracts
+        num_cars_dis = (cont_spots).sum() 
+
+        # Sum Soc
+        sum_soc = df_state[occ_spots]["soc_t"].sum()
+
+        # Sum SOC_rem
+        sum_diff_soc = num_cars * config.FINAL_SOC - sum_soc
+
+        # Sum soc_dis
+        sum_soc_dis = df_state[cont_spots]["soc_dis"].sum()
+
+        # Sum Y_min
+        hat_y_low = config.FINAL_SOC-df_state["soc_t"] - config.alpha_c*config.eta_c*(df_state["t_rem"] - 1)/config.B
+        y_low = np.maximum(hat_y_low * config.eta_c, hat_y_low / config.eta_d)
+        y_low[~occ_spots] = 0
+
+        sum_y_low = y_low.sum()
+
+        # Lax
+        lax = df_state["t_rem"] - (config.FINAL_SOC - df_state["soc_t"])*config.B / (config.alpha_c*config.eta_c)
+        lax[~occ_spots] = 0
+
+        sum_lax = lax.sum()
+        self.lax = lax
+        self.t_rem = df_state["t_rem"]
+        self.t_dis = df_state["t_dis"]
+
+        # p25, p50, p75, max, of soc_t, t_rem, soc_dis, t_dis
+        p_soc_t = df_state[occ_spots]["soc_t"].quantile([0, 0.25, 0.5, 0.75, 1])
+        p_t_rem = df_state[occ_spots]["t_rem"].quantile([0, 0.25, 0.5, 0.75, 1])
+        p_soc_dis = df_state[occ_spots]["soc_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
+        p_t_dis = df_state[occ_spots]["t_dis"].quantile([0, 0.25, 0.5, 0.75, 1])
+
+        # Bounds
+        dis_lim = np.zeros(config.max_cars)
+        dis_lim[cont_spots] += -df_state[cont_spots]["soc_dis"]*config.eta_d
+
+        self.lower = np.maximum(y_low, np.maximum(-config.alpha_d/config.B, dis_lim))
+        self.lower[~occ_spots] = 0
+
+        upper_soc = (config.FINAL_SOC - df_state["soc_t"]) / config.eta_c
+        self.upper = np.minimum(upper_soc,  config.alpha_c / config.B)
+        self.upper[~occ_spots] = 0
+
+        self.sum_lower = self.lower.sum() + 0.001
+        self.sum_upper = self.upper.sum()
+        
+
+        #state_cars = np.concatenate(([self.sum_lower],
+        #                             [self.sum_upper],
+        #                             [num_cars],
+        #                             [num_cars_dis],
+        #                             [sum_soc],
+        #                             [sum_soc_dis],
+        #                             [sum_y_low],
+        #                             [sum_lax],
+        #                             p_soc_t,
+        #                             p_t_rem,
+        #                             p_soc_dis,
+        #                             p_t_dis)) 
+
+        if num_cars > 0:
+            sum_lower = self.sum_lower / num_cars
+            sum_upper = self.sum_upper / num_cars
+        else:
+            sum_lower = self.sum_lower
+            sum_upper = self.sum_upper
+
+        state_cars = np.concatenate(([sum_lower],
+                                     [sum_upper],
+                                     #[num_cars],
+                                     #[num_cars_dis],
+                                     #[sum_soc],
+                                     #[sum_soc_dis],
+                                     #[sum_y_low],
+                                     #[sum_lax],
+                                     #p_soc_t,
+                                     #p_t_rem,
+                                     #p_soc_dis,
+                                     #p_t_dis)
+                                     ))
+        # Note, all the "sums"  can be normalized
+        state_cars = np.nan_to_num(state_cars)
+
+        pred_price = self._get_prediction(t, self.pred_price_n)
+        pred_price = (pred_price - pred_price.mean()) / (pred_price.std() + 1e-3)
+        hour = np.array([t % 24])
+        day = np.array([np.diff(pred_price).mean()])
+        np_x = np.concatenate((state_cars, pred_price, hour, day)).astype(float)
+        #ic(np_x, np_x.shape, type(np_x))
+        x = torch.tensor(np_x).to(self.device).float()#reshape(1, self.envs["single_observation_space"])
+        #print(f"{x=}, {x.shape=}")
+        self.t = t
+        return x
+
+    def state_to_df(self, obs):
+        raise Exception("Not valid in aggregate")
+        np_obs = obs.cpu().numpy()
+        data_state = np_obs[0, :config.max_cars*4]
+        df_state_simpl = pd.DataFrame(data = data_state.reshape((config.max_cars, 4)), columns = ["soc_t", "t_rem", "soc_dis", "t_dis"])
+        pred_price = np_obs[config.max_cars*4:config.max_cars*4+self.pred_price_n]
+        hour = np_obs[-1]
+        return df_state_simpl, pred_price, hour
+
+    def _get_action_and_value(self, x,  action=None):
+        #print(f"-- Agent step --")
+        #print(f"{x.shape=}")
+        if x.ndim == 1:
+            action_mean = self.actor_mean(x).unsqueeze(1)
+        else:
+            action_mean = self.actor_mean(x)
+        #ic(action_mean)
+        #ic(action_mean.shape)
+        #ic(self.actor_logstd)
+        #ic(self.actor_logstd.shape)
+        action_logstd = self.actor_logstd.expand_as(action_mean)
+        action_std = torch.exp(action_logstd)  / 10
+        probs = Normal(action_mean, action_std)
+        if action is None:
+            #print(f"{action_mean=}, {action_mean.shape=}, {type(action_mean)=}")
+            
+            action = probs.sample()
+            # Double safety
+            #action_t = action_n * (self.sum_upper) + (1- action_n)*(self.sum_lower)
+            #action = self._clamp_bounds(action_t) # before, also needed x
+
+        value = self.critic(x)
+        return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), value 
+
+    def _clamp_bounds(self, action_t):
+        # Aggregate clamp
+        Tlower = torch.tensor(self.sum_lower).to(self.device)
+        Tupper = torch.tensor(self.sum_upper).to(self.device)
+
+        action = torch.clamp(action_t, Tlower, Tupper)
+        return action
+
+    def get_action_and_value(self, x,  action=None):
+        # Right now it doesn't do anything, but left for consistency with the other method
+        action, logprob, entropy, value = self._get_action_and_value(x, action)
+        return action, logprob, entropy, value 
+
+    def action_to_env(self, action_agg):
+        # Dissagregation
+        alpha = action_agg.cpu().numpy().squeeze()
+        alpha = np.clip(alpha, 0, 1)
+        Y_tot = alpha*(self.sum_upper) + (1-alpha)*(self.sum_lower)
+        occ_spots = self.t_rem > 0
+        cont_spots = self.t_dis > 0
+        range_y = self.upper - self.lower
+        action = self.lower.copy()
+
+        if range_y.sum() > 0:
+            priority_list = np.argsort(self.lax) # Least laxity first
+            #time_val = np.array([-t_d if t_d > 0 else t_r for t_d, t_r in zip(self.t_dis, self.t_rem)])
+            #priority_list = np.argsort(-time_val)
+            Y_temp = Y_tot - self.lower.sum()
+            for i in priority_list:
+                if i in occ_spots:
+                    y_i = np.min([Y_temp, range_y[i]])
+                    action[i] += y_i
+                    Y_temp -= y_i
+                if isclose(Y_temp, 0):
+                    break
+
+        action[~occ_spots] = 0
+        #action[~cont_spots] = np.maximum(action[~cont_spots], 0)
+        return action
 
 class agentPPO_sep(nn.Module):
     """

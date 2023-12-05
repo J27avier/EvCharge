@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 from tabulate import tabulate
 import os
+import pyfiglet # type: ignore
+from colorama import init, Back, Fore
 import argparse
 from tqdm import tqdm
 from icecream import ic # type: ignore
@@ -9,8 +11,8 @@ from icecream import ic # type: ignore
 # User defined modules
 from EvGym.charge_world import ChargeWorldEnv
 #from EvGym.charge_agent import agentASAP, agentOptim, agentNoV2G, agentOracle
-from EvGym.charge_rl_agent import agentPPO_sep, agentPPO_lay, agentPPO_agg
-from EvGym.charge_utils import parse_args, print_welcome
+from EvGym.charge_rl_agent import agentPPO_sep, agentPPO_lay, agentPPO_agg, agentPPO_sagg
+from EvGym.charge_utils import parse_rl_args, print_welcome
 from EvGym import config
 
 # Contracts
@@ -30,7 +32,7 @@ torch.set_num_threads(8)
 
 def runSim(args = None):
     if args is None:
-        args = parse_args()
+        args = parse_rl_args()
 
     title = f"EvWorld-{args.agent}{args.desc}"
 
@@ -63,7 +65,8 @@ def runSim(args = None):
                                      IR = "fst", IC = "ort_l", monotonicity=False) # Tractable formulation
 
     L = np.round(L_cont,0) # L_cont →  L continuous
-    contract_info = {"G": G, "W": W, "L": L}
+    #contract_info = {"G": G, "W": W, "L": L}
+    contract_info = {"G": G, "W": W, "L": L, "thetas_i": config.thetas_i, "thetas_j": config.thetas_j, "c1": config.c1, "c2": config.c2}
 
     # Some agents are not allowed to discharge energy
     skip_contracts = True if args.agent in ["ASAP", "NoV2G"] else False
@@ -73,7 +76,7 @@ def runSim(args = None):
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     torch.backends.cudnn.deterministic = args.torch_deterministic
-    device = torch.device("cuda:2" if torch.cuda.is_available() and args.cuda else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
     ic(device)
 
     # Agent info
@@ -84,22 +87,33 @@ def runSim(args = None):
 
     # Agents
     if args.agent == "PPO-sep":
-        agent = agentPPO_sep(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
+        logstd = args.logstd
+        agent = agentPPO_sep(envs, df_price, device, pred_price_n=pred_price_n, logstd = logstd, myprint = False).to(device)
 
     elif args.agent == "PPO-lay":
         agent = agentPPO_lay(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
 
     elif args.agent == "PPO-agg":
-        envs["single_observation_space"] = 37
-        agent = agentPPO_agg(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
+        envs["single_observation_space"] = args.n_state
+        agent = agentPPO_agg(envs, df_price, device, args, pred_price_n=pred_price_n, myprint = False).to(device)
+
+    elif args.agent == "PPO-sagg":
+        envs["single_observation_space"] = args.n_state
+        agent = agentPPO_sagg(envs, df_price, device, pred_price_n=pred_price_n, myprint = False).to(device)
 
     else:
         try:
             print(f"Attempting to load: {args.agent}")
             if "agg" in args.agent:
-                envs["single_observation_space"] = 37
+                envs["single_observation_space"] = args.n_state
             agent = torch.load(f"{config.agents_path}{args.agent}.pt")
             print(f"Loaded {args.agent}")
+            if args.reset_std:
+                if args.grad_std:
+                    agent.actor_logstd = nn.Parameter(args.logstd*torch.ones(1,1)) 
+                else:
+                    agent.actor_logstd = nn.Parameter(args.logstd*torch.ones(1,1), requires_grad = False) 
+                #agent.actor_logstd.reset_parameter() 
         except Exception as e:
             print(e)
             print(f"Agent name not recognized")
@@ -110,7 +124,10 @@ def runSim(args = None):
     #ic(reward_coef, type(reward_coef))
     #ic(proj_coef, type(proj_coef))
 
-    optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
+    if args.optimizer == "Adam":
+        optimizer = optim.Adam(agent.parameters(), lr = args.learning_rate, eps = 1e-5)
+    else:
+        optimizer = optim.SGD(agent.parameters(), lr = args.learning_rate)
 
     obs      = torch.zeros((args.num_steps, 1, envs["single_observation_space"]) ).to(device) # Manual concat
     actions  = torch.zeros((args.num_steps, 1, envs["single_action_space"])).to(device) # Manual concat
@@ -121,7 +138,7 @@ def runSim(args = None):
     values   = torch.zeros((args.num_steps, 1)).to(device)
 
     # Initialize objects
-    world = ChargeWorldEnv(df_sessions, df_price, contract_info, rng, skip_contracts = skip_contracts)
+    world = ChargeWorldEnv(df_sessions, df_price, contract_info, rng, skip_contracts = skip_contracts, norm_reward = args.norm_reward, lax_coef = args.lax_coef, df_imit = args.df_imit)
     df_state = world.reset()
 
     next_obs = agent.df_to_state(df_state, ts_min) # should be ts_min -1 , but only matters for this timestep
@@ -175,7 +192,7 @@ def runSim(args = None):
                 df_state, reward, done, info = world.step(agent.action_to_env(action))
                 # Reward tuning
                 #ic(reward, type(reward))
-                reward = reward_coef * reward #+ proj_coef * agent.proj_loss
+                reward = reward_coef * reward + proj_coef * agent.proj_loss 
                 #print(f"{reward_coef=}, {type(reward_coef)=}")
                 #print(f"{reward=}, {type(reward)=}")
                 #print(f"{proj_coef=}, {type(proj_coef)=}")
@@ -220,11 +237,12 @@ def runSim(args = None):
             b_logprobs = logprobs.reshape(-1)
             b_actions = actions.reshape((-1, envs["single_action_space"]))
             b_advantages = advantages.reshape(-1) # Normailze
-            #b_advantages = (b_advantages - b_advantages.mean()) - (b_advantages.std() + 1e-8)
+            #b_advantages = (b_advantages - b_advantages.mean()) / (b_advantages.std() + 1e-8)
             b_returns = returns.reshape(-1) #  Normailze"
-            #b_returns = (b_returns - b_returns.mean()) - (b_returns.std() + 1e-8)
+            #b_returns = (b_returns - b_returns.mean()) / (b_returns.std()+ 1e-8)
             b_values = values.reshape(-1) #Normailze 
-            #b_values = (b_values - b_values.mean()) - (b_values.std() + 1e-8)
+            #b_values = (b_values - b_values.mean()) / (b_values.std()+1e-8)
+            # deactivate norm in options
 
             # Optimizing the policy and value network
             b_inds = np.arange(args.batch_size)
@@ -247,8 +265,8 @@ def runSim(args = None):
 
                     mb_advantages = b_advantages[mb_inds]
                     if args.norm_adv:
-                        #pass
-                        mb_advantages = (mb_advantages - mb_advantages.mean()) / (mb_advantages.std() + 1e-8)
+                        pass
+                        #mb_advantages = (mb_advantages - mb_advantages.mean()) / (mb_advantages.std() + 1e-8)
 
                     # Policy loss
                     pg_loss1 = -mb_advantages * ratio
@@ -317,7 +335,7 @@ def runSim(args = None):
 
 
 if __name__ == "__main__":
-    args = parse_args()
+    args = parse_rl_args()
 
     if args.years is None:
         runSim(args)
