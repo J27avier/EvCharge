@@ -193,8 +193,10 @@ def parse_args():
     parser.add_argument("--summary", type= lambda x: bool(strtobool(x)), default=True, nargs='?', const=True)
 
     # Files
+    #parser.add_argument("-I", "--file-price", help = "Name of imbalance price dataframe", 
+    #                    type=str, default= "df_price_2019.csv")
     parser.add_argument("-I", "--file-price", help = "Name of imbalance price dataframe", 
-                        type=str, default= "df_price_2019.csv")
+                        type=str, default= "df_prices_c.csv")
     parser.add_argument("-O", "--file-contracts", help = "CSV of contracts offered", 
                         type=str, default= "ExpLogs/2023-09-13-15:25:05_Contracts_ev_world_Optim.csv")
     parser.add_argument("-N", "--file-sessions", help = "CSV of charging sessions",
