@@ -1,1 +1,1 @@
-nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name sac_gen_a --years 100 --norm-reward --state-rep nothmd --autotune False --disagg P --n-state 59 --file-price df_prices_c.csv --general True &
+nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_gen_a --years 100 --norm-reward --state-rep nothmd --autotune False --disagg P --n-state 59 --file-price df_prices_c.csv --general True &
