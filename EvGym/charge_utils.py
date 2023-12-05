@@ -43,7 +43,7 @@ def parse_sac_args():
     parser.add_argument("--n-state", type=int, default = 59)
     parser.add_argument("--n-action", type=int, default = 1)
     parser.add_argument("--hidden", type=int, default=64)
-    parser.add_argument("--norm-reward", type= lambda x: bool(strtobool(x)), default=True, nargs='?', const=True)
+    parser.add_argument("--norm-reward", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
     parser.add_argument("--state-rep", type=str, default="nothmd")
     parser.add_argument("--disagg", type=str, default="LL")
     parser.add_argument("--test", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
