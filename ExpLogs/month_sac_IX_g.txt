@@ -1,4 +1,4 @@
-timestamp: 2023-12-05-03:23:21
+timestamp: 2023-12-05-03:48:46
 
 --Info
 title: EvWorld-SAC-sagg
@@ -26,7 +26,7 @@ logstd: -2
 n_state: 59
 n_action: 1
 hidden: 64
-norm_reward: False
+norm_reward: True
 state_rep: nothmd
 disagg: LL
 test: False
@@ -49,4 +49,4 @@ policy_frequency: 2
 target_network_frequency: 1
 noise_clip: 0.5
 alpha: 0.2
-autotune: True
+autotune: False
