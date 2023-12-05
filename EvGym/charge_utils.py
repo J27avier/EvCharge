@@ -93,7 +93,7 @@ def parse_sac_args():
         help="noise clip parameter of the Target Policy Smoothing Regularization")
     parser.add_argument("--alpha", type=float, default=0.2,
             help="Entropy regularization coefficient.")
-    parser.add_argument("--autotune", type=lambda x:bool(strtobool(x)), default=True, nargs="?", const=True,
+    parser.add_argument("--autotune", type=lambda x:bool(strtobool(x)), default=False, nargs="?", const=False,
         help="automatic tuning of the entropy coefficient")
     args = parser.parse_args()
     # fmt: on
