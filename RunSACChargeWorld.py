@@ -49,6 +49,9 @@ def runSim(args = None, modules = None):
     ts_max = df_sessions["ts_dep"].max()
 
     df_price = pd.read_csv(f"{config.data_path}{args.file_price}", parse_dates=["date"])
+    if not args.test:
+        sigma = df_price["price_im"].quantiles(0.75) - df_price["price_im"].quantiles(0.25)
+        df_price["price_im"] = df_price["price_im"] + rng.normal(0, sigma, len(df_price))
 
     # Calculate contracts
     G, W, L_cont = general_contracts(thetas_i = config.thetas_i,
@@ -115,6 +118,7 @@ def runSim(args = None, modules = None):
         print("Recieved modules")
         # Copy when receiving, very important!
         agent = copy.deepcopy(modules["agent"])
+        agent.df_price = df_price
         qf1   = copy.deepcopy(modules["qf1"])
         qf2   = copy.deepcopy(modules["qf2"])
         rb    = copy.deepcopy(modules["rb"])
@@ -194,9 +198,6 @@ def runSim(args = None, modules = None):
                     usr_in = ""
             else:
                 pass
-
-            if args.test:
-                continue
 
             # !!! JS: CAREFUL!!!
 
@@ -301,7 +302,7 @@ if __name__ == "__main__":
             print(f"Iter:{year+1}/{years}")
 
             # Train with synth data
-            #args.test = False
+            args.test = False
             #args.file_sessions = "df_synth_sessions_2014_2018.csv"
             args.file_sessions = "df_elaad_preproc_jan.csv"
             args.save_name = f"train_{save_name}_{year}"
@@ -312,7 +313,7 @@ if __name__ == "__main__":
 
             # Validate with synth data
             args.agent = f"train_{save_name}_{year}"
-            ##args.test = True # Can learn during episode, but not save it's knowledge
+            args.test = True # Can learn during episode, but not save it's knowledge
             args.file_sessions = "df_elaad_preproc_feb.csv"
             args.save_name = f"val_{save_name}_{year}"
             #args.save_agent = False
