@@ -1,4 +1,4 @@
-timestamp: 2023-12-06-00:44:14
+timestamp: 2023-12-06-03:24:12
 
 --Info
 title: EvWorld ASAP
@@ -11,7 +11,7 @@ agent: ASAP
 desc: 
 seed: 42
 save_name: mar_ASAP
-summary: False
+summary: True
 file_price: df_prices_c.csv
 file_contracts: ExpLogs/2023-09-13-15:25:05_Contracts_ev_world_Optim.csv
 file_sessions: df_elaad_preproc_mar.csv
