@@ -1,4 +1,4 @@
-timestamp: 2023-12-05-04:15:10
+timestamp: 2023-12-06-00:05:36
 
 --Info
 title: EvWorld-train_month_sac_gen_a_45
@@ -26,7 +26,7 @@ logstd: -2
 n_state: 59
 n_action: 1
 hidden: 64
-norm_reward: True
+norm_reward: False
 state_rep: nothmd
 disagg: P
 test: False
