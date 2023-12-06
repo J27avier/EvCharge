@@ -306,6 +306,7 @@ if __name__ == "__main__":
             #args.file_sessions = "df_synth_sessions_2014_2018.csv"
             args.file_sessions = "df_elaad_preproc_jan.csv"
             args.save_name = f"train_{save_name}_{year}"
+            args.seed += 1
             #args.save_agent = True
             #if year > 0:
             #    args.agent = f"train_{save_name}_{year-1}"
