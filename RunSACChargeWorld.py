@@ -41,7 +41,16 @@ def runSim(args = None, modules = None):
     title = f"EvWorld-{args.agent}{args.desc}"
 
     # Random number generator, same throught the program for reproducibility
-    rng = np.random.default_rng(args.seed)
+    # TRY NOT TO MODIFY: seeding
+    seed = args.seed 
+    if not args.test:
+        seed += int(time.time()*100)%100
+        
+    rng = np.random.default_rng(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.backends.cudnn.deterministic = args.torch_deterministic
 
     # Load datasets
     df_sessions = pd.read_csv(f"{config.data_path}{args.file_sessions}", parse_dates = ["starttime_parking", "endtime_parking"])
@@ -70,11 +79,6 @@ def runSim(args = None, modules = None):
     # Some agents are not allowed to discharge energy
     skip_contracts = True if args.agent in ["ASAP", "NoV2G"] else False
 
-    # TRY NOT TO MODIFY: seeding
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    torch.backends.cudnn.deterministic = args.torch_deterministic
 
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
     ic(device)
@@ -306,7 +310,6 @@ if __name__ == "__main__":
             #args.file_sessions = "df_synth_sessions_2014_2018.csv"
             args.file_sessions = "df_elaad_preproc_jan.csv"
             args.save_name = f"train_{save_name}_{year}"
-            args.seed += 1
             #args.save_agent = True
             #if year > 0:
             #    args.agent = f"train_{save_name}_{year-1}"
