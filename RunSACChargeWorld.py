@@ -50,7 +50,7 @@ def runSim(args = None, modules = None):
 
     df_price = pd.read_csv(f"{config.data_path}{args.file_price}", parse_dates=["date"])
     if not args.test:
-        sigma = df_price["price_im"].quantiles(0.75) - df_price["price_im"].quantiles(0.25)
+        sigma = df_price["price_im"].quantile(0.75) - df_price["price_im"].quantile(0.25)
         df_price["price_im"] = df_price["price_im"] + rng.normal(0, sigma, len(df_price))
 
     # Calculate contracts
