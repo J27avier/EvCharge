@@ -45,7 +45,7 @@ def parse_sac_args():
     parser.add_argument("--hidden", type=int, default=64)
     parser.add_argument("--norm-reward", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
     parser.add_argument("--state-rep", type=str, default="nothmd")
-    parser.add_argument("--disagg", type=str, default="LL")
+    parser.add_argument("--disagg", type=str, default="P")
     parser.add_argument("--test", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
 
     # Clean RL arguments

@@ -43,7 +43,7 @@ def runSim(args = None, modules = None):
     # Random number generator, same throught the program for reproducibility
     # TRY NOT TO MODIFY: seeding
     seed = args.seed 
-    if not args.test:
+    if not args.test and False:
         seed += int(time.time()*100)%100
         
     rng = np.random.default_rng(seed)
@@ -271,7 +271,7 @@ def runSim(args = None, modules = None):
         if not args.no_save:
             if args.years > 1: args.desc = f"_{year}"
             world.tracker.save_log(args, path=config.results_path)
-            world.tracker.save_desc(args, {"title": title}, path=config.results_path)
+            world.tracker.save_desc(args, {"title": title, "contract_info": str(contract_info)}, path=config.results_path)
 
         if args.save_contracts:
             world.tracker.save_contracts(args, path=config.results_path)
@@ -308,7 +308,7 @@ if __name__ == "__main__":
             # Train with synth data
             args.test = False
             #args.file_sessions = "df_synth_sessions_2014_2018.csv"
-            args.file_sessions = "df_elaad_preproc_jan.csv"
+            args.file_sessions = "df_elaad_preproc_janfeb.csv"
             args.save_name = f"train_{save_name}_{year}"
             #args.save_agent = True
             #if year > 0:
