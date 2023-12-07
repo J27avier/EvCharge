@@ -47,6 +47,9 @@ def parse_sac_args():
     parser.add_argument("--state-rep", type=str, default="nothmd")
     parser.add_argument("--disagg", type=str, default="P")
     parser.add_argument("--test", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
+    parser.add_argument("--rng-test", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
+    parser.add_argument("--price-noise", type=float, default=0)
+    
 
     # Clean RL arguments
     parser.add_argument("--exp-name", type=str, default=os.path.basename(__file__).rstrip(".py"),
