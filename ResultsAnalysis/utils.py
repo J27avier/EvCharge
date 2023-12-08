@@ -105,11 +105,47 @@ def taguchi_l7(values):
 
     return values
 
- 
 # logstd	gamma	gae_lambda	clip_coef	vf_coef	max_grad_norm	ent_coef
 # -1.8  	0.99	0.95	        0.1	        0.3	0.3	        0
 # -2.2  	0.95	0.9	        0.2	        0.5	0.5	        0.01
 #       	0.9	0.85	        0.3	        0.7	0.7	        0.1
+ 
+
+def load_rl_gen(name, num, dir = "", month = False, norm_dict = None):
+    train_str = [f"./../ExpLogs/{dir}summ_train_{name}_{i}.csv" for i in range(num)]
+    val_str   = [f"./../ExpLogs/{dir}summ_val_{name}_{i}.csv" for i in range(num)]
+    test_str  = [f"./../ExpLogs/{dir}summ_test_{name}_{i}.csv" for i in range(num)]
+
+    df_train = pd.concat([pd.read_csv(i) for i in train_str], axis=0).reset_index(drop=True)
+    df_val = pd.concat([pd.read_csv(i) for i in val_str], axis=0).reset_index(drop=True)
+    df_test = pd.concat([pd.read_csv(i) for i in test_str], axis=0).reset_index(drop=True)
+
+    if norm_dict is not None:
+        df_train["transf"] /= norm_dict["train"]
+        df_val["transf"] /= norm_dict["val"]
+        df_test["transf"] /= norm_dict["test"]
+
+    return df_train, df_val, df_test
+
+def load_rl(name, num, dir = ""):
+    load_str = [f"./../ExpLogs/{dir}summ_{name}_{i}.csv" for i in range(num)]
+    df_res = pd.concat([pd.read_csv(i) for i in load_str], axis=0).reset_index(drop=True)
+    return df_res
+
+def draw_hlines(ax, asap, nov2g, optim, x_max = 100):
+    fontsize = 15
+    ax.hlines(asap.sum(),  0, x_max, color='k', ls=':')
+    ax.text(5, asap.sum(), "ASAP", fontsize = fontsize-4)
+    ax.hlines(nov2g.sum(),  0, x_max, color='k', ls=':')
+    ax.text(5, nov2g.sum(), "NoV2G", fontsize = fontsize-4)
+    ax.hlines(optim.sum(), 0, x_max, color='k', ls=':')
+    ax.text(5, optim.sum(), "Optim", fontsize = fontsize-4)
+
+    #ax.set_ylim(0, 1.1*asap.sum())
+    ax.set_xlabel("Episode")
+
+    return ax
+
     
     
     
