@@ -301,13 +301,15 @@ if __name__ == "__main__":
         save_name = args.save_name
         args.years = 1
         dict_modules = None
+        l_df_train = ["df_elaad_preproc_jan.csv", "df_elaad_preproc_feb.csv", "df_elaad_preproc_mar.csv"]
 
         for year in range(years):
             print(f"Iter:{year+1}/{years}")
 
             # Train with synth data
             args.test = False
-            args.file_sessions = "df_elaad_preproc_janfebmar.csv"
+            #args.file_sessions = "df_elaad_preproc_janfebmar.csv"
+            args.file_sessions = l_df_train[np.random.randint(3)]
             args.file_price = "df_prices_c.csv"
             args.save_name = f"train_{save_name}_{year}"
             #args.save_agent = True
@@ -320,7 +322,7 @@ if __name__ == "__main__":
             args.test = True # Can learn during episode, but not save it's knowledge
             args.file_sessions = "df_elaad_preproc_mar.csv"
             args.save_name = f"val_{save_name}_{year}"
-            #args.save_agent = False
+            ##args.save_agent = False
             _ = runSim(args, dict_modules)
 
             # Test with real data
