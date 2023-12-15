@@ -111,21 +111,24 @@ def taguchi_l7(values):
 #       	0.9	0.85	        0.3	        0.7	0.7	        0.1
  
 
-def load_rl_gen(name, num, dir = "", month = False, norm_dict = None):
+def load_rl_gen(name, num, dir = "", month = False, norm_dict = None, val = True):
     train_str = [f"./../ExpLogs/{dir}summ_train_{name}_{i}.csv" for i in range(num)]
-    val_str   = [f"./../ExpLogs/{dir}summ_val_{name}_{i}.csv" for i in range(num)]
+    if val: val_str   = [f"./../ExpLogs/{dir}summ_val_{name}_{i}.csv" for i in range(num)]
     test_str  = [f"./../ExpLogs/{dir}summ_test_{name}_{i}.csv" for i in range(num)]
 
     df_train = pd.concat([pd.read_csv(i) for i in train_str], axis=0).reset_index(drop=True)
-    df_val = pd.concat([pd.read_csv(i) for i in val_str], axis=0).reset_index(drop=True)
+    if val: df_val = pd.concat([pd.read_csv(i) for i in val_str], axis=0).reset_index(drop=True)
     df_test = pd.concat([pd.read_csv(i) for i in test_str], axis=0).reset_index(drop=True)
 
     if norm_dict is not None:
         df_train["transf"] /= norm_dict["train"]
-        df_val["transf"] /= norm_dict["val"]
+        if val: df_val["transf"] /= norm_dict["val"]
         df_test["transf"] /= norm_dict["test"]
 
-    return df_train, df_val, df_test
+    if val:
+        return df_train, df_val, df_test
+    else:
+        return df_train, df_test
 
 def load_rl(name, num, dir = ""):
     load_str = [f"./../ExpLogs/{dir}summ_{name}_{i}.csv" for i in range(num)]

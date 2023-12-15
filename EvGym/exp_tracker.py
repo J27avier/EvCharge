@@ -46,7 +46,7 @@ class ExpTracker():
 
             total = client - transf - payoff
 
-            df_sum = pd.DataFrame([[args.save_name, transf, client, payoff, total, args.flie_sessions]],
+            df_sum = pd.DataFrame([[args.save_name, transf, client, payoff, total, args.file_sessions]],
                     columns = self.summary_cols)
             print(df_sum.head())
             

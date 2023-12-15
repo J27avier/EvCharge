@@ -49,6 +49,7 @@ def parse_sac_args():
     parser.add_argument("--test", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
     parser.add_argument("--rng-test", type= lambda x: bool(strtobool(x)), default=False, nargs='?', const=False)
     parser.add_argument("--price-noise", type=float, default=0)
+    parser.add_argument("--pred-noise", type=float, default=0)
     
 
     # Clean RL arguments
@@ -132,6 +133,8 @@ def parse_args():
     parser.add_argument("--kappa1", type=float, default=config.kappa1)
     parser.add_argument("--kappa2", type=float, default=config.kappa2)
     parser.add_argument("--integer", type= lambda x: bool(strtobool(x)), default=config.integer)
+
+    parser.add_argument("--pred-noise", type=float, default=0)
 
     return parser.parse_args()
 
