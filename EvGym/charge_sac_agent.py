@@ -44,11 +44,13 @@ class agentSAC_sagg(nn.Module):
         self.args = args
         self.device = device
         self.pred_price_n = pred_price_n
+        self.rng = np.random.default_rng(args.seed)
 
         self.fc1 = nn.Linear(args.n_state, 256)
         self.fc2 = nn.Linear(256, 256)
         self.fc_mean = nn.Linear(256, args.n_action)
         self.fc_logstd = nn.Linear(256, args.n_action)
+
 
         # action rescaling
         self.register_buffer(
@@ -281,6 +283,7 @@ class agentSAC_sagg(nn.Module):
         idx_tend = min(idx_t0+n, self.df_price.index.max()+1)
         #idx_tend = idx_t0+n
         pred_price = self.df_price.iloc[idx_t0:idx_tend]["price_im"].values
+        pred_price += self.rng.normal(loc = 0.0, scale = self.args.pred_noise, size = n)
 
         # Autopad
         if idx_tend - idx_t0 < n:

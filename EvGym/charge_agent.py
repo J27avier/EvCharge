@@ -27,10 +27,12 @@ class agentASAP():
         return action
 
 class agentOptim():
-    def __init__(self, df_price, max_cars: int = config.max_cars, myprint = False):
+    def __init__(self, df_price, args, max_cars: int = config.max_cars, myprint = False):
         self.max_cars = max_cars
         self.df_price = df_price
         self.myprint = myprint
+        self.rng = np.random.default_rng(args.seed)
+        self.args = args
 
 
     def _get_prediction(self, t, n):
@@ -39,6 +41,7 @@ class agentOptim():
         idx_t0 = l_idx_t0[0]
         idx_tend = min(idx_t0+n, self.df_price.index.max()+1)
         pred_price = self.df_price.iloc[idx_t0:idx_tend]["price_im"].values
+        pred_price += self.rng.normal(loc = 0, scale = self.args.pred_noise, size = len(pred_price))
         return pred_price
 
     def get_action(self, df_state: pd.DataFrame, t: int) -> npt.NDArray[Any]:
@@ -137,10 +140,12 @@ class agentOptim():
         return action
 
 class agentNoV2G():
-    def __init__(self, df_price, max_cars: int = config.max_cars, myprint = False):
+    def __init__(self, df_price, args, max_cars: int = config.max_cars, myprint = False):
         self.max_cars = max_cars
         self.df_price = df_price
         self.myprint = myprint
+        self.rng = np.random.default_rng(args.seed)
+        self.args = args
 
     def _get_prediction(self, t, n):
         l_idx_t0 = self.df_price.index[self.df_price["ts"] == t].to_list()
@@ -148,6 +153,7 @@ class agentNoV2G():
         idx_t0 = l_idx_t0[0]
         idx_tend = min(idx_t0+n, self.df_price.index.max()+1)
         pred_price = self.df_price.iloc[idx_t0:idx_tend]["price_im"].values
+        pred_price += self.rng.normal(loc = 0, scale = self.args.pred_noise, size = len(pred_price))
         return pred_price
 
     def get_action(self, df_state: pd.DataFrame, t: int) -> npt.NDArray[Any]:
