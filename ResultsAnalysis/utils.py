@@ -135,25 +135,47 @@ def load_rl(name, num, dir = ""):
     df_res = pd.concat([pd.read_csv(i) for i in load_str], axis=0).reset_index(drop=True)
     return df_res
 
-def draw_hlines(ax, asap, nov2g, optim, x_max = 100):
+def draw_hlines(ax, asap, nov2g, optim, x_max = 100, color="k"):
     fontsize = 15
-    ax.hlines(asap.sum(),  0, x_max, color='k', ls=':')
-    ax.text(5, asap.sum(), "ASAP", fontsize = fontsize-4)
-    ax.hlines(nov2g.sum(),  0, x_max, color='k', ls=':')
-    ax.text(5, nov2g.sum(), "NoV2G", fontsize = fontsize-4)
-    ax.hlines(optim.sum(), 0, x_max, color='k', ls=':')
-    ax.text(5, optim.sum(), "Optim", fontsize = fontsize-4)
+    x_min, x_max = ax.get_xlim()
+    ax.hlines(asap.sum(),  0, x_max, color=color, ls=':')
+    ax.text(x_max*0.1, asap.sum(), "ASAP", fontsize = fontsize-4)
+    ax.hlines(nov2g.sum(),  0, x_max, color=color, ls=':')
+    ax.text(x_max*0.1, nov2g.sum(), "NoV2G", fontsize = fontsize-4)
+    ax.hlines(optim.sum(), 0, x_max, color=color, ls=':')
+    ax.text(x_max*0.1, optim.sum(), "Optim", fontsize = fontsize-4)
 
     #ax.set_ylim(0, 1.1*asap.sum())
     ax.set_xlabel("Episode")
 
     return ax
+    
+    
+def plot_rl_gen(ax1, ax2, ax3, df_train, df_val, df_test, label="", ls="-", val=True):
+    ax1.plot(df_train["transf"], label=label, ls=ls)
+    if val:
+        ax2.plot(df_val["transf"], label=label, ls=ls)
+        ax3.plot(df_test["transf"], label=label, ls=ls)
+        return ax1, ax2, ax3
+    else:
+        ax2.plot(df_test["transf"], label=label, ls=ls)
+        return ax1, ax2
 
-    
-    
-    
-    
-    
+def plot_rl_gen_stoc(ax1, ax2, dfs, label="", ls="", norm_dict = None, ax3=None):
+    if norm_dict is None:
+        ax1.scatter(dfs[0][dfs[0]["sessions"] == "df_elaad_preproc_jan.csv"]["name"].apply(lambda x: int(x.split("_")[-1])), dfs[0][dfs[0]["sessions"] == "df_elaad_preproc_jan.csv"]["transf"], label = "Jan")
+        ax1.scatter(dfs[0][dfs[0]["sessions"] == "df_elaad_preproc_feb.csv"]["name"].apply(lambda x: int(x.split("_")[-1])), dfs[0][dfs[0]["sessions"] == "df_elaad_preproc_feb.csv"]["transf"], label = "Feb")
+        ax1.scatter(dfs[0][dfs[0]["sessions"] == "df_elaad_preproc_mar.csv"]["name"].apply(lambda x: int(x.split("_")[-1])), dfs[0][dfs[0]["sessions"] == "df_elaad_preproc_mar.csv"]["transf"], label = "Mar")
+    else:
+        ax1.scatter(dfs[0][dfs[0]["sessions"] == "df_elaad_preproc_jan.csv"]["name"].apply(lambda x: int(x.split("_")[-1])), dfs[0][dfs[0]["sessions"] == "df_elaad_preproc_jan.csv"]["transf"]/norm_dict["jan"], label = "Jan")
+        ax1.scatter(dfs[0][dfs[0]["sessions"] == "df_elaad_preproc_feb.csv"]["name"].apply(lambda x: int(x.split("_")[-1])), dfs[0][dfs[0]["sessions"] == "df_elaad_preproc_feb.csv"]["transf"]/norm_dict["feb"], label = "Feb")
+        ax1.scatter(dfs[0][dfs[0]["sessions"] == "df_elaad_preproc_mar.csv"]["name"].apply(lambda x: int(x.split("_")[-1])), dfs[0][dfs[0]["sessions"] == "df_elaad_preproc_mar.csv"]["transf"]/norm_dict["mar"], label = "Mar")
+
+    if ax3 is None:
+        ax2.plot(dfs[1]["transf"])
+    else:
+        ax2.plot(dfs[1]["transf"]/norm_dict["apr"])
+        ax3.plot(dfs[1]["total"])
     
     
     

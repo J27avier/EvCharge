@@ -302,14 +302,17 @@ if __name__ == "__main__":
         args.years = 1
         dict_modules = None
         l_df_train = ["df_elaad_preproc_jan.csv", "df_elaad_preproc_feb.csv", "df_elaad_preproc_mar.csv"]
+        og_pred_noise = args.pred_noise
 
         for year in range(years):
             print(f"Iter:{year+1}/{years}")
 
             # Train with synth data
             args.test = False
+            args.pred_noise = 0
             #args.file_sessions = "df_elaad_preproc_janfebmar.csv"
-            args.file_sessions = l_df_train[np.random.randint(3)]
+            args.file_sessions = "df_elaad_preproc_janfeb.csv"
+            #args.file_sessions = l_df_train[np.random.randint(3)]
             args.file_price = "df_prices_c.csv"
             args.save_name = f"train_{save_name}_{year}"
             #args.save_agent = True
@@ -319,6 +322,7 @@ if __name__ == "__main__":
 
             # Validate with synth data
             #args.agent = f"train_{save_name}_{year}"
+            args.pred_noise = og_pred_noise
             args.test = True # Can learn during episode, but not save it's knowledge
             #args.file_sessions = "df_elaad_preproc_mar.csv"
             #args.save_name = f"val_{save_name}_{year}"
@@ -326,7 +330,7 @@ if __name__ == "__main__":
             #_ = runSim(args, dict_modules)
 
             # Test with real data
-            args.file_sessions = "df_elaad_preproc_apr.csv"
+            args.file_sessions = "df_elaad_preproc_marapr.csv"
             args.save_name = f"test_{save_name}_{year}"
             _ = runSim(args, dict_modules)
     else:
