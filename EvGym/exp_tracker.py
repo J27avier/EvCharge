@@ -19,7 +19,7 @@ class ExpTracker():
         self.contract_log_cols = ["idSess", "soc_dis", "t_dis", "g", "idx_theta_w", "idx_theta_l"]
         self.contract_log = [] # type: ignore
 
-        self.summary_cols = ["name", "transf", "client", "payoff", "total"]
+        self.summary_cols = ["name", "transf", "client", "payoff", "total", "sessions"]
 
         self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
         self.tinit = tinit
@@ -46,7 +46,8 @@ class ExpTracker():
 
             total = client - transf - payoff
 
-            df_sum = pd.DataFrame([[args.save_name, transf, client, payoff, total]], columns = self.summary_cols)
+            df_sum = pd.DataFrame([[args.save_name, transf, client, payoff, total, args.flie_sessions]],
+                    columns = self.summary_cols)
             print(df_sum.head())
             
             if args.save_name != "":

@@ -318,12 +318,12 @@ if __name__ == "__main__":
             dict_modules = runSim(args, dict_modules)
 
             # Validate with synth data
-            args.agent = f"train_{save_name}_{year}"
+            #args.agent = f"train_{save_name}_{year}"
             args.test = True # Can learn during episode, but not save it's knowledge
-            args.file_sessions = "df_elaad_preproc_mar.csv"
-            args.save_name = f"val_{save_name}_{year}"
+            #args.file_sessions = "df_elaad_preproc_mar.csv"
+            #args.save_name = f"val_{save_name}_{year}"
             ##args.save_agent = False
-            _ = runSim(args, dict_modules)
+            #_ = runSim(args, dict_modules)
 
             # Test with real data
             args.file_sessions = "df_elaad_preproc_apr.csv"
