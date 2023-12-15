@@ -57,9 +57,9 @@ def main():
     if args.agent == "ASAP":
         agent = agentASAP()
     elif args.agent == "NoV2G":
-        agent = agentNoV2G(df_price, myprint = False)
+        agent = agentNoV2G(df_price, args, myprint = False)
     elif args.agent == "Optim":
-        agent = agentOptim(df_price, myprint = False)
+        agent = agentOptim(df_price, args, myprint = False)
     elif args.agent == "Oracle":
         df_contracts = pd.read_csv(f"{args.file_contracts}")
         agent = agentOracle(df_price, df_sessions, df_contracts, lookahead = 24, myprint = False)
