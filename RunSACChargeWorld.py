@@ -123,6 +123,7 @@ def runSim(args = None, modules = None):
         # Copy when receiving, very important!
         agent = copy.deepcopy(modules["agent"])
         agent.df_price = df_price
+        agent.args = args
         qf1   = copy.deepcopy(modules["qf1"])
         qf2   = copy.deepcopy(modules["qf2"])
         rb    = copy.deepcopy(modules["rb"])
@@ -303,6 +304,7 @@ if __name__ == "__main__":
         dict_modules = None
         l_df_train = ["df_elaad_preproc_jan.csv", "df_elaad_preproc_feb.csv", "df_elaad_preproc_mar.csv"]
         og_pred_noise = args.pred_noise
+        og_learning_starts = args.learning_starts
 
         for year in range(years):
             print(f"Iter:{year+1}/{years}")
@@ -310,6 +312,7 @@ if __name__ == "__main__":
             # Train with synth data
             args.test = False
             args.pred_noise = 0
+            args.learning_starts = og_learning_starts
             #args.file_sessions = "df_elaad_preproc_janfebmar.csv"
             args.file_sessions = "df_elaad_preproc_janfeb.csv"
             #args.file_sessions = l_df_train[np.random.randint(3)]
@@ -323,6 +326,7 @@ if __name__ == "__main__":
             # Validate with synth data
             #args.agent = f"train_{save_name}_{year}"
             args.pred_noise = og_pred_noise
+            args.learning_starts = 0
             args.test = True # Can learn during episode, but not save it's knowledge
             #args.file_sessions = "df_elaad_preproc_mar.csv"
             #args.save_name = f"val_{save_name}_{year}"
