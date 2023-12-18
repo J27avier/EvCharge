@@ -283,7 +283,7 @@ class agentSAC_sagg(nn.Module):
         idx_tend = min(idx_t0+n, self.df_price.index.max()+1)
         #idx_tend = idx_t0+n
         pred_price = self.df_price.iloc[idx_t0:idx_tend]["price_im"].values
-        pred_price += self.rng.normal(loc = 0.0, scale = self.args.pred_noise, size = n)
+        pred_price += self.rng.normal(loc = 0.0, scale = self.args.pred_noise, size = len(pred_price))
 
         # Autopad
         if idx_tend - idx_t0 < n:

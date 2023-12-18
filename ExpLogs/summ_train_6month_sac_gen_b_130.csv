@@ -1,0 +1,2 @@
+name,transf,client,payoff,total,sessions
+train_6month_sac_gen_b_130,3246.7387150349487,8371.850816,855.3665467890802,4269.745554175971,df_elaad_preproc_f6months.csv

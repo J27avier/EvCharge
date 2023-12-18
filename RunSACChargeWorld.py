@@ -314,7 +314,7 @@ if __name__ == "__main__":
             args.pred_noise = 0
             args.learning_starts = og_learning_starts
             #args.file_sessions = "df_elaad_preproc_janfebmar.csv"
-            args.file_sessions = "df_elaad_preproc_janfeb.csv"
+            args.file_sessions = "df_elaad_preproc_f6months.csv"
             #args.file_sessions = l_df_train[np.random.randint(3)]
             args.file_price = "df_prices_c.csv"
             args.save_name = f"train_{save_name}_{year}"
@@ -334,7 +334,7 @@ if __name__ == "__main__":
             #_ = runSim(args, dict_modules)
 
             # Test with real data
-            args.file_sessions = "df_elaad_preproc_marapr.csv"
+            args.file_sessions = "df_elaad_preproc_l6months.csv"
             args.save_name = f"test_{save_name}_{year}"
             _ = runSim(args, dict_modules)
     else:
