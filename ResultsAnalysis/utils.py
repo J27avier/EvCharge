@@ -137,7 +137,6 @@ def load_rl(name, num, dir = ""):
 
 def draw_hlines(ax, asap, nov2g, optim, x_max = 100, color="k"):
     fontsize = 15
-    x_min, x_max = ax.get_xlim()
     ax.hlines(asap.sum(),  0, x_max, color=color, ls=':')
     ax.text(x_max*0.1, asap.sum(), "ASAP", fontsize = fontsize-4)
     ax.hlines(nov2g.sum(),  0, x_max, color=color, ls=':')
