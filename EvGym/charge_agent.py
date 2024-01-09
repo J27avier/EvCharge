@@ -4,6 +4,7 @@ import pandas as pd
 from . import config
 from typing import TYPE_CHECKING, Any
 import numpy.typing as npt
+import time
 
 np.set_printoptions(linewidth=np.nan) # type: ignore
 
@@ -31,7 +32,8 @@ class agentOptim():
         self.max_cars = max_cars
         self.df_price = df_price
         self.myprint = myprint
-        self.rng = np.random.default_rng(args.seed)
+        #self.rng = np.random.default_rng(args.seed)
+        self.rng = np.random.default_rng(int(time.time()*1000)%1000)
         self.args = args
 
 
@@ -144,7 +146,8 @@ class agentNoV2G():
         self.max_cars = max_cars
         self.df_price = df_price
         self.myprint = myprint
-        self.rng = np.random.default_rng(args.seed)
+        #self.rng = np.random.default_rng(args.seed)
+        self.rng = np.random.default_rng(int(time.time()*1000)%1000)
         self.args = args
 
     def _get_prediction(self, t, n):

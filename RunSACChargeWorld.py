@@ -44,7 +44,7 @@ def runSim(args = None, modules = None):
     # TRY NOT TO MODIFY: seeding
     seed = args.seed 
     if not args.test and args.rng_test:
-        seed += int(time.time()*100)%100
+        seed += int(time.time()*1000)%1000
         
     rng = np.random.default_rng(seed)
     random.seed(seed)
@@ -334,6 +334,7 @@ if __name__ == "__main__":
             #_ = runSim(args, dict_modules)
 
             # Test with real data
+            #args.file_sessions = "df_elaad_preproc_marapr.csv"
             args.file_sessions = "df_elaad_preproc_l6months.csv"
             args.save_name = f"test_{save_name}_{year}"
             _ = runSim(args, dict_modules)

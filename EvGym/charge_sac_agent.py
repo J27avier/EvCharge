@@ -7,6 +7,7 @@ from .charge_disagg import priority, proportional, prioritySoft
 from cvxpylayers.torch import CvxpyLayer # type: ignore
 from math import isclose
 from icecream import ic # type: ignore
+import time
 
 np.set_printoptions(linewidth=np.nan) # type: ignore
 
@@ -44,7 +45,7 @@ class agentSAC_sagg(nn.Module):
         self.args = args
         self.device = device
         self.pred_price_n = pred_price_n
-        self.rng = np.random.default_rng(args.seed)
+        self.rng = np.random.default_rng(int(time.time()*1000)%1000)
 
         self.fc1 = nn.Linear(args.n_state, 256)
         self.fc2 = nn.Linear(256, 256)
