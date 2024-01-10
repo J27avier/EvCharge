@@ -110,6 +110,8 @@ class agentSAC_sagg(nn.Module):
         - m: Add average of derivative
         - 1: Perform polyfit degree 1
         - 2: Perform polyfit degree 2
+        
+        Default: nothmd
         """
         args = self.args
         self.t = t
@@ -161,7 +163,7 @@ class agentSAC_sagg(nn.Module):
         self.upper = np.minimum(upper_soc,  config.alpha_c / config.B)
         self.upper[~occ_spots] = 0
 
-        self.sum_lower = self.lower.sum() + 0.001
+        self.sum_lower = self.lower.sum() + 0.001 # For numerical error
         self.sum_upper = self.upper.sum()
 
         sum_lower = self.sum_lower
@@ -178,7 +180,7 @@ class agentSAC_sagg(nn.Module):
             frac_cars     = num_cars_dis / num_cars
 
             if num_cars_dis > 0:
-                sum_dis_lim  /= num_cars
+                sum_dis_lim  /= num_cars # dis???
                 sum_t_dis /= num_cars_dis
             else:
                 sum_soc_dis  = 0 
