@@ -44,3 +44,20 @@ def proportional(Y_tot, lower, upper, occ_spots):
         Y_temp = Y_tot - lower.sum()
         y += range_y * Y_temp
     return y
+
+def proportionalFairness(Y_tot, lower, upper, occ_spots):
+    # Naive without checking for occ_spots
+    # Potential problems:
+    # * Charging unoccupied spots
+    # * There might be a case where lower > upper
+    n = len(lower)
+    Y = cp.Variable(n)
+    constraints = []
+    constraints += [cp.sum(Y) == Y_tot]
+    constraints += [lower <= Y]
+    constraints += [Y <= upper]
+    objective = cp.Maximize(cp.sum(cp.log((Y - lower) + 1.0001)))
+    prob = cp.Problem(objective, constraints)
+    prob.solve(cp.MOSEK)
+    best_cost = prob.value
+    return Y.value

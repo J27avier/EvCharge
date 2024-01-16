@@ -180,7 +180,7 @@ class agentSAC_sagg(nn.Module):
             frac_cars     = num_cars_dis / num_cars
 
             if num_cars_dis > 0:
-                sum_dis_lim  /= num_cars # dis???
+                sum_dis_lim  /= num_cars_dis # dis???
                 sum_t_dis /= num_cars_dis
             else:
                 sum_soc_dis  = 0 
@@ -304,11 +304,11 @@ class agentSAC_sagg(nn.Module):
         Y_tot = alpha*(self.sum_upper) + (1-alpha)*(self.sum_lower)
         occ_spots = self.t_rem > 0
         cont_spots = self.t_dis > 0
-        #range_y = self.upper - self.lower
-
 
         if self.args.disagg == "P":
             action = proportional(Y_tot, self.lower, self.upper, occ_spots)
+        elif self.args.disagg == "PF":
+            action = proportionalFairness(Y_tot, self.lower, self.upper, occ_spots)
         elif self.args.disagg == "LL":
             action = priority(Y_tot, self.lower, self.upper, occ_spots, self.lax)
         elif self.args.disagg == "ML":
