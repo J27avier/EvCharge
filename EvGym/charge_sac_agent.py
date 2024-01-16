@@ -3,7 +3,7 @@ import traceback
 import cvxpy as cp # type: ignore
 import pandas as pd
 from . import config
-from .charge_disagg import priority, proportional, prioritySoft 
+from .charge_disagg import priority, proportional, prioritySoft, proportionalFairness
 from cvxpylayers.torch import CvxpyLayer # type: ignore
 from math import isclose
 from icecream import ic # type: ignore
@@ -163,7 +163,7 @@ class agentSAC_sagg(nn.Module):
         self.upper = np.minimum(upper_soc,  config.alpha_c / config.B)
         self.upper[~occ_spots] = 0
 
-        self.sum_lower = self.lower.sum() + 0.001 # For numerical error
+        self.sum_lower = self.lower.sum() + 0.0001 # For numerical error
         self.sum_upper = self.upper.sum()
 
         sum_lower = self.sum_lower
@@ -180,7 +180,7 @@ class agentSAC_sagg(nn.Module):
             frac_cars     = num_cars_dis / num_cars
 
             if num_cars_dis > 0:
-                sum_dis_lim  /= num_cars_dis # dis???
+                sum_dis_lim  /= num_cars_dis # Previously /num_cars
                 sum_t_dis /= num_cars_dis
             else:
                 sum_soc_dis  = 0 

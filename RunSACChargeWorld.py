@@ -305,6 +305,8 @@ if __name__ == "__main__":
         l_df_train = ["df_elaad_preproc_jan.csv", "df_elaad_preproc_feb.csv", "df_elaad_preproc_mar.csv"]
         og_pred_noise = args.pred_noise
         og_learning_starts = args.learning_starts
+        og_save_agent = args.save_agent
+        args.save_agent = False
 
         for year in range(years):
             print(f"Iter:{year+1}/{years}")
@@ -318,6 +320,8 @@ if __name__ == "__main__":
             #args.file_sessions = l_df_train[np.random.randint(3)]
             args.file_price = "df_prices_c.csv"
             args.save_name = f"train_{save_name}_{year}"
+            if og_save_agent and year == years-1:
+                args.save_agent = True
             #args.save_agent = True
             #if year > 0:
             #    args.agent = f"train_{save_name}_{year-1}"
@@ -328,6 +332,7 @@ if __name__ == "__main__":
             args.pred_noise = og_pred_noise
             args.learning_starts = 0
             args.test = True # Can learn during episode, but not save it's knowledge
+            args.save_agent = False
             #args.file_sessions = "df_elaad_preproc_mar.csv"
             #args.save_name = f"val_{save_name}_{year}"
             ##args.save_agent = False
