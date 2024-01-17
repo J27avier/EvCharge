@@ -1,4 +1,4 @@
-timestamp: 2024-01-16-16:02:56
+timestamp: 2024-01-16-23:52:42
 
 --Info
 title: EvWorld-SAC-sagg
@@ -31,9 +31,9 @@ n_action: 1
 hidden: 64
 norm_reward: False
 state_rep: nothmd
-disagg: PF
+disagg: P
 test: False
-rng_test: False
+rng_test: True
 price_noise: 0
 pred_noise: 0
 exp_name: charge_utils
