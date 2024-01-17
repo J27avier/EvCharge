@@ -93,7 +93,7 @@ def proportionalFairness(Y_tot, lower, upper, occ_spots):
             print(n)
             print("ran", [f"{x:.4f}" for x in (s_range)], s_range.sum())
             print(Y_surplus)
-            exit()
+            raise SystemExit('Error in proportional fairness disaggregation.')
 
 
 
