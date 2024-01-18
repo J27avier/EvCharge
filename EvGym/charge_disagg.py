@@ -51,9 +51,9 @@ def proportionalFairness(Y_tot, lower, upper, occ_spots):
     # Potential problems:
     # * Charging unoccupied spots
     # * There might be a case where lower > upper
-    upper = np.maximum(upper, lower)
-    lower = np.minimum(upper, lower)
-    ev_ranges = upper - lower
+    upper = np.maximum(upper, lower).round(6)
+    lower = np.minimum(upper, lower).round(6)
+    ev_ranges = (upper - lower).round(6)
     bool_ranges = np.array([not isclose(ev_range, 0, abs_tol = 1e-05) for ev_range in ev_ranges]) #
     #bool_ranges = np.array([not isclose(ev_range, 0) for ev_range in ev_ranges])
     to_disagg = bool_ranges & occ_spots
@@ -77,7 +77,7 @@ def proportionalFairness(Y_tot, lower, upper, occ_spots):
         constraints += [Y <= s_range]
         constraints += [cp.sum(Y) == Y_surplus]
 
-        objective = cp.Maximize(cp.sum(cp.log(100*(Y+1.1))))
+        objective = cp.Maximize(cp.sum(cp.log(Y+1)))
         prob = cp.Problem(objective, constraints)
 
         # Custom error message
@@ -94,8 +94,6 @@ def proportionalFairness(Y_tot, lower, upper, occ_spots):
             print("ran", [f"{x:.4f}" for x in (s_range)], s_range.sum())
             print(Y_surplus)
             raise SystemExit('Error in proportional fairness disaggregation.')
-
-
 
     y = lower.copy()
     j = 0
