@@ -2,6 +2,7 @@ import numpy as np
 from math import isclose
 from icecream import ic # type: ignore
 import cvxpy as cp
+import os
 
 def zipf(N, s):
     x = np.arange(N)
@@ -47,58 +48,61 @@ def proportional(Y_tot, lower, upper, occ_spots):
     return y
 
 def proportionalFairness(Y_tot, lower, upper, occ_spots):
-    # Naive without checking for occ_spots
-    # Potential problems:
-    # * Charging unoccupied spots
-    # * There might be a case where lower > upper
-    upper = np.maximum(upper, lower).to_numpy().round(6)
-    lower = np.minimum(upper, lower).to_numpy().round(6)
-    ev_ranges = (upper - lower).round(6)
-    bool_ranges = np.array([not isclose(ev_range, 0, abs_tol = 1e-05) for ev_range in ev_ranges]) #
-    #bool_ranges = np.array([not isclose(ev_range, 0) for ev_range in ev_ranges])
-    to_disagg = bool_ranges & occ_spots
-    n = sum(to_disagg)
-    Y_surplus = (Y_tot - lower.sum())
+    try:
+        upper = upper.to_numpy(dtype = np.float64)
+        lower = lower.to_numpy(dtype = np.float64)
 
-    if n > 0:
-        Y = cp.Variable(n)
-        s_lower = lower[to_disagg] # Subset lower
-        s_upper = upper[to_disagg] # Subset upper
-        s_range = s_upper - s_lower
+        ev_ranges = (upper - lower)
+        bool_ranges = np.array([not isclose(ev_range, 0, abs_tol = 1e-05) for ev_range in ev_ranges]) #
+        to_disagg = bool_ranges & occ_spots
+        n = sum(to_disagg)
+        Y_surplus = (Y_tot - lower.sum())
 
-        if Y_surplus > s_range.sum():
-            #print(f"Warning: surplus larger by: {Y_surplus - s_range.sum()}")
-            if Y_surplus - s_range.sum() > 0.0001:
-                raise "Discrepancy too large"
-            Y_surplus = s_range.sum()
 
-        constraints = []
-        constraints += [0 <= Y]
-        constraints += [Y <= s_range]
-        constraints += [cp.sum(Y) == Y_surplus]
+        if n > 0:
+            Y = cp.Variable(n)
+            s_lower = lower[to_disagg] # Subset lower
+            s_upper = upper[to_disagg] # Subset upper
+            s_range = s_upper - s_lower
 
-        objective = cp.Maximize(cp.sum(cp.log(Y+1)))
-        prob = cp.Problem(objective, constraints)
+            if Y_surplus > s_range.sum():
+                #print(f"Warning: surplus larger by: {Y_surplus - s_range.sum()}")
+                if Y_surplus - s_range.sum() > 0.0001:
+                    raise "Discrepancy too large"
+                Y_surplus = s_range.sum()
 
-        # Custom error message
-        try:
-            prob.solve(cp.MOSEK, mosek_params = {'MSK_IPAR_NUM_THREADS': 8, 'MSK_IPAR_BI_MAX_ITERATIONS': 2_000_000, "MSK_IPAR_INTPNT_MAX_ITERATIONS": 800}, verbose=False)  
-            if prob.status != 'optimal':
-                print(prob.status)
-                raise Exception("Optimal disaggregation not found")
-        except Exception:
-            print("----")
-            print("low", [f"{x:.4f}" for x in lower])
-            print("upp", [f"{x:.4f}" for x in upper])
-            print(n)
-            print("ran", [f"{x:.4f}" for x in (s_range)], s_range.sum())
-            print(Y_surplus)
-            raise SystemExit('Error in proportional fairness disaggregation.')
+            constraints = []
+            constraints += [0 <= Y]
+            constraints += [Y <= s_range]
+            constraints += [cp.sum(Y) == Y_surplus]
 
-    y = lower.copy()
-    j = 0
-    for i in range(len(lower)):
-        if to_disagg[i]:
-            y[i] += Y.value[j]
-            j += 1
+            objective = cp.Maximize(cp.sum(cp.log(Y+1)))
+            prob = cp.Problem(objective, constraints)
+
+            # Custom error message
+            try:
+                prob.solve(cp.MOSEK, mosek_params = {'MSK_IPAR_NUM_THREADS': 8, 'MSK_IPAR_BI_MAX_ITERATIONS': 2_000_000, "MSK_IPAR_INTPNT_MAX_ITERATIONS": 800}, verbose=False)  
+                if prob.status != 'optimal':
+                    print(prob.status)
+                    raise Exception("Optimal disaggregation not found")
+            except Exception:
+                print("----")
+                print("low", [f"{x:.4f}" for x in lower])
+                print("upp", [f"{x:.4f}" for x in upper])
+                print(n)
+                print("ran", [f"{x:.4f}" for x in (s_range)], s_range.sum())
+                print(Y_surplus)
+                raise SystemExit('Error in proportional fairness disaggregation.')
+
+        y = lower.copy()
+        j = 0
+        for i in range(len(lower)):
+            if to_disagg[i]:
+                y[i] += Y.value[j]
+                j += 1
+    except Exception:
+        print("WARNING! proportionalFairness failed")
+        y = proportional(Y_tot, lower, upper, occ_spots)
+        #Super hacky way to track errors
+        os.system("echo 'err' >> err_disagg.txt")
     return y
