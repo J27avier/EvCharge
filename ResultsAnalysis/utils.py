@@ -135,12 +135,13 @@ def load_rl(name, num, dir = ""):
     df_res = pd.concat([pd.read_csv(i) for i in load_str], axis=0).reset_index(drop=True)
     return df_res
 
-def draw_hlines(ax, asap, nov2g, optim, x_max = 100, color="k"):
+def draw_hlines(ax, asap, nov2g, optim, x_max = 100, color="k", b_nov2g = True):
     fontsize = 15
     ax.hlines(asap.sum(),  0, x_max, color=color, ls=':')
     ax.text(x_max*0.1, asap.sum(), "ASAP", fontsize = fontsize-4)
-    ax.hlines(nov2g.sum(),  0, x_max, color=color, ls=':')
-    ax.text(x_max*0.1, nov2g.sum(), "NoV2G", fontsize = fontsize-4)
+    if b_nov2g:
+        ax.hlines(nov2g.sum(),  0, x_max, color=color, ls=':')
+        ax.text(x_max*0.1, nov2g.sum(), "NoV2G", fontsize = fontsize-4)
     ax.hlines(optim.sum(), 0, x_max, color=color, ls=':')
     ax.text(x_max*0.1, optim.sum(), "Optim", fontsize = fontsize-4)
 
