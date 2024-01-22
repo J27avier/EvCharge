@@ -180,8 +180,8 @@ class agentSAC_sagg(nn.Module):
             frac_cars     = num_cars_dis / num_cars
 
             if num_cars_dis > 0:
-                sum_dis_lim  /= num_cars_dis # Previously /num_cars
-                sum_t_dis /= num_cars_dis
+                sum_dis_lim  /= num_cars # Previously /num_cars
+                sum_t_dis /= num_cars_dis # Previously /num_cars_dis
             else:
                 sum_soc_dis  = 0 
                 sum_t_dis = 0
