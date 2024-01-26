@@ -1,4 +1,4 @@
-timestamp: 2024-01-26-05:32:34
+timestamp: 2024-01-26-07:20:43
 
 --Info
 title: EvWorld NoV2G
@@ -22,4 +22,4 @@ c2: 0.05
 kappa1: 0.4
 kappa2: 0.6
 integer: True
-pred_noise: 0.004
+pred_noise: 0.04
