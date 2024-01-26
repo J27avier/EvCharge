@@ -138,12 +138,12 @@ def load_rl(name, num, dir = ""):
 def draw_hlines(ax, asap, nov2g, optim, x_max = 100, color="k", b_nov2g = True):
     fontsize = 15
     ax.hlines(asap.sum(),  0, x_max, color=color, ls=':')
-    ax.text(x_max*0.1, asap.sum(), "ASAP", fontsize = fontsize-4)
+    ax.text(x_max*0.1, asap.sum()+200, "ASAP", fontsize = fontsize-4)
     if b_nov2g:
         ax.hlines(nov2g.sum(),  0, x_max, color=color, ls=':')
-        ax.text(x_max*0.1, nov2g.sum(), "NoV2G", fontsize = fontsize-4)
+        ax.text(x_max*0.1, nov2g.sum()+200, "NoV2G", fontsize = fontsize-4)
     ax.hlines(optim.sum(), 0, x_max, color=color, ls=':')
-    ax.text(x_max*0.1, optim.sum(), "Optim", fontsize = fontsize-4)
+    ax.text(x_max*0.1, optim.sum()+200, "Optim", fontsize = fontsize-4)
 
     #ax.set_ylim(0, 1.1*asap.sum())
     ax.set_xlabel("Episode")
@@ -151,7 +151,7 @@ def draw_hlines(ax, asap, nov2g, optim, x_max = 100, color="k", b_nov2g = True):
     return ax
     
     
-def plot_rl_gen(ax1, ax2, ax3, df_train, df_val, df_test, label="", ls="-", val=True):
+def plot_rl_gen(ax1, ax2, ax3, df_train, df_val, df_test, label="", ls="-", val=True, prof = False):
     ax1.plot(df_train["transf"], label=label, ls=ls)
     if val:
         ax2.plot(df_val["transf"], label=label, ls=ls)
@@ -159,6 +159,8 @@ def plot_rl_gen(ax1, ax2, ax3, df_train, df_val, df_test, label="", ls="-", val=
         return ax1, ax2, ax3
     else:
         ax2.plot(df_test["transf"], label=label, ls=ls)
+    if prof:
+        ax3.plot(df_test["total"], label=label, ls=ls)
         return ax1, ax2
 
 def plot_rl_gen_stoc(ax1, ax2, dfs, label="", ls="", norm_dict = None, ax3=None):
