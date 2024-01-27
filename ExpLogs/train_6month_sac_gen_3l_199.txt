@@ -1,4 +1,4 @@
-timestamp: 2024-01-22-19:16:00
+timestamp: 2024-01-26-23:54:05
 
 --Info
 title: EvWorld-SAC-sagg
@@ -13,7 +13,7 @@ save_contracts: False
 agent: SAC-sagg
 desc: 
 seed: 42
-save_agent: False
+save_agent: True
 save_name: train_6month_sac_gen_3l_199
 years: 1
 summary: True

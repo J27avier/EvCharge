@@ -3,6 +3,13 @@
 #python3 RunChargeWorld.py --agent NoV2G --save-name c_NoV2G  --file-price df_prices_2019_c.csv &
 #python3 RunChargeWorld.py --agent Optim --save-name c_Optim  --file-price df_prices_2019_c.csv &
 
+nohup python3 RunChargeWorld.py --agent ASAP  --save-name f6_ASAP  --summary False --file-sessions df_elaad_preproc_f6months.csv &
+nohup python3 RunChargeWorld.py --agent NoV2G --save-name f6_NoV2G --summary False --file-sessions df_elaad_preproc_f6months.csv &
+nohup python3 RunChargeWorld.py --agent Optim --save-name f6_Optim --summary False --file-sessions df_elaad_preproc_f6months.csv &
+nohup python3 RunChargeWorld.py --agent ASAP  --save-name l6_ASAP  --summary False --file-sessions df_elaad_preproc_l6months.csv &
+nohup python3 RunChargeWorld.py --agent NoV2G --save-name l6_NoV2G --summary False --file-sessions df_elaad_preproc_l6months.csv &
+nohup python3 RunChargeWorld.py --agent Optim --save-name l6_Optim --summary False --file-sessions df_elaad_preproc_l6months.csv &
+
 #nohup python3 RunChargeWorld.py --agent ASAP  --save-name train_ASAP  --file-sessions df_synth_sessions_2014_2018.csv --file-price df_prices_c.csv --summary False &
 #nohup python3 RunChargeWorld.py --agent NoV2G --save-name train_NoV2G --file-sessions df_synth_sessions_2014_2018.csv --file-price df_prices_c.csv --summary False &
 #nohup python3 RunChargeWorld.py --agent Optim --save-name train_Optim --file-sessions df_synth_sessions_2014_2018.csv --file-price df_prices_c.csv --summary False &
@@ -18,7 +25,7 @@
 #python3 RunChargeWorld.py --agent NoV2G --save-name nc_NoV2G  --summary False --file-price df_prices_c.csv &
 #python3 RunChargeWorld.py --agent Optim --save-name nc_Optim  --summary False --file-price df_prices_c.csv &
 #python3 RunChargeWorld.py --agent Optim --save-name nc2_Optim --summary True  --file-price df_prices_c.csv --kappa1 0.4 --kappa2 0.6 --c1 0.01 --c2 0.05 &
-python3 RunChargeWorld.py --agent Optim --save-name nc3_Optim --summary True  --file-price df_prices_c.csv &
+#python3 RunChargeWorld.py --agent Optim --save-name nc3_Optim --summary True  --file-price df_prices_c.csv &
 #python3 RunChargeWorld.py --agent ASAP  --save-name nc_ASAP   --summary True  --file-price df_prices_c.csv &
 #python3 RunChargeWorld.py --agent NoV2G --save-name nc_NoV2G  --summary True  --file-price df_prices_c.csv &
 #python3 RunChargeWorld.py --agent Optim --save-name nc_Optim  --summary True  --file-price df_prices_c.csv &

@@ -176,6 +176,7 @@ EvGym/.mypy_cache
 runs/
 ExpLogs/old/
 Agents/old
+Agents/
 ExpLogs/d_month/
 nohup.out
 old_run/

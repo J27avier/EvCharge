@@ -32,7 +32,7 @@ from EvGym import config
 # Contracts
 from ContractDesign.time_contracts import general_contracts
 
-torch.set_num_threads(4)
+torch.set_num_threads(2)
 
 def runSim(args = None, modules = None):
     if args is None:
@@ -96,6 +96,16 @@ def runSim(args = None, modules = None):
             agent = agentSAC_sagg(df_price, args, device, pred_price_n=pred_price_n).to(device)
             qf1 = SoftQNetwork(args).to(device)
             qf2 = SoftQNetwork(args).to(device)
+            rb = ReplayBuffer(
+                args.buffer_size,
+                #envs.single_observation_space,
+                space_state,
+                #envs.single_action_space,
+                space_action,
+                device,
+                handle_timeout_termination=False,
+            )
+
         else:
             try:
                 print(f"Attempting to load: {args.agent}")
@@ -103,21 +113,14 @@ def runSim(args = None, modules = None):
                 agent.df_price = df_price
                 qf1 = torch.load(f"{config.agents_path}qf1_{args.agent}.pt")
                 qf2 = torch.load(f"{config.agents_path}qf2_{args.agent}.pt")
+                rb = torch.load(f"{config.agents_path}rb_{args.agent}.rb")
                 print(f"Loaded {args.agent}")
             except Exception as e:
                 print(e)
                 print(f"Agent name not recognized")
                 exit(1)
 
-        rb = ReplayBuffer(
-            args.buffer_size,
-            #envs.single_observation_space,
-            space_state,
-            #envs.single_action_space,
-            space_action,
-            device,
-            handle_timeout_termination=False,
-        )
+
     else:
         print("Recieved modules")
         # Copy when receiving, very important!
@@ -283,6 +286,7 @@ def runSim(args = None, modules = None):
             torch.save(agent, f"{config.agents_path}{args.save_name}.pt")
             torch.save(qf1, f"{config.agents_path}qf1_{args.save_name}.pt")
             torch.save(qf2, f"{config.agents_path}qf2_{args.save_name}.pt")
+            torch.save(rb, f"{config.agents_path}rb_{args.save_name}.rb")
         else:
             torch.save(agent, f"{config.agents_path}{world.tracker.timestamp}_{args.agent.split('.')[0]}{args.desc}.pt")
             torch.save(qf1, f"{config.agents_path}{world.tracker.timestamp}qf1_{args.agent.split('.')[0]}{args.desc}.pt")
@@ -346,6 +350,6 @@ if __name__ == "__main__":
     else:
         if args.years is None:
             args.years = 1
-        runSim(args)
+        runSim(args, None)
     print(f"Done {args.save_name}")
 
