@@ -111,6 +111,7 @@ def runSim(args = None, modules = None):
                 print(f"Attempting to load: {args.agent}")
                 agent = torch.load(f"{config.agents_path}{args.agent}.pt")
                 agent.df_price = df_price
+                agent.args = args
                 qf1 = torch.load(f"{config.agents_path}qf1_{args.agent}.pt")
                 qf2 = torch.load(f"{config.agents_path}qf2_{args.agent}.pt")
                 rb = torch.load(f"{config.agents_path}rb_{args.agent}.rb")
