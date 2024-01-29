@@ -1,4 +1,4 @@
-timestamp: 2024-01-29-07:43:34
+timestamp: 2024-01-29-08:04:45
 
 --Info
 title: EvWorld-train_6month_sac_gen_1m_199
@@ -14,7 +14,7 @@ agent: train_6month_sac_gen_1m_199
 desc: 
 seed: 42
 save_agent: False
-save_name: 6month_sac_disagg_reload
+save_name: 6month_sac_disagg_1m_MD
 years: 1
 summary: True
 general: False
@@ -31,7 +31,7 @@ n_action: 1
 hidden: 64
 norm_reward: False
 state_rep: nothmd
-disagg: PF
+disagg: MD
 test: True
 rng_test: True
 price_noise: 0

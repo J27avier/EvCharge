@@ -1,7 +1,7 @@
-timestamp: 2024-01-29-07:43:34
+timestamp: 2024-01-29-08:04:46
 
 --Info
-title: EvWorld-train_6month_sac_gen_1m_199
+title: EvWorld-train_6month_sac_gen_2n_199
 contract_info: {'G': array([[0.58667509, 0.7866836 , 0.98664289],
        [0.71999301, 0.92000152, 1.11996081],
        [0.85341189, 1.0534204 , 1.25337969]]), 'W': array([18.99943399, 32.33122561, 49.0085862 ]), 'L': array([ 5.,  9., 14.]), 'thetas_i': [0.75, 1, 1.25], 'thetas_j': [0.75, 1, 1.25], 'c1': 0.01, 'c2': 0.05}
@@ -10,11 +10,11 @@ contract_info: {'G': array([[0.58667509, 0.7866836 , 0.98664289],
 print_dash: False
 no_save: False
 save_contracts: False
-agent: train_6month_sac_gen_1m_199
+agent: train_6month_sac_gen_2n_199
 desc: 
 seed: 42
 save_agent: False
-save_name: 6month_sac_disagg_reload
+save_name: 6month_sac_disagg_2n_PF
 years: 1
 summary: True
 general: False
