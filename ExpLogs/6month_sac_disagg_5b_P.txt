@@ -1,4 +1,4 @@
-timestamp: 2024-02-01-03:15:22
+timestamp: 2024-02-01-21:09:07
 
 --Info
 title: EvWorld-train_6month_sac_pred_noise_5b_199
@@ -12,7 +12,7 @@ no_save: False
 save_contracts: False
 agent: train_6month_sac_pred_noise_5b_199
 desc: 
-seed: 42
+seed: 5
 save_agent: False
 save_name: 6month_sac_disagg_5b_P
 years: 1
@@ -35,7 +35,7 @@ disagg: P
 test: True
 rng_test: True
 price_noise: 0
-pred_noise: 0
+pred_noise: 0.01
 exp_name: charge_utils
 torch_deterministic: True
 cuda: True

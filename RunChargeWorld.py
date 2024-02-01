@@ -29,10 +29,6 @@ def main():
 
     df_price = pd.read_csv(f"{config.data_path}{args.file_price}", parse_dates=["date"])
     
-    # Try this
-    sigma = args.price_noise*(df_price["price_im"].quantile(0.75) - df_price["price_im"].quantile(0.25))
-    df_price["price_im"] = df_price["price_im"] + rng.normal(0, sigma, len(df_price))
-
     # Calculate contracts
     thetas_i, thetas_j = eval(args.thetas_i), eval(args.thetas_j)
     G, W, L_cont = general_contracts(thetas_i = thetas_i,

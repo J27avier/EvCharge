@@ -59,10 +59,10 @@ def runSim(args = None, modules = None):
 
     df_price = pd.read_csv(f"{config.data_path}{args.file_price}", parse_dates=["date"])
 
-    # What is this doing here?
-    if not args.test:
-        sigma = args.price_noise*(df_price["price_im"].quantile(0.75) - df_price["price_im"].quantile(0.25))
-        df_price["price_im"] = df_price["price_im"] + rng.normal(0, sigma, len(df_price))
+    # No longer used, never used actually
+    #if not args.test:
+    #    sigma = args.price_noise*(df_price["price_im"].quantile(0.75) - df_price["price_im"].quantile(0.25))
+    #    df_price["price_im"] = df_price["price_im"] + rng.normal(0, sigma, len(df_price))
 
     # Calculate contracts
     G, W, L_cont = general_contracts(thetas_i = config.thetas_i,
