@@ -12,6 +12,7 @@
 #nohup python3 RunChargeWorld.py --agent Optim --seed 4 --save-name l6_Optim2 --summary False --file-sessions df_elaad_preproc_l6months.csv &
 nohup python3 RunChargeWorld.py --agent Optim --seed 4 --save-name l6_Optim2 --file-sessions df_elaad_preproc_l6months.csv &
 
+
 #nohup python3 RunChargeWorld.py --agent ASAP  --save-name train_ASAP  --file-sessions df_synth_sessions_2014_2018.csv --file-price df_prices_c.csv --summary False &
 #nohup python3 RunChargeWorld.py --agent NoV2G --save-name train_NoV2G --file-sessions df_synth_sessions_2014_2018.csv --file-price df_prices_c.csv --summary False &
 #nohup python3 RunChargeWorld.py --agent Optim --save-name train_Optim --file-sessions df_synth_sessions_2014_2018.csv --file-price df_prices_c.csv --summary False &
