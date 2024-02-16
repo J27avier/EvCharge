@@ -5,6 +5,7 @@ import sys
 sys.path.append("..")
 from EvGym import config # type: ignore
 
+
 def load_res(name, path="../ExpLogs"):
     df_res = pd.read_csv(f"{path}/{name}.csv")
 
