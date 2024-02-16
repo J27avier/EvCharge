@@ -306,3 +306,4 @@ nohup python3 RunSACChargeWorld.py --agent train_6month_sac_pred_noise_5e_199 --
 #nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name 6month_sac_pred_noise_3e --pred-noise 0.06 --seed 3 --years 200 --batch-size 512 --learning-starts 0 --alpha 0.02 --rng-test True --policy-frequency 4 --target-network-frequency 2 --general True --disagg PF --save-agent True &
 #nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name 6month_sac_pred_noise_4e --pred-noise 0.06 --seed 4 --years 200 --batch-size 512 --learning-starts 0 --alpha 0.02 --rng-test True --policy-frequency 4 --target-network-frequency 2 --general True --disagg PF --save-agent True &
 #nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name 6month_sac_pred_noise_5e --pred-noise 0.06 --seed 5 --years 200 --batch-size 512 --learning-starts 0 --alpha 0.02 --rng-test True --policy-frequency 4 --target-network-frequency 2 --general True --disagg PF --save-agent True &
+

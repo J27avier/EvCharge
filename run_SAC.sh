@@ -76,3 +76,4 @@ nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IX_g -
 nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IX_h --years 200 --month True --norm-reward True --file-price df_price_2019.csv &
 nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IX_i --years 200 --month True --norm-reward False & 
 nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name month_sac_IX_j --years 200 --month True --norm-reward False --file-price df_price_2019.csv &
+

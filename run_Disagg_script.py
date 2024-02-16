@@ -1,4 +1,4 @@
-
+# Create script to run Disaggregation experiments
 #nohup python3 RunSACChargeWorld.py --agent train_6month_sac_pred_noise_1a_199 --save-name 6month_sac_disagg_1a_PF  --pred-noise 0.00 --years 1 --batch-size 512 --learning-starts 0 --alpha 0.02 --rng-test True --test True --policy-frequency 4 --target-network-frequency 2 --disagg PF --file-sessions df_elaad_preproc_l6months.csv &
 from itertools import product
 

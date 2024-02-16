@@ -79,6 +79,7 @@ nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name 6month_sac_gen_3
 nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name 6month_sac_gen_4m --years 200 --seed 4 --batch-size 512 --learning-starts 0 --alpha 0.02 --rng-test True --policy-frequency 4 --target-network-frequency 2 --general True --disagg PF --save-agent True &
 nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name 6month_sac_gen_5m --years 200 --seed 5 --batch-size 512 --learning-starts 0 --alpha 0.02 --rng-test True --policy-frequency 4 --target-network-frequency 2 --general True --disagg PF --save-agent True &
 
+
 #nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name 6month_sac_gen_1n --years 200 --batch-size 512 --learning-starts 0 --alpha 0.02 --rng-test True --policy-frequency 4 --target-network-frequency 2 --general True --disagg LL --save-agent True &
 #nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name 6month_sac_gen_2n --years 200 --batch-size 512 --learning-starts 0 --alpha 0.02 --rng-test True --policy-frequency 4 --target-network-frequency 2 --general True --disagg LL --save-agent True &
 #nohup python3 RunSACChargeWorld.py --agent SAC-sagg --save-name 6month_sac_gen_1o --years 200 --batch-size 512 --learning-starts 0 --alpha 0.02 --rng-test True --policy-frequency 4 --target-network-frequency 2 --general True --disagg P --save-agent True &

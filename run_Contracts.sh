@@ -6,6 +6,7 @@
 #nohup python3 RunChargeWorld.py --agent Optim --thetas_i [0.8,1,1.333]         --thetas_j [0.8,1,1.33]          --c1 0.01 --c2 0.05  --kappa1 0.3  --kappa2 0.6  --integer True --save-name Optim_e &
 #nohup python3 RunChargeWorld.py --agent Optim --thetas_i [0.666,1,2]           --thetas_j [0.666,1,2]           --c1 0.01 --c2 0.05  --kappa1 0.5  --kappa2 0.6  --integer True --save-name Optim_f &
 
+
 #nohup python3 RunChargeWorld.py --agent Optim --thetas_i [0.75,1,1.25]          --thetas_j [0.75,1,1.25]          --c1 0.01 --c2 0.05  --kappa1 0.5  --kappa2 0.6  --integer True --save-name Optim_1 &
 #nohup python3 RunChargeWorld.py --agent Optim --thetas_i [0.5,1,1.5]            --thetas_j [0.5,1,1.5]            --c1 0.01 --c2 0.05  --kappa1 0.5  --kappa2 0.6  --integer True --save-name Optim_2 &
 #nohup python3 RunChargeWorld.py --agent Optim --thetas_i [0.5,0.75,1,1.25,1.5]  --thetas_j [0.5,0.75,1,1.25,1.5]  --c1 0.01 --c2 0.05  --kappa1 0.5  --kappa2 0.6  --integer True --save-name Optim_3 &

@@ -15,6 +15,7 @@ from EvGym.charge_utils import print_welcome, parse_args # type: ignore
 # Contracts
 from ContractDesign.time_contracts import general_contracts
 
+
 def main():
     args = parse_args()
     title = f"EvWorld {args.agent}{args.desc}"

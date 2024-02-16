@@ -33,6 +33,7 @@ from ContractDesign.time_contracts import general_contracts
 
 torch.set_num_threads(8)
 
+
 def runSim(args = None):
     if args is None:
         args = parse_sac_args()
