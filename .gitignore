@@ -179,5 +179,6 @@ Agents/
 ExpLogs/d_month/
 nohup.out
 old_run/
+old/
 notify.txt
 misc/
