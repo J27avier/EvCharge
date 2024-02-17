@@ -168,6 +168,7 @@ outputs/
 ref/
 gym-examples/
 EvGym/__pycache__
+EvGym/old/
 profiling/
 *.swp
 .mypy_cache
@@ -184,3 +185,5 @@ notify.txt
 misc/
 0*
 .vscode/
+Offline/
+figs/
