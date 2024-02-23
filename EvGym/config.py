@@ -86,6 +86,7 @@ agents_path = "Agents/"
 #kappa2 = 0.5
 thetas_i = [0.75,1,1.25]
 thetas_j = [0.75,1,1.25]
+
 c1 = 0.01
 c2 = 0.05
 kappa1 = 0.4
@@ -113,3 +114,4 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
