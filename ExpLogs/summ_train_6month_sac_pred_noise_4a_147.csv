@@ -1,0 +1,2 @@
+name,transf,client,payoff,total,sessions
+train_6month_sac_pred_noise_4a_147,3229.872424295581,8371.850816,844.3021351852143,4297.676256519205,df_elaad_preproc_f6months.csv

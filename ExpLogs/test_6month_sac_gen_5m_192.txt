@@ -1,0 +1,58 @@
+timestamp: 2024-02-24-13:02:21
+
+--Info
+title: EvWorld-SAC-sagg
+contract_info: {'G': array([[0.58667509, 0.7866836 , 0.98664289],
+       [0.71999301, 0.92000152, 1.11996081],
+       [0.85341189, 1.0534204 , 1.25337969]]), 'W': array([18.99943399, 32.33122561, 49.0085862 ]), 'L': array([ 5.,  9., 14.]), 'thetas_i': [0.75, 1, 1.25], 'thetas_j': [0.75, 1, 1.25], 'c1': 0.01, 'c2': 0.05}
+
+--Args
+print_dash: False
+no_save: False
+save_contracts: False
+agent: SAC-sagg
+desc: 
+seed: 5
+save_agent: False
+save_name: test_6month_sac_gen_5m_192
+years: 1
+summary: True
+general: True
+month: False
+file_price: df_prices_c.csv
+file_contracts: ExpLogs/2023-09-13-15:25:05_Contracts_ev_world_Optim.csv
+file_sessions: df_elaad_preproc_l6months.csv
+reward_coef: 1
+proj_coef: 0
+lax_coef: 0
+logstd: -2
+n_state: 59
+n_action: 1
+hidden: 64
+norm_reward: False
+state_rep: nothmd
+disagg: PF
+test: True
+rng_test: True
+price_noise: 0
+pred_noise: 0
+exp_name: charge_utils
+torch_deterministic: True
+cuda: True
+track: False
+wandb_project_name: cleanRL
+wandb_entity: None
+capture_video: False
+total_timesteps: 10000000
+buffer_size: 1000000
+gamma: 0.99
+tau: 0.005
+batch_size: 512
+learning_starts: 0
+policy_lr: 0.0003
+q_lr: 0.001
+policy_frequency: 4
+target_network_frequency: 2
+noise_clip: 0.5
+alpha: 0.02
+autotune: False
