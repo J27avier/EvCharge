@@ -7,7 +7,7 @@ We study a virtual power plant (VPP) that trades the bidirectional charging flex
 ## Overview
 The code is divided into these parts
 * `ContractDesign/`: The code and notebooks used to generate and analyze the incentive-compatible V2G contracts. 
-* `ElectricityMarkets/`: The preprocessing and analysis for the electricity price dataset. 
+* `ElectricityMarkets/`: The analysis for the electricity price dataset at the proper time resolution. 
 * `EvGym/`: Here is the environment and the agents 
 * `ExpLogs/`
 * `ResultsAnalysis/`
