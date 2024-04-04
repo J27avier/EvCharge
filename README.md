@@ -1,28 +1,27 @@
-# EvCharge
+# EvCharge :zap: :car: :zap: :car: :zap:
 This is the accompanying repo for the paper "Efficient Trading of Aggregate Bidirectional EV Charging Flexibility with Reinforcement Learning", due to appear on ACM's e-Energy 2024 proceedings. You can find it in this repo as `AggregateFlex_eEnergy24.pdf`.
 
-## Abstract
+## Abstract :cloud_with_lightning:	
 We study a virtual power plant (VPP) that trades the bidirectional charging flexibility of privately owned plug-in electric vehicles (EVs) in a real-time electricity market to maximize its profit. To incentivize EVs to allow bidirectional charging, we design incentive-compatible, variable-term contracts between the VPP and EVs. Through deliberate aggregation of the energy storage capacity of individual EVs, we learn a reinforcement learning (RL) policy to efficiently trade the flexibility, independent of the number of accepted contracts and connected EVs. The proposed aggregation method ensures the satisfaction of individual EV charging requirements by constraining the optimal action returned by the RL policy within certain bounds. We then develop a disaggregation scheme to allocate power to bidirectional chargers in a proportionally fair manner, given the total amount of energy traded in the market. Evaluation on a real-world dataset demonstrates robust performance of the proposed method despite uncertainties in electricity prices and shifts in the distribution of EV mobility.
 
-## Overview
+## Overview :classical-building:
 The code is divided into these parts
-* `ContractDesign/`: The code and notebooks used to generate and analyze the incentive-compatible V2G contracts. 
-* `ElectricityMarkets/`: The analysis for the electricity price dataset at the proper time resolution. 
-* `EvGym/`: The environment and the RL agents, more details in a later section.
-* `ExpLogs/`: Records of the experiments used in the paper.
-* `ResultsAnalysis/`: Notebooks used for analysis and visualization. 
-* `data/`: Datasets used simulations.
-* `scripts/`: The `Bash` scripts used for experiments, multiple simulation runs.
-* `time/`: Results for time profiling of different agents.
-* `PreprocElaad.ipynb`: Notebook for preprocessing Elaad, charging sessions dataset
-* `RunChargeWorld.py`: Script for running simulations without RL.
-* `RunSACChargeWorld.py`: Script for running simulation with RL
+* :scroll: `ContractDesign/`: The code and notebooks used to generate and analyze the incentive-compatible V2G contracts. 
+* :electric_plug: `ElectricityMarkets/`: The analysis for the electricity price dataset at the proper time resolution. 
+* :weight_lifting: `EvGym/`: The environment and the RL agents, more details in a later section.
+* :test_tube: `ExpLogs/`: Records of the experiments used in the paper.
+* :microscope: `ResultsAnalysis/`: Notebooks used for analysis and visualization. 
+* :books: `data/`: Datasets used simulations.
+* :chess_pawn: `scripts/`: The `Bash` scripts used for experiments, multiple simulation runs.
+* :hourglass: `time/`: Results for time profiling of different agents.
+* :stew: `PreprocElaad.ipynb`: Notebook for preprocessing Elaad, charging sessions dataset
+* :star: `RunChargeWorld.py`: Script for running simulations without RL.
+* :star2: `RunSACChargeWorld.py`: Script for running simulation with RL
 
 Additionally a `requirements.txt` file is provided.
 Using a `virtualenv` is recommended.
 
-## Parameters
-|------------------------------|----------|--------------------------------------------------|
+## Parameters 
 | Parameter                    | Value    | Description                                      |
 |------------------------------|----------|--------------------------------------------------|
 | `--agent`                    | SAC-sagg | Agent to use for real-time scheduling            |
@@ -38,8 +37,41 @@ Using a `virtualenv` is recommended.
 | `--buffer-size`              | 1e6      | Number of experiences to save in replay buffer   |
 | `--save-agent`               | True     | Save the weights of the trained agent            |
 | `--general`                  | True     | Run training mode (`False` is for deployment)    |
-|------------------------------|----------|--------------------------------------------------|
 
+## Architecture :brain:
+
+### Actor :person_fencing:
+The architecture for the actor, the policy network. 
+\begin{table}[h]
+\centering
+\resizebox{0.5\columnwidth}{!}{%
+\begin{tabular}{l|l|l}
+\textbf{Layer}         & \textbf{In} & \textbf{Out} \\ \hline
+Linear (ReLU)          & 59          & 256          \\
+Linear (ReLU)          & 256         & 256          \\
+Head 1, Mean: Linear (Sigmoid) & 256         & 1            \\
+Head 2, Logstd: Linear (Tanh) & 256         & 1           
+\end{tabular}%
+}
+\caption{Architecture for the Actor.} \label{tbl:actor}
+\end{table}
+
+### Critic :detective:
+The architecture for the two critics, soft Q networks.
+
+
+\begin{table}[h]
+\centering
+\resizebox{0.3\columnwidth}{!}{%
+\begin{tabular}{l|l|l}
+\textbf{Layer} & \textbf{In} & \textbf{Out} \\ \hline
+Linear (ReLU)  & 60          & 256          \\
+Linear (ReLU)  & 256         & 256          \\
+Linear         & 256         & 1           
+\end{tabular}%
+}
+\caption{Architecture for the Critics.} \label{tbl:critic}
+\end{table}
 
 ## Notes for `RunSACChargeWorld.py`
 This is of how we train our implementation of _Aggregate SAC_. 
