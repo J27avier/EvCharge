@@ -25,14 +25,14 @@ Using a `virtualenv` is recommended.
 This is of how we train our implementation of _Aggregate SAC_. 
 First, we import some general modules. Then we import the user-defined modules, mainly the environment (`ChargeWorldEnv`), the actor (`agentSAC\_sagg`), and the critic (`SoftQNetwork`).
 
-In the body of the program, we initialize `ChargeWorldEnv` with the dataset that contains the charging sessions (`df\_sessions`), the dataset that contains the real-time prices (\texttt{df\_prices}), the contract parameters (\texttt{contract\_info}), and a random number generator (\texttt{rng}).
+In the body of the program, we initialize `ChargeWorldEnv` with the dataset that contains the charging sessions (`df_sessions`), the dataset that contains the real-time prices (`df_prices`), the contract parameters (`contract_info`), and a random number generator (`rng`).
 
-For the agent, we initialize the actor (\texttt{agentSAC\_agg}) with the price dataset (\texttt{df\_price}), arguments read from the command line (\texttt{args}), and the device  (\texttt{device}). This \texttt{device} is needed for certain PyTorch functionalities. The critic is composed of two Q networks (\texttt{SoftQNetwork}).
-Additionally, soft actor-critic uses a replay buffer (\texttt{rb}). 
+For the agent, we initialize the actor (`agentSAC_agg`) with the price dataset (`df_price`), arguments read from the command line (`args`), and the device  (`device`). This `device` is needed for certain PyTorch functionalities. The critic is composed of two Q networks (`SoftQNetwork`).
+Additionally, soft actor-critic uses a replay buffer (`rb`). 
 
-We can train the agent for many \texttt{episodes}, each with a predetermined number of \texttt{timesteps}.
-Similar to Farama's Gym, the environment is initialized with a \texttt{world.reset()}. 
-During training, the agent receives an observation from the environment, and it outputs an action with \texttt{agent.get\_action()}. 
+We can train the agent for many `episodes`, each with a predetermined number of `timesteps`.
+Similar to Farama's Gym, the environment is initialized with a `world.reset()`. 
+During training, the agent receives an observation from the environment, and it outputs an action with `agent.get_action()`. 
 The environment receives the action and moves forward one timestep with \texttt{world.step()}.
 The loop keeps going on until all the timesteps are completed for all the episodes.
 At each iteration, the training of the agent is performed. 
