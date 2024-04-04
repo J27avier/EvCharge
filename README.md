@@ -21,9 +21,29 @@ The code is divided into these parts
 Additionally a `requirements.txt` file is provided.
 Using a `virtualenv` is recommended.
 
+## Parameters
+|------------------------------|----------|--------------------------------------------------|
+| Parameter                    | Value    | Description                                      |
+|------------------------------|----------|--------------------------------------------------|
+| `--agent`                    | SAC-sagg | Agent to use for real-time scheduling            |
+| `--save-name`                | sac_a    | Name used for logs, results, etc.                |
+| `--pred-noise`               | 0.00     | Nosie for price predictions in training          |
+| `--seed`                     | 42       | Seed for random number generators                |
+| `--years`                    | 200      | Number of episodes to train                      |
+| `--batch-size`               | 512      | Batch size to sample from the replay buffer      |
+| `--alpha`                    | 0.02     | Temperature parameter in SAC                     |
+| `--policy-frequency`         | 4        | How often to update the policy (timesteps)       |
+| `--target-network-frequency` | 2        | How often to update the second Q NN (timesteps)  |
+| `--disagg`                   | PF       | (Proportional fairness) Disaggregation algorithm |
+| `--buffer-size`              | 1e6      | Number of experiences to save in replay buffer   |
+| `--save-agent`               | True     | Save the weights of the trained agent            |
+| `--general`                  | True     | Run training mode (`False` is for deployment)    |
+|------------------------------|----------|--------------------------------------------------|
+
+
 ## Notes for `RunSACChargeWorld.py`
 This is of how we train our implementation of _Aggregate SAC_. 
-First, we import some general modules. Then we import the user-defined modules, mainly the environment (`ChargeWorldEnv`), the actor (`agentSAC\_sagg`), and the critic (`SoftQNetwork`).
+First, we import some general modules. Then we import the user-defined modules, mainly the environment (`ChargeWorldEnv`), the actor (`agentSAC_sagg`), and the critic (`SoftQNetwork`).
 
 In the body of the program, we initialize `ChargeWorldEnv` with the dataset that contains the charging sessions (`df_sessions`), the dataset that contains the real-time prices (`df_prices`), the contract parameters (`contract_info`), and a random number generator (`rng`).
 
@@ -33,12 +53,12 @@ Additionally, soft actor-critic uses a replay buffer (`rb`).
 We can train the agent for many `episodes`, each with a predetermined number of `timesteps`.
 Similar to Farama's Gym, the environment is initialized with a `world.reset()`. 
 During training, the agent receives an observation from the environment, and it outputs an action with `agent.get_action()`. 
-The environment receives the action and moves forward one timestep with \texttt{world.step()}.
+The environment receives the action and moves forward one timestep with `world.step()`.
 The loop keeps going on until all the timesteps are completed for all the episodes.
 At each iteration, the training of the agent is performed. 
 
 The charging sessions dataset, real-time prices dataset and state are implemented in Pandas DataFrames.
 Additionally, the environment also receives a Pandas DataFrame for the action.
 Conversely, the agent works mainly with PyTorch Tensors.
-To convert the state DataFrame into a PyTorch Tensor, we employ \texttt{agent.df\_to\_state()}.
-Similarly, to convert the agent's action into the required Pandas format that the environment prefers, we use \texttt{agent.action\_to\_env()}.
+To convert the state DataFrame into a PyTorch Tensor, we employ `agent.df_to_state()`.
+Similarly, to convert the agent's action into the required Pandas format that the environment prefers, we use `agent.action_to_env()`.
