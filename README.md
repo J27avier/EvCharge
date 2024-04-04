@@ -1,12 +1,12 @@
-# EvCharge :zap: :car: :zap: :car: :zap:
+# EvCharge :zap: :car: :zap: 
 This is the accompanying repo for the paper "Efficient Trading of Aggregate Bidirectional EV Charging Flexibility with Reinforcement Learning", due to appear on ACM's e-Energy 2024 proceedings. You can find it in this repo as `AggregateFlex_eEnergy24.pdf`.
 
 ## Abstract :cloud_with_lightning:	
 We study a virtual power plant (VPP) that trades the bidirectional charging flexibility of privately owned plug-in electric vehicles (EVs) in a real-time electricity market to maximize its profit. To incentivize EVs to allow bidirectional charging, we design incentive-compatible, variable-term contracts between the VPP and EVs. Through deliberate aggregation of the energy storage capacity of individual EVs, we learn a reinforcement learning (RL) policy to efficiently trade the flexibility, independent of the number of accepted contracts and connected EVs. The proposed aggregation method ensures the satisfaction of individual EV charging requirements by constraining the optimal action returned by the RL policy within certain bounds. We then develop a disaggregation scheme to allocate power to bidirectional chargers in a proportionally fair manner, given the total amount of energy traded in the market. Evaluation on a real-world dataset demonstrates robust performance of the proposed method despite uncertainties in electricity prices and shifts in the distribution of EV mobility.
 
-## Overview :classical-building:
+## Overview :telescope:
 The code is divided into these parts
-* :scroll: `ContractDesign/`: The code and notebooks used to generate and analyze the incentive-compatible V2G contracts. 
+* :scroll: `ContractDesign/`: The code and notebooks used to generate and analyze the V2G contracts. 
 * :electric_plug: `ElectricityMarkets/`: The analysis for the electricity price dataset at the proper time resolution. 
 * :weight_lifting: `EvGym/`: The environment and the RL agents, more details in a later section.
 * :test_tube: `ExpLogs/`: Records of the experiments used in the paper.
@@ -21,7 +21,7 @@ The code is divided into these parts
 Additionally a `requirements.txt` file is provided.
 Using a `virtualenv` is recommended.
 
-## Parameters 
+## Parameters :gear: 
 | Parameter                    | Value    | Description                                      |
 |------------------------------|----------|--------------------------------------------------|
 | `--agent`                    | SAC-sagg | Agent to use for real-time scheduling            |
@@ -42,38 +42,24 @@ Using a `virtualenv` is recommended.
 
 ### Actor :person_fencing:
 The architecture for the actor, the policy network. 
-\begin{table}[h]
-\centering
-\resizebox{0.5\columnwidth}{!}{%
-\begin{tabular}{l|l|l}
-\textbf{Layer}         & \textbf{In} & \textbf{Out} \\ \hline
-Linear (ReLU)          & 59          & 256          \\
-Linear (ReLU)          & 256         & 256          \\
-Head 1, Mean: Linear (Sigmoid) & 256         & 1            \\
-Head 2, Logstd: Linear (Tanh) & 256         & 1           
-\end{tabular}%
-}
-\caption{Architecture for the Actor.} \label{tbl:actor}
-\end{table}
+
+| Layer                          | In  | Out |
+|--------------------------------|-----|-----|
+| Linear (ReLU)                  | 59  | 256 |
+| Linear (ReLU)                  | 256 | 256 |
+| Head 1, Mean: Linear (Sigmoid) | 256 | 1   |
+| Head 2, Logstd: Linear (Tanh)  | 256 | 1   |
 
 ### Critic :detective:
 The architecture for the two critics, soft Q networks.
 
+| Layer         | In  | Out |
+|---------------|-----|-----|
+| Linear (ReLU) | 60  | 256 |
+| Linear (ReLU) | 256 | 256 |
+| Linear        | 256 | 1   |
 
-\begin{table}[h]
-\centering
-\resizebox{0.3\columnwidth}{!}{%
-\begin{tabular}{l|l|l}
-\textbf{Layer} & \textbf{In} & \textbf{Out} \\ \hline
-Linear (ReLU)  & 60          & 256          \\
-Linear (ReLU)  & 256         & 256          \\
-Linear         & 256         & 1           
-\end{tabular}%
-}
-\caption{Architecture for the Critics.} \label{tbl:critic}
-\end{table}
-
-## Notes for `RunSACChargeWorld.py`
+## Notes for `RunSACChargeWorld.py` :city_sunrise:	
 This is of how we train our implementation of _Aggregate SAC_. 
 First, we import some general modules. Then we import the user-defined modules, mainly the environment (`ChargeWorldEnv`), the actor (`agentSAC_sagg`), and the critic (`SoftQNetwork`).
 
