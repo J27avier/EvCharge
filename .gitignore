@@ -193,3 +193,4 @@ ElectricityMarkets/2GenerateHistoricalDatasets.ipynb
 ElectricityMarkets/3PriceEDA.ipynb
 ElectricityMarkets/4CustomPrice.ipynb
 ElectricityMarkets/price_data_maker.ipynb
+utils/
