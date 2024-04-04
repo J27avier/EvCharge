@@ -1,4 +1,4 @@
-# :zap: :car: :zap: EvCharge 
+# EvCharge :zap: :car: :zap: 
 This is the accompanying repo for the paper "Efficient Trading of Aggregate Bidirectional EV Charging Flexibility with Reinforcement Learning", due to appear on ACM's e-Energy 2024 proceedings. You can find it in this repo as `AggregateFlex_eEnergy24.pdf`.
 
 ## :cloud_with_lightning: Abstract 
@@ -38,9 +38,9 @@ Using a `virtualenv` is recommended.
 | `--save-agent`               | True     | Save the weights of the trained agent            |
 | `--general`                  | True     | Run training mode (`False` is for deployment)    |
 
-## Architecture :brain:
+## :brain: Architecture 
 
-### Actor :person_fencing:
+### :person_fencing: Actor 
 The architecture for the actor, the policy network. 
 
 | Layer                          | In  | Out |
@@ -50,7 +50,7 @@ The architecture for the actor, the policy network.
 | Head 1, Mean: Linear (Sigmoid) | 256 | 1   |
 | Head 2, Logstd: Linear (Tanh)  | 256 | 1   |
 
-### Critic :detective:
+### :detective: Critic 
 The architecture for the two critics, soft Q networks.
 
 | Layer         | In  | Out |
@@ -59,7 +59,21 @@ The architecture for the two critics, soft Q networks.
 | Linear (ReLU) | 256 | 256 |
 | Linear        | 256 | 1   |
 
-## Notes for `RunSACChargeWorld.py` :city_sunrise:	
+## :skier: Running the Scripts
+The command to run the experiment with the parameters is shown below.
+
+```
+python3 RunSACChargeWorld.py --agent SAC-sagg --save-name sac_a 
+                             --pred-noise 0.00 --seed 42 --years 200 
+                             --batch-size 512 --alpha 0.02 
+                             --policy-frequency 4  
+                             --target-network-frequency 2 
+                             --disagg PF --save-agent True 
+                             --general True
+```
+
+
+## :city_sunrise: Notes for `RunSACChargeWorld.py` 
 This is of how we train our implementation of _Aggregate SAC_. 
 First, we import some general modules. Then we import the user-defined modules, mainly the environment (`ChargeWorldEnv`), the actor (`agentSAC_sagg`), and the critic (`SoftQNetwork`).
 
